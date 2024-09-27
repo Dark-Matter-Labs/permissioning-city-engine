@@ -227,20 +227,20 @@ Ref: user_notification.user_id > user.id
 Ref: user_notification.external_service_id > external_service.id
 
 // Group
-Table space_follower {
-  space_id uuid [not null]
-  user_id uuid [not null]
-  is_near_by bool [not null, default: false]
-  is_active bool [not null, default: true]
-  created_at timestamptz [default: `CURRENT_TIMESTAMP`]
-  updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
+// Table space_follower {
+//   space_id uuid [not null]
+//   user_id uuid [not null]
+//   is_near_by bool [not null, default: false]
+//   is_active bool [not null, default: true]
+//   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
+//   updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
 
-  indexes {
-    (space_id, user_id) [pk]
-  }
-}
-Ref: space_follower.user_id  > user.id // check if this is right
-Ref: space_follower.space_id > space.id // check if this is right
+//   indexes {
+//     (space_id, user_id) [pk]
+//   }
+// }
+// Ref: space_follower.user_id  > user.id // check if this is right
+// Ref: space_follower.space_id > space.id // check if this is right
 
 Table space_permissioner {
   space_id uuid [not null]
@@ -272,20 +272,20 @@ Table topic_follower {
 Ref: topic_follower.user_id > user.id // check if this is right
 Ref: topic_follower.topic_id > topic.id // check if this is right
 
-Table space_event_attendee {
-  space_event_id uuid [not null]
-  user_id uuid [not null]
-  is_confirmed bool [not null, default: false] 
-  created_at timestamptz [default: `CURRENT_TIMESTAMP`]
-  updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
+// Table space_event_attendee {
+//   space_event_id uuid [not null]
+//   user_id uuid [not null]
+//   is_confirmed bool [not null, default: false] 
+//   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
+//   updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
 
-  indexes {
-    (space_event_id, user_id) [pk]
-  }
-}
-Ref: space_event_attendee.user_id > user.id // check if this is right
-Ref: space_event_attendee.space_event_id > space_event.id // check if this is right
-Ref: space_event_image.space_event_id > space_event.id // check if this is right
+//   indexes {
+//     (space_event_id, user_id) [pk]
+//   }
+// }
+// Ref: space_event_attendee.user_id > user.id // check if this is right
+// Ref: space_event_attendee.space_event_id > space_event.id // check if this is right
+// Ref: space_event_image.space_event_id > space_event.id // check if this is right
 
 // many-to-many
 Ref external_service_user: external_service.id <> user.id [delete: cascade] 
