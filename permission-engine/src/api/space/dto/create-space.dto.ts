@@ -21,24 +21,27 @@ export class CreateSpaceDto {
   @ApiProperty({ description: 'Space name in string', required: true })
   name: string;
 
-  @IsUUID()
-  @IsNotEmpty()
-  @ApiProperty({ description: 'Space owner userId in uuid', required: true })
-  ownerId: string;
-
   @IsInt()
   @ApiProperty({ description: 'Space zipcode' })
   zipcode: number;
 
   @IsNotEmpty()
+  @MaxLength(100)
   @ApiProperty({ description: 'Country', required: true })
   country: string;
 
   @IsNotEmpty()
+  @MaxLength(100)
+  @ApiProperty({ description: 'State|Region', required: true })
+  region: string;
+
+  @IsNotEmpty()
+  @MaxLength(100)
   @ApiProperty({ description: 'City', required: true })
   city: string;
 
   @IsNotEmpty()
+  @MaxLength(100)
   @ApiProperty({ description: 'District', required: true })
   district: string;
 
@@ -53,14 +56,6 @@ export class CreateSpaceDto {
   @IsNotEmpty()
   @ApiProperty({ description: 'Longitude in string', required: true })
   longitude: string;
-
-  @IsNotEmpty()
-  @ApiProperty({
-    description: 'Is space active',
-    required: true,
-    default: true,
-  })
-  isActive: boolean;
 
   @IsUUID()
   @ApiProperty({ description: 'Space rule ruleId in uuid' })
