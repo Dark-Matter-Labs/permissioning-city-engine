@@ -82,4 +82,3 @@ services:
 networks:
   permission_engine_network:
     driver: bridge
-    external: true
