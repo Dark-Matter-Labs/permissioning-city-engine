@@ -1,0 +1,299 @@
+// Entity
+Table user {
+  id uuid [primary key]
+  name varchar
+  email varchar [unique, not null]
+  type varchar [note: 'individual, organization, government']
+  is_active bool [not null, default: true]
+  birth_year integer [note: 'year of birth']
+  country varchar
+  region varchar
+  city varchar
+  district varchar
+  details text
+  created_at timestamptz [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
+}
+
+Table space {
+  id uuid [primary key]
+  owner_id uuid [not null]
+  name varchar [not null]
+  zipcode integer [not null]
+  country varchar [not null]
+  city varchar [not null]
+  region varchar [not null]
+  district varchar [not null]
+  address text [not null]
+  latitude varchar [not null]
+  longitude varchar [not null]
+  is_active bool [not null, default: true]
+  rule_id uuid [not null]
+  consent_condition varchar [not null, default: `'under_50_no'`, note: '{under|over|is}_{percent}_{yes|no}: over_50_yes, under_20_no, is_100_yes, is_0_no, ...']
+  details text
+  created_at timestamptz [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
+
+}
+Ref: space.owner_id > user.id
+Ref: space.rule_id > rule.id
+
+Table space_image {
+  id uuid [primary key]
+  space_id uuid [not null]
+  link text [not null]
+  created_at timestamptz [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
+  
+}
+Ref: space_image.space_id > space.id // check if this is right
+
+Table external_service {
+  id uuid [primary key]
+  owner_id uuid
+  name varchar [not null]
+  details text
+  is_active bool [not null, default: true]
+  link text [not null]
+  created_at timestamptz [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
+
+}
+Ref: external_service.owner_id > user.id
+
+Table topic {
+  id uuid [primary key]
+  name varchar [not null, unique]
+  details text
+  is_active bool [not null, default: true] 
+  created_at timestamptz [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
+}
+
+Table space_event {
+  id uuid [primary key]
+  organizer_id uuid [not null]
+  space_id uuid
+  topic_id uuid
+  permission_request_id uuid
+  external_service_id uuid
+  name varchar [not null]
+  status varchar [not null, default: 'pending', note: 'pending, permission_requested, permission_approved, permission_approved_with_condition, permission_rejected, running, complete']
+  details text
+  is_active bool [not null, default: true]
+  link text [not null]
+  duration varchar [not null]
+  start_at timestamptz [not null]
+  created_at timestamptz [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
+}
+Ref: space_event.organizer_id > user.id
+Ref: space_event.external_service_id > external_service.id
+Ref: space_event.permission_request_id > permission_request.id
+Ref: space_event.topic_id > topic.id
+Ref: space_event.space_id > space.id
+
+Table space_event_image {
+  id uuid [primary key]
+  space_event_id uuid [not null]
+  link text [not null]
+  created_at timestamptz [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
+}
+
+Table rule {
+  id uuid [primary key]
+  name varchar [not null]
+  hash varchar [not null]
+  author_id uuid [not null]
+  type varchar [not null]
+  parent_rule_id uuid
+  is_active bool [not null, default: true]
+  created_at timestamptz [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
+}
+Ref: rule.author_id > user.id
+
+Table rule_block {
+  id uuid [primary key]
+  name varchar [not null]
+  hash varchar [not null]
+  author_id uuid [not null]
+  type varchar [not null]
+  content text [not null]
+  created_at timestamptz [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
+}
+Ref: rule_block.author_id > user.id
+
+// Stack
+Table space_history {
+  id uuid [primary key]
+  space_id uuid [not null]
+  rule_id uuid [not null]
+  user_id uuid
+  space_event_id uuid
+  permissioner_ids uuid[]
+  is_active bool [not null, default: true]
+  type varchar [not null, note: 'create, update_details, activate, deactivate, permissioner_opt_in, permissioner_opt_out, permission_request, permission_response']
+  details text
+  created_at timestamptz [default: `CURRENT_TIMESTAMP`]
+}
+Ref: space_history.space_id > space.id
+Ref: space_history.user_id > user.id
+Ref: space_history.space_event_id > space_event.id
+Ref: space_history.rule_id > rule.id
+
+Table permission_request {
+  id uuid [primary key]
+  space_id uuid [not null]
+  space_event_id uuid [not null]
+  space_rule_id uuid [not null]
+  space_event_rule_id uuid [not null]
+  user_id uuid
+  permissioner_ids uuid[]
+  status varchar [not null, note: 'pending, assigned, assign_failed, review_required, review_require_failed, issue_raised, review_approved, review_approved_with_condition, resolve_rejected, resolve_accepted, resolve_dropped']
+  created_at timestamptz [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
+}
+Ref: permission_request.space_id > space.id
+Ref: permission_request.user_id > user.id
+Ref: permission_request.space_event_id > space_event.id
+Ref: permission_request.space_rule_id > rule.id
+Ref: permission_request.space_event_rule_id > rule.id
+
+Table permission_response {
+  id uuid [primary key]
+  permission_request_id uuid [not null]
+  permissioner_id uuid
+  status varchar [not null, note: 'pending, approved, approved_with_condition, rejected']
+  conditions text[]
+  excitements text[]
+  worries text[]
+  timeout_at timestamptz
+  created_at timestamptz [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
+}
+Ref: permission_response.permission_request_id > permission_request.id
+Ref: permission_response.permissioner_id > user.id
+
+Table permission_result {
+  id uuid [primary key]
+  permission_request_id uuid [not null]
+  status varchar [not null, note: 'pending, approved, approved_with_condition, rejected']
+  conditions text[]
+  excitements text[]
+  worries text[]
+  summary text
+  created_at timestamptz [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
+}
+Ref: permission_result.permission_request_id > permission_request.id
+
+Table rule_history {
+  id uuid [primary key]
+  rule_id uuid [not null]
+  user_id uuid [not null]
+  space_id uuid
+  space_event_id uuid
+  permission_request_id uuid
+  type rule_history_type [not null]
+  details text
+  created_at timestamptz [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
+}
+Ref: rule_history.rule_id > rule.id
+Ref: rule_history.user_id > user.id
+Ref: rule_history.space_id > space.id
+Ref: rule_history.space_event_id > space_event.id
+Ref: rule_history.permission_request_id > permission_request.id
+
+Table user_notification {
+  id uuid [primary key]
+  user_id uuid [not null]
+  user_type varchar [not null, note: 'space_owner, space_event_orgnaizer, space_event_attendee, permissioner, topic_follower, space_follower, rule_creator']
+  type varchar [not null, note: 'internal, external']
+  status varchar [not null, default: 'pending', note: 'pending, complete, failed']
+  external_service_id uuid
+  link text
+  template_name varchar [not null]
+  subject_part text [not null]
+  text_part text [not null]
+  html_part text [not null]
+  created_at timestamptz [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
+}
+Ref: user_notification.user_id > user.id
+Ref: user_notification.external_service_id > external_service.id
+
+// Group
+Table space_follower {
+  space_id uuid [not null]
+  user_id uuid [not null]
+  is_near_by bool [not null, default: false]
+  is_active bool [not null, default: true]
+  created_at timestamptz [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (space_id, user_id) [pk]
+  }
+}
+Ref: space_follower.user_id  > user.id // check if this is right
+Ref: space_follower.space_id > space.id // check if this is right
+
+Table space_permissioner {
+  space_id uuid [not null]
+  user_id uuid [not null]
+  inviter_id uuid
+  is_active bool [not null, default: false]
+  created_at timestamptz [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (space_id, user_id) [pk]
+  }
+}
+Ref: space_permissioner.user_id > user.id // check if this is right
+Ref: space_permissioner.inviter_id > user.id // check if this is right
+Ref: space_permissioner.space_id > space.id // check if this is right
+
+Table topic_follower {
+  topic_id uuid [not null]
+  user_id uuid [not null]
+  is_active bool [not null, default: true] 
+  created_at timestamptz [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (topic_id, user_id) [pk]
+  }
+}
+Ref: topic_follower.user_id > user.id // check if this is right
+Ref: topic_follower.topic_id > topic.id // check if this is right
+
+Table space_event_attendee {
+  space_event_id uuid [not null]
+  user_id uuid [not null]
+  is_confirmed bool [not null, default: false] 
+  created_at timestamptz [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (space_event_id, user_id) [pk]
+  }
+}
+Ref: space_event_attendee.user_id > user.id // check if this is right
+Ref: space_event_attendee.space_event_id > space_event.id // check if this is right
+Ref: space_event_image.space_event_id > space_event.id // check if this is right
+
+// many-to-many
+Ref external_service_user: external_service.id <> user.id [delete: cascade] 
+
+Ref space_topic: space.id <> topic.id [delete: restrict]
+
+Ref space_event_topic: space_event.id <> topic.id [delete: cascade]
+
+Ref rule_topic: rule.id <> topic.id [delete: cascade]
+
+Ref rule_rule_block: rule.id <> rule_block.id [delete: cascade]

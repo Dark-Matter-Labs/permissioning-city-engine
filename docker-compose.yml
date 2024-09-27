@@ -1,0 +1,67 @@
+version: '3.7'
+
+services:
+  nginx:
+    image: nginx:1.25.3
+    container_name: nginx
+    env_file:
+      - .env
+    volumes:
+      - ./logs/nginx:/var/log/nginx
+      - ./nginx:/etc/nginx/conf.d
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "5"
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - permission-engine
+    networks:
+      - permission_engine_network
+  
+  redis:
+    image: redis:7.2.5
+    container_name: redis
+    env_file:
+      - .env
+    networks:
+      - permission_engine_network
+
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    env_file:
+      - .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./data/postgres_data:/var/lib/postgresql/data
+    networks:
+      - permission_engine_network
+
+  permission-engine:
+    build:
+      context: ./permission-engine
+    container_name: permission-engine
+    env_file:
+      - .env
+    volumes:
+      - ./logs/permission-engine/app.log:/app/app.log
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "5"
+    ports:
+      - "3000:3000"
+    command: ["npm", "run", "start:prod"]
+    depends_on:
+      - postgres
+    restart: always
+    networks:
+      - permission_engine_network
+
+networks:
+  permission_engine_network:
+    driver: bridge
