@@ -1,7 +1,9 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+import { ApiProperty } from '@nestjs/swagger';
 import { UserNotification } from './user-notification.entity';
 import { SpaceEvent } from './space-event.entity';
-import { ApiProperty } from '@nestjs/swagger';
+import { ExternalService } from './external-service.entity';
+import { RuleBlock } from './rule-block.entity';
 
 @Entity()
 export class User {
@@ -64,5 +66,9 @@ export class User {
   @OneToMany(() => SpaceEvent, (spaceEvent) => spaceEvent.organizer)
   spaceEvents: SpaceEvent[];
 
-  // TODO. add list of external service links as oneToMany
+  @OneToMany(() => ExternalService, (externalService) => externalService.owner)
+  externalServices: ExternalService[];
+
+  @OneToMany(() => RuleBlock, (ruleBlock) => ruleBlock.author)
+  ruleBlocks: RuleBlock[];
 }
