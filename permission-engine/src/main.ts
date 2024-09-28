@@ -28,6 +28,7 @@ async function bootstrap() {
     .setVersion('1.0')
     .addBearerAuth()
     .setBasePath('/api/v1')
+    .addServer(`${process.env.GOOGLE_CALLBACK_DOMAIN}/api/v1`)
     .build();
 
   const document = SwaggerModule.createDocument(app, swaggerConfig);
