@@ -23,30 +23,15 @@ async function bootstrap() {
   );
 
   const swaggerConfig = new DocumentBuilder()
-    .setTitle('Permissioning Engine API') // API 문서의 제목
-    .setDescription('API documentation of permissioning engine') // API에 대한 설명
-    .setVersion('1.0') // 버전 정보
+    .setTitle('Permissioning Engine API')
+    .setDescription('API documentation of permissioning engine')
+    .setVersion('1.0')
     .addBearerAuth()
     .setBasePath('/api/v1')
     .build();
 
   const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('api', app, document, {
-    swaggerOptions: {
-      authAction: {
-        BearerAuth: {
-          name: 'Authorization',
-          schema: {
-            type: 'apiKey',
-            in: 'header',
-            name: 'Authorization',
-            description: 'Enter JWT Bearer token',
-          },
-          value: 'Bearer <your-token-here>',
-        },
-      },
-    },
-  });
+  SwaggerModule.setup('api', app, document);
 
   await app.listen(process.env.PERMISSION_ENGINE_PORT);
 }
