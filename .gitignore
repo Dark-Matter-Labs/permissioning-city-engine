@@ -24,4 +24,5 @@ logs/
 .keys
 
 data/
-
+certbot/
+letsencrypt/
