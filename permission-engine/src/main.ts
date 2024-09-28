@@ -27,7 +27,6 @@ async function bootstrap() {
     .setDescription('API documentation of permissioning engine')
     .setVersion('1.0')
     .addBearerAuth()
-    .setBasePath('/api/v1')
     .addServer(`${process.env.GOOGLE_CALLBACK_DOMAIN}/api/v1`)
     .build();
 
