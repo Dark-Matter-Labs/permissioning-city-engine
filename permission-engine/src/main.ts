@@ -27,7 +27,7 @@ async function bootstrap() {
     .setDescription('API documentation of permissioning engine')
     .setVersion('1.0')
     .addBearerAuth()
-    .addServer(`${process.env.GOOGLE_CALLBACK_DOMAIN}/api/v1`)
+    .addServer(process.env.GOOGLE_CALLBACK_DOMAIN)
     .build();
 
   const document = SwaggerModule.createDocument(app, swaggerConfig);
