@@ -5,6 +5,7 @@ import {
   PrimaryGeneratedColumn,
   JoinColumn,
   ManyToOne,
+  CreateDateColumn,
 } from 'typeorm';
 import { Space } from './space.entity';
 
@@ -24,7 +25,7 @@ export class SpaceImage {
   @Column()
   link: string;
 
-  @Column()
+  @CreateDateColumn()
   @ApiProperty({ description: 'Created timestamp' })
   createdAt: Date;
 

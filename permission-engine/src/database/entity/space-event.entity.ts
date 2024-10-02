@@ -7,6 +7,7 @@ import {
   ManyToOne,
   ManyToMany,
   JoinTable,
+  CreateDateColumn,
 } from 'typeorm';
 import { User } from './user.entity';
 import { Space } from './space.entity';
@@ -74,7 +75,7 @@ export class SpaceEvent {
   @Column()
   startAt: Date;
 
-  @Column()
+  @CreateDateColumn()
   @ApiProperty({ description: 'Created timestamp' })
   createdAt: Date;
 

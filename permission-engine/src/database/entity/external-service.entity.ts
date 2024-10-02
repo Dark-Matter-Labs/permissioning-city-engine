@@ -5,6 +5,7 @@ import {
   PrimaryGeneratedColumn,
   JoinColumn,
   ManyToOne,
+  CreateDateColumn,
 } from 'typeorm';
 import { User } from './user.entity';
 
@@ -38,7 +39,7 @@ export class ExternalService {
   @ApiProperty({ description: 'External service description' })
   details: string;
 
-  @Column()
+  @CreateDateColumn()
   @ApiProperty({ description: 'Created timestamp' })
   createdAt: Date;
 

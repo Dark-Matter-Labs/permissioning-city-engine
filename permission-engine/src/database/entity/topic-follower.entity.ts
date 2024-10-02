@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToMany } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToMany, CreateDateColumn } from 'typeorm';
 import { SpaceEvent } from './space-event.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import { Space } from './space.entity';
@@ -21,7 +21,7 @@ export class TopicFollower {
   @ApiProperty({ description: 'Is topic active' })
   isActive: boolean;
 
-  @Column()
+  @CreateDateColumn()
   @ApiProperty({ description: 'Created timestamp' })
   createdAt: Date;
 

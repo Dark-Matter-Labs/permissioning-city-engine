@@ -4,6 +4,7 @@ import {
   PrimaryGeneratedColumn,
   ManyToOne,
   JoinColumn,
+  CreateDateColumn,
 } from 'typeorm';
 import { User } from './user.entity';
 import { ApiProperty } from '@nestjs/swagger';
@@ -55,7 +56,7 @@ export class UserNotification {
   @Column()
   htmlPart: string;
 
-  @Column()
+  @CreateDateColumn()
   createdAt: Date;
 
   @Column()

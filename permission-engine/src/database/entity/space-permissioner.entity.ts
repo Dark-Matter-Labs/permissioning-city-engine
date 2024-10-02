@@ -5,6 +5,7 @@ import {
   PrimaryGeneratedColumn,
   OneToMany,
   ManyToMany,
+  CreateDateColumn,
 } from 'typeorm';
 import { SpaceEvent } from './space-event.entity';
 import { Topic } from './topic.entity';
@@ -73,7 +74,7 @@ export class SpacePermissioner {
   @ApiProperty({ description: 'Space description' })
   details: string;
 
-  @Column()
+  @CreateDateColumn()
   @ApiProperty({ description: 'Created timestamp' })
   createdAt: Date;
 

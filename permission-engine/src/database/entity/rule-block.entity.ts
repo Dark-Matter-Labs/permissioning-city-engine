@@ -5,6 +5,7 @@ import {
   PrimaryGeneratedColumn,
   JoinColumn,
   ManyToOne,
+  CreateDateColumn,
 } from 'typeorm';
 import { User } from './user.entity';
 
@@ -47,7 +48,7 @@ export class RuleBlock {
   @ApiProperty({ description: 'Rule block content' })
   content: string;
 
-  @Column()
+  @CreateDateColumn()
   @ApiProperty({ description: 'Created timestamp' })
   createdAt: Date;
 
