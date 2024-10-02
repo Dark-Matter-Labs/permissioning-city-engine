@@ -22,4 +22,11 @@ export default () => ({
     s3BucketName: process.env.AWS_S3_BUCKET_NAME || '',
   },
   emailFrom: process.env.EMAIL_FROM || '',
+  jwt: {
+    secret: process.env.JWT_SECRET || '',
+    accessTokenExpirationTime:
+      process.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME || '',
+    refreshTokenExpirationTime:
+      process.env.JWT_REFRESH_TOKEN_EXPIRATION_TIME || '',
+  },
 });

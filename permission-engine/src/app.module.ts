@@ -16,11 +16,22 @@ import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { UserModule } from './api/user/user.module';
 import { SpaceModule } from './api/space/space.module';
 import { EventModule } from './api/event/event.module';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       load: [configuration],
+    }),
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_SECRET'),
+        signOptions: {
+          expiresIn: `${configService.get<string>('JWT_ACCESS_TOKEN_EXPIRATION_TIME')}s`,
+        },
+      }),
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],

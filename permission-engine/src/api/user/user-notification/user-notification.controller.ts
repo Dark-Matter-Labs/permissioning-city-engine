@@ -9,9 +9,9 @@ import {
 } from '@nestjs/common';
 import { UserNotificationService } from './user-notification.service';
 import { UserNotification } from '../../../database/entity/user-notification.entity';
-import { GoogleAuthGuard } from 'src/auth/google-auth.guard';
 import { Logger } from 'src/lib/logger/logger.service';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 @ApiTags('user')
 @Controller('api/v1/user/notification')
@@ -23,20 +23,20 @@ export class UserNotificationController {
 
   @Get()
   @ApiOperation({ summary: 'Get UserNotification by userId' })
-  @UseGuards(GoogleAuthGuard)
+  @UseGuards(JwtAuthGuard)
   findByUserId(@Query('userId') userId: string): Promise<UserNotification[]> {
     return this.userNotificationService.findByUserId(userId);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get UserNotification by id' })
-  @UseGuards(GoogleAuthGuard)
+  @UseGuards(JwtAuthGuard)
   findOne(@Param('id') id: string): Promise<UserNotification> {
     return this.userNotificationService.findOne(id);
   }
 
   @Put(':id')
-  @UseGuards(GoogleAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Update pending UserNotification to complete' })
   complete(@Param('id') id: string): Promise<boolean> {
     return this.userNotificationService
@@ -45,7 +45,7 @@ export class UserNotificationController {
         if (res.affected === 1) {
           return true;
         } else {
-          throw new BadRequestException(`Notification doesn't exist: ${id}`);
+          throw new BadRequestException(`Notification does not exist: ${id}`);
         }
       })
       .catch((e) => {

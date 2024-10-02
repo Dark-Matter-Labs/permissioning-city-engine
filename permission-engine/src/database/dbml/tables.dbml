@@ -15,6 +15,15 @@ Table user {
   updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
 }
 
+Table refresh_token {
+  id uuid [primary key]
+  token text
+  user_id uuid
+  created_at timestamptz [default: `CURRENT_TIMESTAMP`]
+  expires_at timestamptz
+}
+Ref: refresh_token.user_id > user.id [delete: cascade, update: no action] 
+
 Table space {
   id uuid [primary key]
   owner_id uuid [not null]
@@ -33,7 +42,6 @@ Table space {
   details text
   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
   updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
-
 }
 Ref: space.owner_id > user.id
 Ref: space.rule_id > rule.id
@@ -288,12 +296,12 @@ Ref: topic_follower.topic_id > topic.id // check if this is right
 // Ref: space_event_image.space_event_id > space_event.id // check if this is right
 
 // many-to-many
-Ref external_service_user: external_service.id <> user.id [delete: cascade] 
+Ref external_service_user: external_service.id <> user.id [delete: cascade, update: no action]
 
 Ref space_topic: space.id <> topic.id [delete: restrict]
 
-Ref space_event_topic: space_event.id <> topic.id [delete: cascade]
+Ref space_event_topic: space_event.id <> topic.id [delete: cascade, update: no action]
 
-Ref rule_topic: rule.id <> topic.id [delete: cascade]
+Ref rule_topic: rule.id <> topic.id [delete: cascade, update: no action]
 
-Ref rule_rule_block: rule.id <> rule_block.id [delete: cascade]
+Ref rule_rule_block: rule.id <> rule_block.id [delete: cascade, update: no action]
