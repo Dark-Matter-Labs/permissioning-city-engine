@@ -38,6 +38,8 @@ services:
   redis:
     image: redis:7.2.5
     container_name: redis
+    volumes:
+      - ./data/redis:/data
     env_file:
       - .env
     networks:

@@ -96,7 +96,6 @@ export class AuthService {
       bcrypt.hashSync(refreshToken, 10),
     );
 
-    console.log(storedRefreshToken.expiresAt);
     if (!storedRefreshToken || storedRefreshToken.expiresAt < new Date()) {
       throw new Error('Invalid or expired refresh token');
     }

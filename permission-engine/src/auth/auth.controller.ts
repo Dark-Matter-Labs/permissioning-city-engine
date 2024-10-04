@@ -62,8 +62,6 @@ export class AuthController {
 
       return res.json({ message: 'Token refreshed successfully' });
     } catch (error) {
-      console.log(res);
-      console.log(error);
       return res
         .status(403)
         .json({ message: 'Invalid or expired refresh token' });
