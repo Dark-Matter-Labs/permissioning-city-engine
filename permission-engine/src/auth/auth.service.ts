@@ -6,6 +6,7 @@ import { User } from 'src/database/entity/user.entity';
 import { RefreshTokenService } from './token/refresh-token.service';
 import { CreateUserDto } from 'src/api/user/dto';
 import { JwtPayloadDto } from './token/dto';
+import { Logger } from 'src/lib/logger/logger.service';
 
 @Injectable()
 export class AuthService {
@@ -13,33 +14,8 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly userService: UserService,
     private readonly refreshTokenService: RefreshTokenService,
+    private readonly logger: Logger,
   ) {}
-
-  async googleLogin(req) {
-    if (!req.user) {
-      return 'No user from Google';
-    }
-
-    const user = req.user;
-
-    // Generate JWT
-    const payload: JwtPayloadDto = {
-      email: user.email,
-      sub: user.name,
-    };
-
-    const accessToken = this.jwtService.sign(payload, {
-      secret: process.env.JWT_SECRET,
-      expiresIn: process.env.JWT_EXPIRATION_TIME,
-    });
-
-    return {
-      message: 'User information from Google',
-      user: req.user,
-      accessToken,
-      refreshToken: user.refreshToken,
-    };
-  }
 
   async findOrCreateUser(profile: CreateUserDto): Promise<User> {
     let user = await this.userService.findByEmail(profile.email);
@@ -77,32 +53,24 @@ export class AuthService {
       user.id.toString() + Date.now().toString(),
       10,
     );
-    const expiresAt = new Date(
-      Date.now() +
-        parseInt(process.env.JWT_REFRESH_TOKEN_EXPIRATION_TIME) * 1000,
-    );
 
     const refreshToken = await this.refreshTokenService.create({
-      token: bcrypt.hashSync(token, 10),
+      token,
       user,
-      expiresAt,
     });
 
     return refreshToken.token;
   }
 
   async refreshAccessToken(refreshToken: string) {
-    const storedRefreshToken = await this.refreshTokenService.findByToken(
-      bcrypt.hashSync(refreshToken, 10),
-    );
+    const user = await this.refreshTokenService.getUserByToken(refreshToken);
 
-    if (!storedRefreshToken || storedRefreshToken.expiresAt < new Date()) {
+    if (!user) {
       throw new Error('Invalid or expired refresh token');
     }
-
     const payload = {
-      email: storedRefreshToken.user.email,
-      sub: storedRefreshToken.user.id,
+      email: user.email,
+      sub: user.id,
     };
 
     return this.jwtService.sign(payload, {

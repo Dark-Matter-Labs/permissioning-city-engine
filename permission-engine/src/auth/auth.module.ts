@@ -6,15 +6,21 @@ import { JwtModule } from '@nestjs/jwt';
 import { GoogleStrategy } from './strategy/google.strategy';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RefreshToken } from 'src/database/entity/refresh-token.entity';
 import { User } from 'src/database/entity/user.entity';
 import { UserService } from 'src/api/user/user.service';
 import { RefreshTokenService } from './token/refresh-token.service';
 import { JwtStrategy } from './strategy/jwt.strategy';
+import { Logger } from 'src/lib/logger/logger.service';
+import configuration from 'src/config/configuration';
+import { LoggerModule } from 'src/lib/logger/logger.module';
+import { RefreshTokenModule } from './token/refresh-token.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, RefreshToken]),
+    ConfigModule.forRoot({
+      load: [configuration],
+    }),
+    TypeOrmModule.forFeature([User]),
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -26,7 +32,8 @@ import { JwtStrategy } from './strategy/jwt.strategy';
         },
       }),
     }),
-    ConfigModule,
+    RefreshTokenModule,
+    LoggerModule,
   ],
   providers: [
     AuthService,
@@ -34,6 +41,7 @@ import { JwtStrategy } from './strategy/jwt.strategy';
     RefreshTokenService,
     GoogleStrategy,
     JwtStrategy,
+    Logger,
   ],
   controllers: [AuthController],
 })
