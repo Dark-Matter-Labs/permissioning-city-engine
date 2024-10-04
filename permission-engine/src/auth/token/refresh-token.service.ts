@@ -16,9 +16,10 @@ export class RefreshTokenService {
     private readonly configService: ConfigService,
     private readonly logger: Logger,
   ) {
-    this.redis = this.redisService.getOrNil();
-    if (!this.redis) {
-      throw new Error('Failed to init redis');
+    try {
+      this.redis = this.redisService.getOrThrow();
+    } catch (error) {
+      this.logger.error('Failed to load redis', error);
     }
   }
 
