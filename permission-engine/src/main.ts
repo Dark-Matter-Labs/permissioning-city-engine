@@ -16,7 +16,21 @@ async function bootstrap() {
     origin: process.env.GOOGLE_CALLBACK_DOMAIN,
     credentials: true,
   });
-  app.use(helmet());
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          connectSrc: ["'self'", 'https://accounts.google.com'],
+          scriptSrc: [
+            "'self'",
+            "'unsafe-inline'",
+            'https://accounts.google.com',
+          ],
+        },
+      },
+    }),
+  );
   app.use(compression());
   app.use(cookieParser());
   app.useGlobalPipes(
