@@ -17,6 +17,8 @@ import { UserModule } from './api/user/user.module';
 import { SpaceModule } from './api/space/space.module';
 import { EventModule } from './api/event/event.module';
 import { JwtModule } from '@nestjs/jwt';
+import { RedisModule } from '@liaoliaots/nestjs-redis';
+import { EmailSenderModule } from './lib/email-sender/email-sender.module';
 
 @Module({
   imports: [
@@ -48,6 +50,12 @@ import { JwtModule } from '@nestjs/jwt';
         namingStrategy: new SnakeNamingStrategy(),
       }),
     }),
+    RedisModule.forRoot({
+      config: {
+        host: process.env.REDIS_HOST,
+        port: Number(process.env.REDIS_PORT),
+      },
+    }),
     DatabaseModule,
     S3Module,
     BullModule.forRoot({
@@ -57,6 +65,7 @@ import { JwtModule } from '@nestjs/jwt';
       },
     }),
     ValidatorModule,
+    EmailSenderModule,
     AuthModule,
     UserModule,
     SpaceModule,
