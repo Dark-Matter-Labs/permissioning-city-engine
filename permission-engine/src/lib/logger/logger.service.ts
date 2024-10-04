@@ -14,7 +14,7 @@ export class Logger implements LoggerService {
       ),
       transports: [
         new winston.transports.Console(),
-        new winston.transports.File({ filename: 'app.log' }),
+        new winston.transports.File({ filename: 'log/app.log' }),
       ],
     });
   }

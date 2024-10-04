@@ -64,7 +64,7 @@ services:
     env_file:
       - .env
     volumes:
-      - ./logs/permission-engine/app.log:/app/app.log
+      - ./logs/permission-engine:/app/log
     logging:
       options:
         max-size: "10m"
