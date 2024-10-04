@@ -45,10 +45,7 @@ export class AuthController {
       path: '/',
     });
 
-    return res.json({
-      message: 'Google login successful',
-      accessToken: tokens.accessToken,
-    });
+    return res.redirect(process.env.GOOGLE_CALLBACK_DOMAIN);
   }
 
   @Post('refresh')
