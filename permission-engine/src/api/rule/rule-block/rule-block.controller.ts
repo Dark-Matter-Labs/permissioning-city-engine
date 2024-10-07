@@ -8,7 +8,6 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { RuleBlock } from '../../../database/entity/rule-block.entity';
-import { Logger } from 'src/lib/logger/logger.service';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { CreateRuleBlockDto } from '../dto';
@@ -17,10 +16,7 @@ import { RuleBlockService } from './rule-block.service';
 @ApiTags('rule')
 @Controller('api/v1/rule/block')
 export class RuleBlockController {
-  constructor(
-    private readonly ruleBlockService: RuleBlockService,
-    private readonly logger: Logger,
-  ) {}
+  constructor(private readonly ruleBlockService: RuleBlockService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get RuleBlock by authorId' })
