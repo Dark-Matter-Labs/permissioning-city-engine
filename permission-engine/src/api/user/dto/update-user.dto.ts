@@ -3,6 +3,7 @@ import {
   IsEmail,
   IsEnum,
   IsNotEmpty,
+  IsUUID,
   Matches,
   MaxLength,
   Min,
@@ -10,6 +11,10 @@ import {
 import { UserType } from '../type';
 
 export class UpdateUserDto {
+  @IsUUID()
+  @ApiProperty({ description: 'User id in uuid', required: true })
+  id: string;
+
   @IsNotEmpty()
   @MaxLength(100)
   @ApiProperty({ description: 'User name in string', required: true })

@@ -1,8 +1,10 @@
-import { Controller, Get, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, UseGuards, Req, Put, Body } from '@nestjs/common';
 import { UserService } from './user.service';
 import { User } from '../../database/entity/user.entity';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { UpdateResult } from 'typeorm';
+import { UpdateUserDto } from './dto';
 
 @ApiTags('user')
 @Controller('api/v1/user')
@@ -16,22 +18,12 @@ export class UserController {
     return this.userService.findByEmail(req.user.email);
   }
 
-  // @Post()
-  // @ApiOperation({ summary: 'Create a user' })
-  // @ApiResponse({ status: 201, description: 'Create a user', type: User })
-  // @UseGuards(GoogleAuthGuard)
-  // create(@Req() req, @Body() createUserDto: CreateUserDto): Promise<User> {
-  //   if (createUserDto.email !== req.user.email) {
-  //     throw new ForbiddenException();
-  //   }
-  //   return this.userService.create(createUserDto);
-  // }
-
-  // @Delete()
-  // @ApiOperation({ summary: 'Delete a user' })
-  // @ApiResponse({ status: 201, description: 'Delete a user' })
-  // @UseGuards(JwtAuthGuard)
-  // remove(@Req() req): Promise<void> {
-  //   return this.userService.remove(req.user.email);
-  // }
+  @Put()
+  @UseGuards(JwtAuthGuard)
+  updateSelf(
+    @Req() req,
+    @Body() updateUserDto: UpdateUserDto,
+  ): Promise<UpdateResult> {
+    return this.userService.update(req.user.email, updateUserDto);
+  }
 }

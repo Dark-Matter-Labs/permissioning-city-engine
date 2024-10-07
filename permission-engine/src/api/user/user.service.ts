@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, UpdateResult } from 'typeorm';
 import { User } from '../../database/entity/user.entity';
-import { CreateUserDto } from './dto';
+import { CreateUserDto, UpdateUserDto } from './dto';
 import { v4 as uuidv4 } from 'uuid'; // Importing the UUID v4 version
 
 @Injectable()
@@ -45,5 +45,21 @@ export class UserService {
       ...createUserDto,
     });
     return await this.userRepository.save(user);
+  }
+
+  async update(
+    email: string,
+    updateUserDto: UpdateUserDto,
+  ): Promise<UpdateResult> {
+    const user = await this.findByEmail(email);
+
+    if (user.id !== updateUserDto.id) {
+      throw new ForbiddenException();
+    }
+
+    return this.userRepository.update(user.id, {
+      updatedAt: new Date(),
+      ...updateUserDto,
+    });
   }
 }
