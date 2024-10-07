@@ -15,7 +15,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { UserModule } from './api/user/user.module';
 import { SpaceModule } from './api/space/space.module';
-import { EventModule } from './api/event/event.module';
+import { SpaceEventModule } from './api/space-event/space-event.module';
 import { JwtModule } from '@nestjs/jwt';
 import { RedisModule } from '@liaoliaots/nestjs-redis';
 import { EmailSenderModule } from './lib/email-sender/email-sender.module';
@@ -69,7 +69,7 @@ import { EmailSenderModule } from './lib/email-sender/email-sender.module';
     AuthModule,
     UserModule,
     SpaceModule,
-    EventModule,
+    SpaceEventModule,
   ],
   controllers: [AppController],
   providers: [AppService, Logger],
