@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
-import { ValidationJobData } from 'src/type';
+import { ValidationJobData } from 'src/lib/type';
 
 @Injectable()
 export class ValidatorService {

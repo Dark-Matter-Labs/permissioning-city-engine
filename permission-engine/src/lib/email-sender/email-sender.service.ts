@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
-import { EmailSendJobData } from 'src/type';
+import { EmailSendJobData } from 'src/lib/type';
 
 @Injectable()
 export class EmailSenderService {
