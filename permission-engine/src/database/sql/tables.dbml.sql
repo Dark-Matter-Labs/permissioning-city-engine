@@ -2,10 +2,11 @@ CREATE TABLE "user" (
   "id" uuid PRIMARY KEY,
   "name" varchar,
   "email" varchar UNIQUE NOT NULL,
-  "type" varchar,
+  "type" varchar DEFAULT 'individual',
   "is_active" bool NOT NULL DEFAULT true,
   "birth_year" integer,
   "country" varchar,
+  "region" varchar,
   "city" varchar,
   "district" varchar,
   "details" text,
@@ -17,16 +18,16 @@ CREATE TABLE "space" (
   "id" uuid PRIMARY KEY,
   "owner_id" uuid NOT NULL,
   "name" varchar NOT NULL,
-  "zipcode" varchar NOT NULL,
+  "zipcode" integer NOT NULL,
   "country" varchar NOT NULL,
   "city" varchar NOT NULL,
+  "region" varchar NOT NULL,
   "district" varchar NOT NULL,
   "address" text NOT NULL,
   "latitude" varchar NOT NULL,
   "longitude" varchar NOT NULL,
   "is_active" bool NOT NULL DEFAULT true,
   "rule_id" uuid NOT NULL,
-  "consent_condition" varchar NOT NULL DEFAULT ('under_50_no'),
   "details" text,
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
   "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
@@ -64,7 +65,7 @@ CREATE TABLE "space_event" (
   "id" uuid PRIMARY KEY,
   "organizer_id" uuid NOT NULL,
   "space_id" uuid,
-  "topic_id" uuid,
+  "rule_id" uuid NOT NULL,
   "permission_request_id" uuid,
   "external_service_id" uuid,
   "name" varchar NOT NULL,
@@ -73,7 +74,7 @@ CREATE TABLE "space_event" (
   "is_active" bool NOT NULL DEFAULT true,
   "link" text NOT NULL,
   "duration" varchar NOT NULL,
-  "start_at" timestamptz NOT NULL,
+  "starts_at" timestamptz NOT NULL,
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
   "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
 );
@@ -128,9 +129,7 @@ CREATE TABLE "permission_request" (
   "space_event_id" uuid NOT NULL,
   "space_rule_id" uuid NOT NULL,
   "space_event_rule_id" uuid NOT NULL,
-  "user_id" uuid,
-  "permissioner_ids" uuid[],
-  "status" varchar NOT NULL,
+  "status" varchar NOT NULL DEFAULT 'pending',
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
   "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
 );
@@ -181,29 +180,22 @@ CREATE TABLE "user_notification" (
   "status" varchar NOT NULL DEFAULT 'pending',
   "external_service_id" uuid,
   "link" text,
-  "details" text,
+  "template_name" varchar NOT NULL,
+  "subject_part" text NOT NULL,
+  "text_part" text NOT NULL,
+  "html_part" text NOT NULL,
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
   "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
 );
 
-CREATE TABLE "space_follower" (
-  "space_id" uuid NOT NULL,
-  "user_id" uuid NOT NULL,
-  "is_near_by" bool NOT NULL DEFAULT false,
-  "is_active" bool NOT NULL DEFAULT true,
-  "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
-  "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
-  PRIMARY KEY ("space_id", "user_id")
-);
-
 CREATE TABLE "space_permissioner" (
+  "id" uuid PRIMARY KEY,
   "space_id" uuid NOT NULL,
   "user_id" uuid NOT NULL,
   "inviter_id" uuid,
   "is_active" bool NOT NULL DEFAULT false,
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
-  "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
-  PRIMARY KEY ("space_id", "user_id")
+  "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
 );
 
 CREATE TABLE "topic_follower" (
@@ -215,26 +207,15 @@ CREATE TABLE "topic_follower" (
   PRIMARY KEY ("topic_id", "user_id")
 );
 
-CREATE TABLE "space_event_attendee" (
-  "space_event_id" uuid NOT NULL,
-  "user_id" uuid NOT NULL,
-  "is_confirmed" bool NOT NULL DEFAULT false,
-  "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
-  "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
-  PRIMARY KEY ("space_event_id", "user_id")
-);
-
 COMMENT ON COLUMN "user"."type" IS 'individual, organization, government';
 
 COMMENT ON COLUMN "user"."birth_year" IS 'year of birth';
-
-COMMENT ON COLUMN "space"."consent_condition" IS '{under|over|is}_{percent}_{yes|no}: over_50_yes, under_20_no, is_100_yes, is_0_no, ...';
 
 COMMENT ON COLUMN "space_event"."status" IS 'pending, permission_requested, permission_approved, permission_approved_with_condition, permission_rejected, running, complete';
 
 COMMENT ON COLUMN "space_history"."type" IS 'create, update_details, activate, deactivate, permissioner_opt_in, permissioner_opt_out, permission_request, permission_response';
 
-COMMENT ON COLUMN "permission_request"."status" IS 'pending, assigned, assign_failed, review_required, review_require_failed, issue_raised, review_approved, review_approved_with_condition, resolve_rejected, resolve_accepted, resolve_dropped';
+COMMENT ON COLUMN "permission_request"."status" IS 'pending, assigned, assign_failed, issue_raised, review_approved, review_approved_with_condition, resolve_rejected, resolve_accepted, resolve_dropped';
 
 COMMENT ON COLUMN "permission_response"."status" IS 'pending, approved, approved_with_condition, rejected';
 
@@ -260,11 +241,13 @@ ALTER TABLE "space_event" ADD FOREIGN KEY ("external_service_id") REFERENCES "ex
 
 ALTER TABLE "space_event" ADD FOREIGN KEY ("permission_request_id") REFERENCES "permission_request" ("id");
 
-ALTER TABLE "space_event" ADD FOREIGN KEY ("topic_id") REFERENCES "topic" ("id");
-
 ALTER TABLE "space_event" ADD FOREIGN KEY ("space_id") REFERENCES "space" ("id");
 
+ALTER TABLE "space_event" ADD FOREIGN KEY ("rule_id") REFERENCES "rule" ("id");
+
 ALTER TABLE "rule" ADD FOREIGN KEY ("author_id") REFERENCES "user" ("id");
+
+ALTER TABLE "rule" ADD FOREIGN KEY ("parent_rule_id") REFERENCES "rule" ("id");
 
 ALTER TABLE "rule_block" ADD FOREIGN KEY ("author_id") REFERENCES "user" ("id");
 
@@ -277,8 +260,6 @@ ALTER TABLE "space_history" ADD FOREIGN KEY ("space_event_id") REFERENCES "space
 ALTER TABLE "space_history" ADD FOREIGN KEY ("rule_id") REFERENCES "rule" ("id");
 
 ALTER TABLE "permission_request" ADD FOREIGN KEY ("space_id") REFERENCES "space" ("id");
-
-ALTER TABLE "permission_request" ADD FOREIGN KEY ("user_id") REFERENCES "user" ("id");
 
 ALTER TABLE "permission_request" ADD FOREIGN KEY ("space_event_id") REFERENCES "space_event" ("id");
 
@@ -306,10 +287,6 @@ ALTER TABLE "user_notification" ADD FOREIGN KEY ("user_id") REFERENCES "user" ("
 
 ALTER TABLE "user_notification" ADD FOREIGN KEY ("external_service_id") REFERENCES "external_service" ("id");
 
-ALTER TABLE "space_follower" ADD FOREIGN KEY ("user_id") REFERENCES "user" ("id");
-
-ALTER TABLE "space_follower" ADD FOREIGN KEY ("space_id") REFERENCES "space" ("id");
-
 ALTER TABLE "space_permissioner" ADD FOREIGN KEY ("user_id") REFERENCES "user" ("id");
 
 ALTER TABLE "space_permissioner" ADD FOREIGN KEY ("inviter_id") REFERENCES "user" ("id");
@@ -319,12 +296,6 @@ ALTER TABLE "space_permissioner" ADD FOREIGN KEY ("space_id") REFERENCES "space"
 ALTER TABLE "topic_follower" ADD FOREIGN KEY ("user_id") REFERENCES "user" ("id");
 
 ALTER TABLE "topic_follower" ADD FOREIGN KEY ("topic_id") REFERENCES "topic" ("id");
-
-ALTER TABLE "space_event_attendee" ADD FOREIGN KEY ("user_id") REFERENCES "user" ("id");
-
-ALTER TABLE "space_event_attendee" ADD FOREIGN KEY ("space_event_id") REFERENCES "space_event" ("id");
-
-ALTER TABLE "space_event_image" ADD FOREIGN KEY ("space_event_id") REFERENCES "space_event" ("id");
 
 CREATE TABLE "external_service_user" (
   "external_service_id" uuid,
@@ -379,5 +350,16 @@ CREATE TABLE "rule_rule_block" (
 ALTER TABLE "rule_rule_block" ADD FOREIGN KEY ("rule_id") REFERENCES "rule" ("id");
 
 ALTER TABLE "rule_rule_block" ADD FOREIGN KEY ("rule_block_id") REFERENCES "rule_block" ("id");
+
+
+CREATE TABLE "permission_request_space_permissioner" (
+  "permission_request_id" uuid,
+  "space_permissioner_id" uuid,
+  PRIMARY KEY ("permission_request_id", "space_permissioner_id")
+);
+
+ALTER TABLE "permission_request_space_permissioner" ADD FOREIGN KEY ("permission_request_id") REFERENCES "permission_request" ("id");
+
+ALTER TABLE "permission_request_space_permissioner" ADD FOREIGN KEY ("space_permissioner_id") REFERENCES "space_permissioner" ("id");
 
 
