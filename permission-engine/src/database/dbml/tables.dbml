@@ -29,7 +29,6 @@ Table space {
   longitude varchar [not null]
   is_active bool [not null, default: true]
   rule_id uuid [not null]
-  consent_condition varchar [not null, default: `'under_50_no'`, note: '{under|over|is}_{percent}_{yes|no}: over_50_yes, under_20_no, is_100_yes, is_0_no, ...']
   details text
   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
   updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
@@ -150,13 +149,11 @@ Table permission_request {
   space_event_id uuid [not null]
   space_rule_id uuid [not null]
   space_event_rule_id uuid [not null]
-  permissioner_ids uuid[]
-  status varchar [not null, note: 'pending, assigned, assign_failed, review_required, review_require_failed, issue_raised, review_approved, review_approved_with_condition, resolve_rejected, resolve_accepted, resolve_dropped']
+  status varchar [not null, default: 'pending', note: 'pending, assigned, assign_failed, issue_raised, review_approved, review_approved_with_condition, resolve_rejected, resolve_accepted, resolve_dropped']
   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
   updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
 }
 Ref: permission_request.space_id > space.id
-Ref: permission_request.user_id > user.id
 Ref: permission_request.space_event_id > space_event.id
 Ref: permission_request.space_rule_id > rule.id
 Ref: permission_request.space_event_rule_id > rule.id
@@ -242,16 +239,13 @@ Ref: user_notification.external_service_id > external_service.id
 // Ref: space_follower.space_id > space.id // check if this is right
 
 Table space_permissioner {
+  id uuid [primary key]
   space_id uuid [not null]
   user_id uuid [not null]
   inviter_id uuid
   is_active bool [not null, default: false]
   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
   updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
-
-  indexes {
-    (space_id, user_id) [pk]
-  }
 }
 Ref: space_permissioner.user_id > user.id // check if this is right
 Ref: space_permissioner.inviter_id > user.id // check if this is right
@@ -296,3 +290,5 @@ Ref space_event_topic: space_event.id <> topic.id [delete: cascade, update: no a
 Ref rule_topic: rule.id <> topic.id [delete: cascade, update: no action]
 
 Ref rule_rule_block: rule.id <> rule_block.id [delete: cascade, update: no action]
+
+Ref permission_request_space_permissioner: permission_request.id <> space_permissioner.id [delete: cascade, update: no action]
