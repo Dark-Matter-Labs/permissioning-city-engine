@@ -1,7 +1,7 @@
 // src/app.controller.ts
 import { Controller, Post, Body } from '@nestjs/common';
 import { EmailSenderService } from './lib/email-sender/email-sender.service';
-import { EmailSendJobData } from './type';
+import { EmailSendJobData } from './lib/type';
 import { Logger } from './lib/logger/logger.service';
 
 @Controller()
