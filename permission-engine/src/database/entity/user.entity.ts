@@ -10,6 +10,7 @@ import { UserNotification } from './user-notification.entity';
 import { SpaceEvent } from './space-event.entity';
 import { ExternalService } from './external-service.entity';
 import { RuleBlock } from './rule-block.entity';
+import { Rule } from './rule.entity';
 
 @Entity()
 export class User {
@@ -74,6 +75,9 @@ export class User {
 
   @OneToMany(() => ExternalService, (externalService) => externalService.owner)
   externalServices: ExternalService[];
+
+  @OneToMany(() => Rule, (rule) => rule.author)
+  rules: Rule[];
 
   @OneToMany(() => RuleBlock, (ruleBlock) => ruleBlock.author)
   ruleBlocks: RuleBlock[];

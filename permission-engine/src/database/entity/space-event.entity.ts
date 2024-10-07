@@ -8,10 +8,15 @@ import {
   ManyToMany,
   JoinTable,
   CreateDateColumn,
+  OneToMany,
 } from 'typeorm';
 import { User } from './user.entity';
 import { Space } from './space.entity';
 import { Topic } from './topic.entity';
+import { Matches } from 'class-validator';
+import { SpaceEventStatus } from 'src/lib/type';
+import { Rule } from './rule.entity';
+import { PermissionRequest } from './permission-request.entity';
 
 @Entity()
 export class SpaceEvent {
@@ -38,12 +43,17 @@ export class SpaceEvent {
   @Column()
   spaceId: string;
 
+  @ManyToOne(() => Rule, (rule) => rule.spaces)
+  @JoinColumn()
+  rule: Rule;
+
+  @Column()
+  @ApiProperty({ description: 'SpaceEvent ruleId in uuid' })
+  ruleId: string;
+
   @ManyToMany(() => Topic, (topic) => topic.spaceEvents)
   @JoinTable()
   topics: Topic;
-
-  @Column()
-  topicId: string;
 
   @Column()
   permissionRequestId: string;
@@ -52,13 +62,11 @@ export class SpaceEvent {
   externalServiceId: string;
 
   @Column()
-  status:
-    | 'pending'
-    | 'permission_requested'
-    | 'permission_approved'
-    | 'permission_rejected'
-    | 'running'
-    | 'complete';
+  @ApiProperty({
+    description:
+      'SpaceEvent status: pending|permission_requested|permission_approved|permission_rejected|running|closed|complete',
+  })
+  status: SpaceEventStatus;
 
   @Column()
   details: string;
@@ -70,10 +78,21 @@ export class SpaceEvent {
   link: string;
 
   @Column()
+  @ApiProperty({
+    description: 'SpaceEvent duration in {number}{d|w|M|y|h|m|s} format',
+  })
+  @Matches(/^\d+[dwMyhms]$/, {
+    message: 'SpaceEvent duration must in format: {number}{d|w|M|y|h|m|s}',
+  })
   duration: string;
 
   @Column()
-  startAt: Date;
+  @ApiProperty({ description: 'SpaceEvent start timestamp' })
+  startsAt: Date;
+
+  @Column()
+  @ApiProperty({ description: 'SpaceEvent end timestamp' })
+  endsAt: Date;
 
   @CreateDateColumn()
   @ApiProperty({ description: 'Created timestamp' })
@@ -82,4 +101,10 @@ export class SpaceEvent {
   @Column()
   @ApiProperty({ description: 'Updated timestamp' })
   updatedAt: Date;
+
+  @OneToMany(
+    () => PermissionRequest,
+    (permissionRequest) => permissionRequest.space,
+  )
+  permissionRequests: PermissionRequest[];
 }

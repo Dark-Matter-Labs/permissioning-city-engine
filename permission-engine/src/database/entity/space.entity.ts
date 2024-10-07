@@ -6,9 +6,14 @@ import {
   OneToMany,
   ManyToMany,
   CreateDateColumn,
+  JoinColumn,
+  ManyToOne,
 } from 'typeorm';
 import { SpaceEvent } from './space-event.entity';
 import { Topic } from './topic.entity';
+import { User } from './user.entity';
+import { Rule } from './rule.entity';
+import { PermissionRequest } from './permission-request.entity';
 
 @Entity()
 export class Space {
@@ -19,6 +24,10 @@ export class Space {
   @Column()
   @ApiProperty({ description: 'Space name' })
   name: string;
+
+  @ManyToOne(() => User, (user) => user.externalServices)
+  @JoinColumn()
+  owner: User;
 
   @Column()
   @ApiProperty({ description: 'Space owner userId in uuid' })
@@ -60,15 +69,19 @@ export class Space {
   @ApiProperty({ description: 'Is space active' })
   isActive: boolean;
 
+  @ManyToOne(() => Rule, (rule) => rule.spaces)
+  @JoinColumn()
+  rule: Rule;
+
   @Column()
   @ApiProperty({ description: 'Space rule ruleId in uuid' })
   ruleId: string;
 
-  @Column()
-  @ApiProperty({
-    description: 'Space consent condition: {under|over|is}_{percent}_{yes|no}',
-  })
-  consentCondition: string;
+  // @Column()
+  // @ApiProperty({
+  //   description: 'Space consent condition: {under|over|is}_{percent}_{yes|no}',
+  // })
+  // consentCondition: string;
 
   @Column()
   @ApiProperty({ description: 'Space description' })
@@ -84,6 +97,12 @@ export class Space {
 
   @OneToMany(() => SpaceEvent, (spaceEvent) => spaceEvent.organizer)
   spaceEvents: SpaceEvent[];
+
+  @OneToMany(
+    () => PermissionRequest,
+    (permissionRequest) => permissionRequest.space,
+  )
+  permissionRequests: PermissionRequest[];
 
   @ManyToMany(() => Topic, (topic) => topic.spaces)
   topics: Topic[];

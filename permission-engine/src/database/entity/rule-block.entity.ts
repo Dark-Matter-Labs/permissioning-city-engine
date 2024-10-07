@@ -6,17 +6,12 @@ import {
   JoinColumn,
   ManyToOne,
   CreateDateColumn,
+  JoinTable,
+  ManyToMany,
 } from 'typeorm';
 import { User } from './user.entity';
-
-export enum RuleBlockType {
-  // space
-  spaceGeneral = 'space_general',
-  spaceConsentMethod = 'space_consent_method',
-  spacePostEventCheck = 'space_post_event_check',
-  // spaceEvent
-  spaceEventGeneral = 'space_event_general',
-}
+import { Rule } from './rule.entity';
+import { RuleBlockType } from 'src/lib/type';
 
 @Entity()
 export class RuleBlock {
@@ -55,4 +50,8 @@ export class RuleBlock {
   @Column()
   @ApiProperty({ description: 'Updated timestamp' })
   updatedAt: Date;
+
+  @ManyToMany(() => Rule, (rule) => rule.ruleBlocks)
+  @JoinTable()
+  rules: Rule;
 }

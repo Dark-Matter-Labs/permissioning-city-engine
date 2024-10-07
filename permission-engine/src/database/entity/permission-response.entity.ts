@@ -6,9 +6,12 @@ import {
   OneToMany,
   ManyToMany,
   CreateDateColumn,
+  JoinColumn,
+  ManyToOne,
 } from 'typeorm';
 import { SpaceEvent } from './space-event.entity';
 import { Topic } from './topic.entity';
+import { User } from './user.entity';
 
 @Entity()
 export class Space {
@@ -19,6 +22,10 @@ export class Space {
   @Column()
   @ApiProperty({ description: 'Space name' })
   name: string;
+
+  @ManyToOne(() => User, (user) => user.externalServices)
+  @JoinColumn()
+  owner: User;
 
   @Column()
   @ApiProperty({ description: 'Space owner userId in uuid' })
