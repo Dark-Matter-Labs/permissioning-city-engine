@@ -3,7 +3,7 @@ Table user {
   id uuid [primary key]
   name varchar
   email varchar [unique, not null]
-  type varchar [note: 'individual, organization, government']
+  type varchar [default: 'individual', note: 'individual, organization, government']
   is_active bool [not null, default: true]
   birth_year integer [note: 'year of birth']
   country varchar
@@ -73,7 +73,7 @@ Table space_event {
   id uuid [primary key]
   organizer_id uuid [not null]
   space_id uuid
-  topic_id uuid
+  rule_id uuid [not null]
   permission_request_id uuid
   external_service_id uuid
   name varchar [not null]
@@ -82,15 +82,15 @@ Table space_event {
   is_active bool [not null, default: true]
   link text [not null]
   duration varchar [not null]
-  start_at timestamptz [not null]
+  starts_at timestamptz [not null]
   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
   updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
 }
 Ref: space_event.organizer_id > user.id
 Ref: space_event.external_service_id > external_service.id
 Ref: space_event.permission_request_id > permission_request.id
-Ref: space_event.topic_id > topic.id
 Ref: space_event.space_id > space.id
+Ref: space_event.rule_id > rule.id
 
 Table space_event_image {
   id uuid [primary key]
@@ -112,6 +112,7 @@ Table rule {
   updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
 }
 Ref: rule.author_id > user.id
+Ref: rule.parent_rule_id > rule.id
 
 Table rule_block {
   id uuid [primary key]
@@ -149,7 +150,6 @@ Table permission_request {
   space_event_id uuid [not null]
   space_rule_id uuid [not null]
   space_event_rule_id uuid [not null]
-  user_id uuid
   permissioner_ids uuid[]
   status varchar [not null, note: 'pending, assigned, assign_failed, review_required, review_require_failed, issue_raised, review_approved, review_approved_with_condition, resolve_rejected, resolve_accepted, resolve_dropped']
   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
