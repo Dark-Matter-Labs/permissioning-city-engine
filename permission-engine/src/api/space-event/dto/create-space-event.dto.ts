@@ -15,25 +15,25 @@ export class CreateSpaceEventDto {
   @ApiProperty({ description: 'SpaceEvent name', required: true })
   name: string;
 
-  @IsUUID()
+  @IsUUID('4')
   @ApiProperty({
     description: 'SpaceEvent organizerId in uuid',
     required: true,
   })
   organizerId: string;
 
-  @IsUUID()
+  @IsUUID('4')
   @ApiProperty({ description: 'SpaceEvent spaceId in uuid', nullable: true })
   spaceId?: string;
 
-  @IsUUID()
+  @IsUUID('4')
   @ApiProperty({
     description: 'SpaceEvent permissionRequestId in uuid',
     nullable: true,
   })
   permissionRequestId?: string;
 
-  @IsUUID()
+  @IsUUID('4')
   @ApiProperty({
     description: 'SpaceEvent externalServiceId in uuid',
     nullable: true,

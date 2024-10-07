@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  Delete,
   ForbiddenException,
   Get,
   Param,
@@ -16,7 +15,7 @@ import { SpaceEventService } from './space-event.service';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { UserService } from '../user/user.service';
-import { SpaceEventStatus } from 'src/type';
+import { SpaceEventStatus } from 'src/lib/type';
 
 @ApiTags('event')
 @Controller('api/v1/event')
@@ -88,28 +87,5 @@ export class SpaceEventController {
     }
 
     return this.spaceEventService.update(id, updateSpaceEventDto);
-  }
-
-  @Delete(':id')
-  @ApiOperation({ summary: 'Delete a SpaceEvent' })
-  @UseGuards(JwtAuthGuard)
-  async remove(
-    @Req() req,
-    @Param('id') id: string,
-  ): Promise<{ result: string; error?: any }> {
-    const user = await this.userService.findByEmail(req.user.email);
-    const spaceEvent = await this.spaceEventService.findOneById(id);
-    if (spaceEvent.organizerId !== user.id) {
-      throw new ForbiddenException();
-    }
-
-    return this.spaceEventService
-      .remove(id)
-      .then(() => {
-        return { result: 'success' };
-      })
-      .catch((error) => {
-        return { result: 'fail', error };
-      });
   }
 }

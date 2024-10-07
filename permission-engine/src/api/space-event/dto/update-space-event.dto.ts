@@ -7,14 +7,14 @@ export class UpdateSpaceEventDto {
   @ApiProperty({ description: 'SpaceEvent name', required: true })
   name?: string;
 
-  @IsUUID()
+  @IsUUID('4')
   @ApiProperty({
     description: 'SpaceEvent permissionRequestId in uuid',
     nullable: true,
   })
   permissionRequestId?: string;
 
-  @IsUUID()
+  @IsUUID('4')
   @ApiProperty({
     description: 'SpaceEvent externalServiceId in uuid',
     nullable: true,

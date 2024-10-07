@@ -3,7 +3,7 @@ import { CreateSpaceEventDto, UpdateSpaceEventDto } from './dto';
 import { SpaceEvent } from 'src/database/entity/space-event.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, UpdateResult } from 'typeorm';
-import { SpaceEventStatus } from 'src/type';
+import { SpaceEventStatus } from 'src/lib/type';
 import dayjs, { ManipulateType } from 'dayjs';
 
 @Injectable()
