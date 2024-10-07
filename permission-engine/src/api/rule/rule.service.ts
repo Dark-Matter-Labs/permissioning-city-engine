@@ -12,6 +12,7 @@ export class RuleService {
   constructor(
     @InjectRepository(Rule)
     private ruleRepository: Repository<Rule>,
+    @InjectRepository(RuleBlock)
     private ruleBlockRepository: Repository<RuleBlock>,
   ) {}
 
