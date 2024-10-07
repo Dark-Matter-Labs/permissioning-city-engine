@@ -97,7 +97,7 @@ export class AuthController {
 
   @Get('profile')
   @ApiOperation({ summary: 'Get user google profile' })
-  @UseGuards(JwtAuthGuard) // Protect this route with JWT Auth Guard
+  @UseGuards(JwtAuthGuard)
   async getProfile(@Req() req) {
     // Access user information from the validated token
     return req.user;
@@ -105,7 +105,7 @@ export class AuthController {
 
   @Post('logout')
   @ApiOperation({ summary: 'User logout by clearing JWT tokens' })
-  @UseGuards(JwtAuthGuard) // Protect logout route with JWT Auth Guard
+  @UseGuards(JwtAuthGuard)
   async logout(@Res() res: Response) {
     // Clear the access and refresh tokens from cookies
     res.clearCookie('accessToken');
