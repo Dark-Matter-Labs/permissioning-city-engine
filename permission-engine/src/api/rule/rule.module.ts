@@ -9,10 +9,11 @@ import { UserService } from '../user/user.service';
 import { RuleBlockService } from './rule-block/rule-block.service';
 import { RuleBlock } from 'src/database/entity/rule-block.entity';
 import { RuleBlockController } from './rule-block/rule-block.controller';
+import { Logger } from 'src/lib/logger/logger.service';
 
 @Module({
   imports: [ConfigModule, TypeOrmModule.forFeature([Rule, User, RuleBlock])],
   controllers: [RuleController, RuleBlockController],
-  providers: [RuleService, UserService, RuleBlockService],
+  providers: [RuleService, UserService, RuleBlockService, Logger],
 })
 export class RuleModule {}

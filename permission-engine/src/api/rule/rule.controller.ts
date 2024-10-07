@@ -14,16 +14,12 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateRuleDto } from './dto/create-rule.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { ForkRuleDto } from './dto';
-import { UserService } from '../user/user.service';
 import { RuleTarget } from 'src/lib/type';
 
 @ApiTags('rule')
 @Controller('api/v1/rule')
 export class RuleController {
-  constructor(
-    private readonly ruleService: RuleService,
-    private readonly userService: UserService,
-  ) {}
+  constructor(private readonly ruleService: RuleService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get all rules' })
