@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, UpdateResult } from 'typeorm';
 import { Space } from '../../database/entity/space.entity';
+import { CreateSpaceDto, UpdateSpaceDto } from './dto';
 
 @Injectable()
 export class SpaceService {
@@ -10,6 +11,7 @@ export class SpaceService {
     private spaceRepository: Repository<Space>,
   ) {}
 
+  // TODO. implement dynamic search in the future
   findAll(): Promise<Space[]> {
     return this.spaceRepository.find();
   }
@@ -26,8 +28,12 @@ export class SpaceService {
     await this.spaceRepository.delete(id);
   }
 
-  create(spaceData: Partial<Space>): Promise<Space> {
-    const space = this.spaceRepository.create(spaceData);
+  create(createSpaceDto: CreateSpaceDto): Promise<Space> {
+    const space = this.spaceRepository.create(createSpaceDto);
     return this.spaceRepository.save(space);
+  }
+
+  update(id: string, updateSpaceDto: UpdateSpaceDto): Promise<UpdateResult> {
+    return this.spaceRepository.update(id, updateSpaceDto);
   }
 }

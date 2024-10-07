@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
 import { SpaceService } from './space.service';
 import { Space } from '../../database/entity/space.entity';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateSpaceDto } from './dto/create-space.dto';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 @ApiTags('space')
 @Controller('api/v1/space')
@@ -21,21 +22,10 @@ export class SpaceController {
     return this.spaceService.findOneById(id);
   }
 
-  @Get('name/:name')
-  @ApiOperation({ summary: 'Get space by name' })
-  findByName(@Param('id') id: string): Promise<Space> {
-    return this.spaceService.findOneByName(id);
-  }
-
   @Post()
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Create a space' })
   create(@Body() createSpaceDto: CreateSpaceDto): Promise<Space> {
     return this.spaceService.create(createSpaceDto);
-  }
-
-  @Delete(':id')
-  @ApiOperation({ summary: 'Delete a space' })
-  remove(@Param('id') id: string): Promise<void> {
-    return this.spaceService.remove(id);
   }
 }

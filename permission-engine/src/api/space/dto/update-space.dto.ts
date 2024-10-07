@@ -7,13 +7,7 @@ import {
   MaxLength,
 } from 'class-validator';
 
-export enum SpaceType {
-  individual = 'individual',
-  organization = 'organization',
-  government = 'government',
-}
-
-export class CreateSpaceDto {
+export class UpdateSpaceDto {
   @IsNotEmpty()
   @IsString()
   @MaxLength(100)
