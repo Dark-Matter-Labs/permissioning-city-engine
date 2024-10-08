@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, UpdateResult } from 'typeorm';
 import { User } from '../../database/entity/user.entity';
@@ -52,10 +52,6 @@ export class UserService {
     updateUserDto: UpdateUserDto,
   ): Promise<UpdateResult> {
     const user = await this.findByEmail(email);
-
-    if (user.id !== updateUserDto.id) {
-      throw new ForbiddenException();
-    }
 
     return this.userRepository.update(user.id, {
       updatedAt: new Date(),

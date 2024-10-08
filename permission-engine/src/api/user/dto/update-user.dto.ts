@@ -1,56 +1,45 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsEmail,
-  IsEnum,
-  IsNotEmpty,
-  IsUUID,
-  Matches,
-  MaxLength,
-  Min,
-} from 'class-validator';
+import { IsEmail, IsEnum, IsOptional, MaxLength, Min } from 'class-validator';
 import { UserType } from '../type';
 
 export class UpdateUserDto {
-  @IsUUID()
-  @ApiProperty({ description: 'User id in uuid', required: true })
-  id: string;
-
-  @IsNotEmpty()
+  @IsOptional()
   @MaxLength(100)
   @ApiProperty({ description: 'User name in string' })
   name?: string;
 
+  @IsOptional()
   @IsEmail()
-  @IsNotEmpty()
   @ApiProperty({ description: 'User email' })
   email?: string;
 
+  @IsOptional()
   @IsEnum(UserType)
-  @ApiProperty({ description: 'User type', default: 'individual' })
-  type?: 'individual' | 'organization' | 'government';
+  @ApiProperty({ description: 'User type', default: UserType.individual })
+  type?: UserType;
 
-  @Matches(/^\d{4}$/, { message: 'The number must be a 4-digit number.' })
+  // @Matches(/^\d{4}$/, { message: 'The number must be a 4-digit number.' })
+  @IsOptional()
   @Min(1900)
-  @IsNotEmpty()
   @ApiProperty({ description: 'Year of birth in 4 digits' })
   birthYear?: number;
 
-  @IsNotEmpty()
+  @IsOptional()
   @MaxLength(100)
   @ApiProperty({ description: 'Country' })
   country?: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @MaxLength(100)
   @ApiProperty({ description: 'State|Region' })
   region?: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @MaxLength(100)
   @ApiProperty({ description: 'City' })
   city?: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @MaxLength(100)
   @ApiProperty({ description: 'District' })
   district?: string;

@@ -37,7 +37,7 @@ export class User {
   type: 'individual' | 'organization' | 'government';
 
   @Column()
-  @ApiProperty({ description: 'Yser of birth in 4 digits' })
+  @ApiProperty({ description: 'Year of birth in 4 digits' })
   birthYear: number;
 
   @Column()
