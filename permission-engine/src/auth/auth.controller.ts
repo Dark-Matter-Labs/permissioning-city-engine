@@ -106,10 +106,16 @@ export class AuthController {
   @Post('logout')
   @ApiOperation({ summary: 'User logout by clearing JWT tokens' })
   @UseGuards(JwtAuthGuard)
-  async logout(@Res() res: Response) {
-    // Clear the access and refresh tokens from cookies
+  async logout(@Req() req, @Res() res: Response) {
+    // Clear the access and refresh tokens from cookies and redis
     res.clearCookie('accessToken');
-    res.clearCookie('refreshToken');
+    const refreshToken = req.cookies['refreshToken'];
+
+    if (refreshToken) {
+      await this.authService.revokeRefreshToken(refreshToken);
+      res.clearCookie('refreshToken');
+    }
+
     return res.json({ message: 'Logout successful' });
   }
 }
