@@ -27,7 +27,7 @@ services:
     container_name: certbot
     env_file:
       - .env
-    command: certonly --webroot --webroot-path=/var/www/certbot --email $EMAIL_CERTIFICATOR --agree-tos --no-eff-email -d engine.permissioning.city
+    command: certbot certonly --webroot --webroot-path=/var/www/certbot --email $EMAIL_CERTIFICATOR --agree-tos --no-eff-email -d engine.permissioning.city
     volumes:
       - ./letsencrypt:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
