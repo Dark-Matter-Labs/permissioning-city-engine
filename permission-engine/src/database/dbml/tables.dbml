@@ -146,9 +146,9 @@ Ref: space_history.rule_id > rule.id
 Table permission_request {
   id uuid [primary key]
   space_id uuid [not null]
-  space_event_id uuid [not null]
+  space_event_id uuid [note: 'when space_event_id is null, the permission_request is for the space rule revision']
   space_rule_id uuid [not null]
-  space_event_rule_id uuid [not null]
+  space_event_rule_id uuid [note: 'when space_event_rule_id is null, the permission_request is for the space rule revision']
   status varchar [not null, default: 'pending', note: 'pending, assigned, assign_failed, issue_raised, review_approved, review_approved_with_condition, resolve_rejected, resolve_accepted, resolve_dropped']
   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
   updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
