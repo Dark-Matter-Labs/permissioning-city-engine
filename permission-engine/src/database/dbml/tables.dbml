@@ -104,7 +104,7 @@ Table rule {
   name varchar [not null]
   hash varchar [not null]
   author_id uuid [not null]
-  type varchar [not null]
+  target varchar [not null]
   parent_rule_id uuid
   is_active bool [not null, default: true]
   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
