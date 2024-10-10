@@ -14,6 +14,7 @@ import { Topic } from './topic.entity';
 import { User } from './user.entity';
 import { Rule } from './rule.entity';
 import { PermissionRequest } from './permission-request.entity';
+import { SpacePermissioner } from './space-permissioner.entity';
 
 @Entity()
 export class Space {
@@ -77,12 +78,6 @@ export class Space {
   @ApiProperty({ description: 'Space rule ruleId in uuid' })
   ruleId: string;
 
-  // @Column()
-  // @ApiProperty({
-  //   description: 'Space consent condition: {under|over|is}_{percent}_{yes|no}',
-  // })
-  // consentCondition: string;
-
   @Column()
   @ApiProperty({ description: 'Space description' })
   details: string;
@@ -103,6 +98,12 @@ export class Space {
     (permissionRequest) => permissionRequest.space,
   )
   permissionRequests: PermissionRequest[];
+
+  @OneToMany(
+    () => SpacePermissioner,
+    (SpacePermissioner) => SpacePermissioner.space,
+  )
+  spacePermissioners: SpacePermissioner[];
 
   @ManyToMany(() => Topic, (topic) => topic.spaces)
   topics: Topic[];

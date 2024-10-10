@@ -8,6 +8,11 @@ import {
 } from 'typeorm';
 import { User } from './user.entity';
 import { ApiProperty } from '@nestjs/swagger';
+import {
+  UserNotificationStatus,
+  UserNotificationTarget,
+  UserNotificationType,
+} from 'src/lib/type';
 
 @Entity()
 export class UserNotification {
@@ -23,20 +28,13 @@ export class UserNotification {
   userId: string;
 
   @Column()
-  userType:
-    | 'space_owner'
-    | 'event_orgnaizer'
-    | 'event_attendee'
-    | 'permissioner'
-    | 'topic_follower'
-    | 'space_follower'
-    | 'rule_author';
+  target: UserNotificationTarget;
 
   @Column()
-  type: 'internal' | 'external';
+  type: UserNotificationType;
 
   @Column()
-  status: 'pending' | 'complete' | 'failed';
+  status: UserNotificationStatus;
 
   @Column()
   externalServiceId: string;

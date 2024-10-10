@@ -3,12 +3,12 @@ import {
   Entity,
   Column,
   PrimaryGeneratedColumn,
-  OneToMany,
-  ManyToMany,
   CreateDateColumn,
+  JoinColumn,
+  ManyToOne,
 } from 'typeorm';
-import { SpaceEvent } from './space-event.entity';
-import { Topic } from './topic.entity';
+import { Space } from './space.entity';
+import { User } from './user.entity';
 
 @Entity()
 export class SpacePermissioner {
@@ -16,63 +16,32 @@ export class SpacePermissioner {
   @ApiProperty({ description: 'uuid' })
   id: string;
 
-  @Column()
-  @ApiProperty({ description: 'Space name' })
-  name: string;
+  @ManyToOne(() => Space, (space) => space.spacePermissioners)
+  @JoinColumn()
+  space: Space;
 
   @Column()
-  @ApiProperty({ description: 'Space owner userId in uuid' })
-  ownerId: string;
+  @ApiProperty({ description: 'SpacePermissioner spaceId in uuid' })
+  spaceId: string;
+
+  @ManyToOne(() => User, (user) => user.spacePermissioners)
+  @JoinColumn()
+  user: User;
 
   @Column()
-  @ApiProperty({ description: 'Space zipcode' })
-  zipcode: number;
+  @ApiProperty({ description: 'SpacePermissioner userId in uuid' })
+  userId: string;
+
+  @ManyToOne(() => User, (user) => user.spacePermissionerInviters)
+  @JoinColumn()
+  inviter: User;
 
   @Column()
-  @ApiProperty({ description: 'Country' })
-  country: string;
+  @ApiProperty({ description: 'SpacePermissioner inviterId in uuid' })
+  inviterId: string;
 
-  @Column()
-  @ApiProperty({ description: 'State|Region' })
-  region: string;
-
-  @Column()
-  @ApiProperty({ description: 'City' })
-  city: string;
-
-  @Column()
-  @ApiProperty({ description: 'District' })
-  district: string;
-
-  @Column()
-  @ApiProperty({ description: 'Address' })
-  address: string;
-
-  @Column()
-  @ApiProperty({ description: 'Latitude in string' })
-  latitude: string;
-
-  @Column()
-  @ApiProperty({ description: 'Longitude in string' })
-  longitude: string;
-
-  @Column({ default: true })
-  @ApiProperty({ description: 'Is space active' })
+  @Column({ default: false })
   isActive: boolean;
-
-  @Column()
-  @ApiProperty({ description: 'Space rule ruleId in uuid' })
-  ruleId: string;
-
-  @Column()
-  @ApiProperty({
-    description: 'Space consent condition: {under|over|is}_{percent}_{yes|no}',
-  })
-  consentCondition: string;
-
-  @Column()
-  @ApiProperty({ description: 'Space description' })
-  details: string;
 
   @CreateDateColumn()
   @ApiProperty({ description: 'Created timestamp' })
@@ -81,10 +50,4 @@ export class SpacePermissioner {
   @Column()
   @ApiProperty({ description: 'Updated timestamp' })
   updatedAt: Date;
-
-  @OneToMany(() => SpaceEvent, (spaceEvent) => spaceEvent.organizer)
-  spaceEvents: SpaceEvent[];
-
-  @ManyToMany(() => Topic, (topic) => topic.spaces)
-  topics: Topic[];
 }

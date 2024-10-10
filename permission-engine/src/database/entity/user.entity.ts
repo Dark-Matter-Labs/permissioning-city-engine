@@ -11,6 +11,7 @@ import { SpaceEvent } from './space-event.entity';
 import { ExternalService } from './external-service.entity';
 import { RuleBlock } from './rule-block.entity';
 import { Rule } from './rule.entity';
+import { SpacePermissioner } from './space-permissioner.entity';
 
 @Entity()
 export class User {
@@ -81,4 +82,16 @@ export class User {
 
   @OneToMany(() => RuleBlock, (ruleBlock) => ruleBlock.author)
   ruleBlocks: RuleBlock[];
+
+  @OneToMany(
+    () => SpacePermissioner,
+    (spacePermissioner) => spacePermissioner.user,
+  )
+  spacePermissioners: SpacePermissioner[];
+
+  @OneToMany(
+    () => SpacePermissioner,
+    (spacePermissioner) => spacePermissioner.inviter,
+  )
+  spacePermissionerInviters: SpacePermissioner[];
 }
