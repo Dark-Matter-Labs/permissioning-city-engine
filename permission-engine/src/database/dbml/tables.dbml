@@ -208,7 +208,7 @@ Ref: rule_history.permission_request_id > permission_request.id
 Table user_notification {
   id uuid [primary key]
   user_id uuid [not null]
-  user_type varchar [not null, note: 'space_owner, space_event_orgnaizer, space_event_attendee, permissioner, topic_follower, space_follower, rule_creator']
+  target varchar [not null, note: 'space_owner, space_event_orgnaizer, space_event_attendee, permissioner, topic_follower, space_follower, rule_creator']
   type varchar [not null, note: 'internal, external']
   status varchar [not null, default: 'pending', note: 'pending, complete, failed']
   external_service_id uuid
