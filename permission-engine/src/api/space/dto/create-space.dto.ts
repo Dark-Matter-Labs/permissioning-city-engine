@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, IsUUID, MaxLength } from 'class-validator';
 
 export class CreateSpaceDto {
@@ -9,7 +9,7 @@ export class CreateSpaceDto {
   name: string;
 
   @IsString()
-  @ApiProperty({ description: 'Space zipcode' })
+  @ApiPropertyOptional({ description: 'Space zipcode' })
   zipcode: string;
 
   @IsNotEmpty()
