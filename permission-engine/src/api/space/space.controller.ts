@@ -17,6 +17,8 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { UpdateSpaceDto } from './dto';
 import { UpdateResult } from 'typeorm';
 import { UserService } from '../user/user.service';
+import { SpacePermissioner } from 'src/database/entity/space-permissioner.entity';
+import { SpacePermissionerService } from '../space-permissioner/space-permissioner.service';
 
 @ApiTags('space')
 @Controller('api/v1/space')
@@ -24,6 +26,7 @@ export class SpaceController {
   constructor(
     private readonly spaceService: SpaceService,
     private readonly userService: UserService,
+    private readonly spacePermissionerService: SpacePermissionerService,
   ) {}
 
   @Get()
@@ -41,8 +44,21 @@ export class SpaceController {
   @Post()
   @ApiOperation({ summary: 'Create a space' })
   @UseGuards(JwtAuthGuard)
-  create(@Body() createSpaceDto: CreateSpaceDto): Promise<Space> {
-    return this.spaceService.create(createSpaceDto);
+  async create(
+    @Req() req,
+    @Body() createSpaceDto: CreateSpaceDto,
+  ): Promise<{ space: Space; spacePermissioner: SpacePermissioner }> {
+    const user = await this.userService.findOneByEmail(req.user.email);
+    const space = await this.spaceService.create(user.id, createSpaceDto);
+    const spacePermissioner = await this.spacePermissionerService.create(
+      {
+        spaceId: space.id,
+        userId: user.id,
+      },
+      true,
+    );
+
+    return { space, spacePermissioner };
   }
 
   @Put(':id')

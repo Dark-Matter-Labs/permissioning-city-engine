@@ -1,10 +1,15 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, UpdateResult } from 'typeorm';
+import { Not, Repository, UpdateResult } from 'typeorm';
 import { Space } from '../../database/entity/space.entity';
 import { CreateSpaceDto, UpdateSpaceDto } from './dto';
 import { User } from 'src/database/entity/user.entity';
 import { Rule } from 'src/database/entity/rule.entity';
+import { SpacePermissioner } from 'src/database/entity/space-permissioner.entity';
 
 @Injectable()
 export class SpaceService {
@@ -15,6 +20,8 @@ export class SpaceService {
     private userRepository: Repository<User>,
     @InjectRepository(Rule)
     private ruleRepository: Repository<Rule>,
+    @InjectRepository(SpacePermissioner)
+    private spacePermissionerRepository: Repository<SpacePermissioner>,
   ) {}
 
   // TODO. implement dynamic search in the future
@@ -38,8 +45,12 @@ export class SpaceService {
     await this.spaceRepository.delete(id);
   }
 
-  create(createSpaceDto: CreateSpaceDto): Promise<Space> {
-    const space = this.spaceRepository.create(createSpaceDto);
+  create(ownerId: string, createSpaceDto: CreateSpaceDto): Promise<Space> {
+    const space = this.spaceRepository.create({
+      ...createSpaceDto,
+      ownerId,
+    });
+
     return this.spaceRepository.save(space);
   }
 
