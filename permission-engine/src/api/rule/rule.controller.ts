@@ -57,8 +57,13 @@ export class RuleController {
   @Post()
   @ApiOperation({ summary: 'Create a rule' })
   @UseGuards(JwtAuthGuard)
-  create(@Body() createRuleDto: CreateRuleDto): Promise<Rule> {
-    return this.ruleService.create(createRuleDto);
+  async create(
+    @Req() req,
+    @Body() createRuleDto: CreateRuleDto,
+  ): Promise<Rule> {
+    const user = await this.userService.findOneByEmail(req.user.email);
+
+    return this.ruleService.create(user.id, createRuleDto);
   }
 
   @Post('fork')

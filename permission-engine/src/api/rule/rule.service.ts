@@ -33,16 +33,8 @@ export class RuleService {
   async findAll(
     findAllRuleDto: FindAllRuleDto,
   ): Promise<{ data: Rule[]; total: number }> {
-    const { target, authorId, parentRuleId, hash } = findAllRuleDto;
-    let { page, limit } = findAllRuleDto;
-
-    if (!page) {
-      page = 1;
-    }
-
-    if (!limit) {
-      limit = 10;
-    }
+    const { page, limit, target, authorId, parentRuleId, hash } =
+      findAllRuleDto;
 
     const where: FindOptionsWhere<Rule> = { isActive: true };
 
@@ -86,7 +78,7 @@ export class RuleService {
     await this.ruleRepository.delete(id);
   }
 
-  async create(createRuleDto: CreateRuleDto): Promise<Rule> {
+  async create(authorId: string, createRuleDto: CreateRuleDto): Promise<Rule> {
     const { target, ruleBlockIds } = createRuleDto;
     const ruleBlocks = await this.ruleBlockRepository.find({
       where: { id: In(ruleBlockIds) },
@@ -100,7 +92,7 @@ export class RuleService {
 
     if (target === RuleTarget.space) {
       if (ruleBlocks.find((item) => item.type.startsWith('space_event'))) {
-        throw new BadRequestException();
+        throw new BadRequestException('Target mismatch');
       }
 
       const spaceConsentMethodBlocks = ruleBlocks.filter(
@@ -108,11 +100,13 @@ export class RuleService {
       );
 
       if (spaceConsentMethodBlocks.length > 1) {
-        throw new BadRequestException();
+        throw new BadRequestException(
+          'There can be only one RuleBlock with space:consent_method type.',
+        );
       }
     } else if (target === RuleTarget.spaceEvent) {
       if (ruleBlocks.find((item) => item.type.startsWith('space'))) {
-        throw new BadRequestException();
+        throw new BadRequestException('Target mismatch');
       }
     } else {
       throw new BadRequestException();
@@ -120,6 +114,7 @@ export class RuleService {
 
     const rule = this.ruleRepository.create({
       ...createRuleDto,
+      authorId,
       ruleBlocks,
       hash,
     });
