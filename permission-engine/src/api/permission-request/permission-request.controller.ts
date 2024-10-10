@@ -12,7 +12,7 @@ import { CreatePermissionRequestDto } from './dto';
 import { PermissionRequestService } from './permission-request.service';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-import { PermissionRequestStatus } from 'src/lib/type';
+import { FindAllPermissionRequestDto } from './dto';
 
 @ApiTags('permission')
 @Controller('api/v1/permission/request')
@@ -23,31 +23,28 @@ export class PermissionRequestController {
 
   @Get()
   @ApiOperation({ summary: 'Get all PermissionRequests' })
-  findAll(
-    @Query('page') page: number | null,
-    @Query('limit') limit: number | null,
-    @Query('spaceId') spaceId: string | null,
-    @Query('spaceEventId') spaceEventId: string | null,
-    @Query('ruleId') ruleId: string | null,
-    @Query('statuses') statuses: PermissionRequestStatus[] | null,
-  ) {
+  @UseGuards(JwtAuthGuard)
+  findAll(@Query() query: FindAllPermissionRequestDto) {
+    const { page, limit, spaceEventId, spaceId, ruleId, statuses } = query;
+
     if (limit > 100) {
       // limit cannot exceed 100
       throw new ForbiddenException();
     }
 
-    return this.permissionRequestService.findAll(
+    return this.permissionRequestService.findAll({
       page,
       limit,
       spaceEventId,
       spaceId,
       ruleId,
       statuses,
-    );
+    });
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get PermissionRequest by id' })
+  @UseGuards(JwtAuthGuard)
   findOne(@Param('id') id: string) {
     return this.permissionRequestService.findOneById(id);
   }
@@ -68,7 +65,7 @@ export class PermissionRequestController {
   //   @Param('id') id: string,
   //   @Body() updatePermissionRequestDto: UpdatePermissionRequestDto,
   // ) {
-  //   const user = await this.userService.findByEmail(req.user.email);
+  //   const user = await this.userService.findOneByEmail(req.user.email);
   //   const permissionRequest =
   //     await this.permissionRequestService.findOneById(id);
 

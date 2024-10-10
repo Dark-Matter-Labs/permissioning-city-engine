@@ -1,53 +1,66 @@
 import { Injectable } from '@nestjs/common';
-import { CreatePermissionRequestDto } from './dto';
+import { CreatePermissionRequestDto, FindAllPermissionRequestDto } from './dto';
 import { PermissionRequest } from 'src/database/entity/permission-request.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { PermissionRequestStatus } from 'src/lib/type';
+import { Space } from 'src/database/entity/space.entity';
+import { SpaceEvent } from 'src/database/entity/space-event.entity';
 
 @Injectable()
 export class PermissionRequestService {
   constructor(
     @InjectRepository(PermissionRequest)
     private permissionRequestRepository: Repository<PermissionRequest>,
+    @InjectRepository(Space)
+    private spaceRepository: Repository<Space>,
+    @InjectRepository(SpaceEvent)
+    private spaceEventRepository: Repository<SpaceEvent>,
   ) {}
 
   async findAll(
-    page: number = 1,
-    limit: number = 10,
-    spaceEventId: string | null = null,
-    spaceId: string | null = null,
-    ruleId: string | null = null,
-    statuses: PermissionRequestStatus[] | null = null,
+    findAllPermissionRequestDto: FindAllPermissionRequestDto,
   ): Promise<{ data: PermissionRequest[]; total: number }> {
+    const { spaceEventId, spaceId, ruleId, statuses } =
+      findAllPermissionRequestDto;
+    let { page, limit } = findAllPermissionRequestDto;
+
+    if (!page) {
+      page = 1;
+    }
+
+    if (!limit) {
+      limit = 10;
+    }
+
     const where = [];
     const params: any[] = [(page - 1) * limit, limit];
     let paramIndex: number = params.length;
 
-    if (spaceEventId !== null) {
+    if (spaceEventId != null) {
       paramIndex++;
       where.push(`space_event_id = $${paramIndex}`);
       params.push(spaceEventId);
     }
 
-    if (spaceId !== null) {
+    if (spaceId != null) {
       paramIndex++;
       where.push(`space_id = $${paramIndex}`);
       params.push(spaceId);
     }
 
-    if (ruleId !== null) {
+    if (ruleId != null) {
       paramIndex++;
       where.push(`rule_id = $${paramIndex}`);
       params.push(ruleId);
     }
 
-    if (statuses !== null) {
+    if (statuses != null) {
       paramIndex++;
       where.push(`status IN $${paramIndex}`);
       params.push(statuses);
     }
 
+    const whereClause = where.length > 0 ? 'WHERE' : '';
     const query = `
       WITH filtered_data AS (
         SELECT (
@@ -60,14 +73,21 @@ export class PermissionRequestService {
           created_at,
           updated_at
         ) FROM permission_request
-        WHERE ${where.join(' AND ')}
+        ${whereClause} ${where.join(' AND ')}
       )
       SELECT COUNT(*) AS total, json_agg(filtered_data) AS data
       FROM filtered_data
       LIMIT $2 OFFSET $1;
     `;
 
-    return await this.permissionRequestRepository.query(query, params);
+    const [{ data, total }] = await this.permissionRequestRepository.query(
+      query,
+      params,
+    );
+    return {
+      data: !data ? [] : data,
+      total: parseInt(total),
+    };
   }
 
   findOneById(id: string): Promise<PermissionRequest> {
@@ -78,12 +98,26 @@ export class PermissionRequestService {
     await this.permissionRequestRepository.delete(id);
   }
 
-  create(
+  async create(
     createPermissionRequestDto: CreatePermissionRequestDto,
   ): Promise<PermissionRequest> {
-    const permissionRequest = this.permissionRequestRepository.create(
-      createPermissionRequestDto,
-    );
+    const { spaceId, spaceRuleId, spaceEventId } = createPermissionRequestDto;
+    const dto: Partial<PermissionRequest> = createPermissionRequestDto;
+
+    if (!spaceRuleId) {
+      const space = await this.spaceRepository.findOneBy({ id: spaceId });
+      createPermissionRequestDto.spaceRuleId = space.ruleId;
+    }
+
+    if (spaceEventId) {
+      const spaceEvent = await this.spaceEventRepository.findOneBy({
+        id: spaceEventId,
+      });
+
+      dto.spaceEventRuleId = spaceEvent.ruleId;
+    }
+
+    const permissionRequest = this.permissionRequestRepository.create(dto);
 
     return this.permissionRequestRepository.save(permissionRequest);
   }

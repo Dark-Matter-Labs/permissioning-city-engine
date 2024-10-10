@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsUUID } from 'class-validator';
+import { IsOptional, IsUUID } from 'class-validator';
 
 export class CreatePermissionRequestDto {
   @IsUUID('4')
@@ -14,19 +14,13 @@ export class CreatePermissionRequestDto {
     description: 'PermissionRequest spaceEventId in uuid',
     nullable: true,
   })
-  spaceEventId: string;
+  spaceEventId?: string;
 
+  @IsOptional()
   @IsUUID('4')
   @ApiProperty({
-    description: 'PermissionRequest spaceRuleId in uuid',
+    description: 'Desired spaceRuleId to replace the current spaceRuleId',
     nullable: true,
   })
   spaceRuleId?: string;
-
-  @IsUUID('4')
-  @ApiProperty({
-    description: 'PermissionRequest spaceEventRuleId in uuid',
-    nullable: true,
-  })
-  spaceEventRuleId?: string;
 }
