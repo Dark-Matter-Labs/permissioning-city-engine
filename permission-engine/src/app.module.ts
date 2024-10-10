@@ -21,6 +21,9 @@ import { RedisModule } from '@liaoliaots/nestjs-redis';
 import { EmailSenderModule } from './lib/email-sender/email-sender.module';
 import { PermissionRequestModule } from './api/permission-request/permission-request.module';
 import { RuleModule } from './api/rule/rule.module';
+import { SpacePermissionerModule } from './api/space-permissioner/space-permissioner.module';
+import { UserNotificationModule } from './api/user-notification/user-notification.module';
+import { RuleBlockModule } from './api/rule-block/rule-block.module';
 
 @Module({
   imports: [
@@ -69,9 +72,12 @@ import { RuleModule } from './api/rule/rule.module';
     ValidatorModule,
     EmailSenderModule,
     AuthModule,
+    UserNotificationModule,
     UserModule,
-    SpaceModule,
     SpaceEventModule,
+    SpacePermissionerModule,
+    SpaceModule,
+    RuleBlockModule,
     RuleModule,
     PermissionRequestModule,
   ],
