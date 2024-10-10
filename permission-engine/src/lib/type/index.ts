@@ -51,3 +51,35 @@ export enum PermissionRequestStatus {
   resolveDropped = 'resolve_dropped',
   resolveCancelled = 'resolve_cancelled',
 }
+
+export enum UserType {
+  individual = 'individual',
+  organization = 'organization',
+  government = 'government',
+}
+
+export enum UserNotificationTarget {
+  spaceOwner = 'space_owner',
+  eventOrgnaizer = 'event_orgnaizer',
+  eventAttendee = 'event_attendee',
+  permissioner = 'permissioner',
+  topicFollower = 'topic_follower',
+  spaceFollower = 'space_follower',
+  ruleAuthor = 'rule_author',
+}
+
+export enum UserNotificationType {
+  internal = 'internal',
+  external = 'external',
+}
+
+export enum UserNotificationStatus {
+  pending = 'pending',
+  complete = 'complete',
+  failed = 'failed',
+}
+
+export enum RuleType {
+  space = 'space',
+  spaceEvent = 'space_event',
+}
