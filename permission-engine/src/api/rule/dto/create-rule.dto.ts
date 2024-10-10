@@ -10,10 +10,6 @@ export class CreateRuleDto {
   name: string;
 
   @IsUUID('4')
-  @ApiProperty({ description: 'Rule authorId in uuid', required: true })
-  authorId: string;
-
-  @IsUUID('4')
   @ApiProperty({ description: 'Rule parentRuleId in uuid' })
   parentRuleId?: string;
 
