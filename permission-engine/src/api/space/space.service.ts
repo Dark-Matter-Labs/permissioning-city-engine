@@ -64,7 +64,17 @@ export class SpaceService {
         throw new BadRequestException(`There is no rule with id: ${ruleId}`);
       }
 
-      // TODO. check space permissioner group: allow update when there is no permissioner group yet
+      const space = await this.spaceRepository.findOneBy({ id });
+      const isPermissionerExists =
+        await this.spacePermissionerRepository.existsBy({
+          spaceId: id,
+          isActive: true,
+          userId: Not(space.ownerId),
+        });
+
+      if (isPermissionerExists === true) {
+        throw new ForbiddenException('Cannot update rule whithout permission.');
+      }
     }
 
     return this.spaceRepository.update(id, updateSpaceDto);
