@@ -1,4 +1,6 @@
 export class JwtPayloadDto {
   email: string;
-  sub: string;
+  firstName: string;
+  lastName: string;
+  picture: string;
 }

@@ -27,12 +27,17 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(payload: JwtPayloadDto) {
     // Add validation logic, such as checking if the user exists in the database
-    const user = await this.userService.findByEmail(payload.email);
+    const user = await this.userService.findOneByEmail(payload.email);
 
     if (!user) {
       throw new BadRequestException(`User does not exist: ${payload.email}`);
     }
 
-    return { email: payload.email, name: payload.sub };
+    return {
+      email: payload.email,
+      firstName: payload.firstName,
+      lastName: payload.lastName,
+      picture: payload.picture,
+    };
   }
 }

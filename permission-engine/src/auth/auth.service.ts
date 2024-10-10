@@ -18,7 +18,7 @@ export class AuthService {
   ) {}
 
   async findOrCreateUser(profile: CreateUserDto): Promise<User> {
-    let user = await this.userService.findByEmail(profile.email);
+    let user = await this.userService.findOneByEmail(profile.email);
     if (!user) {
       user = await this.userService.create({
         email: profile.email,
@@ -31,7 +31,9 @@ export class AuthService {
   async generateTokens(profile: any) {
     const payload: JwtPayloadDto = {
       email: profile.email,
-      sub: profile.firstName,
+      firstName: profile.firstName,
+      lastName: profile.lastName,
+      picture: profile.picture,
     };
 
     const accessToken = this.jwtService.sign(payload, {
