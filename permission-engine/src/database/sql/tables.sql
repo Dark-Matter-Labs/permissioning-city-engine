@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS "space" (
   "id" uuid PRIMARY KEY,
   "owner_id" uuid NOT NULL,
   "name" varchar NOT NULL,
-  "zipcode" integer NOT NULL,
+  "zipcode" varchar,
   "country" varchar NOT NULL,
   "city" varchar NOT NULL,
   "region" varchar NOT NULL,
@@ -75,6 +75,7 @@ CREATE TABLE IF NOT EXISTS "space_event" (
   "link" text NOT NULL,
   "duration" varchar NOT NULL,
   "starts_at" timestamptz NOT NULL,
+  "ends_at" timestamptz NOT NULL,
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
   "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
 );
@@ -175,7 +176,7 @@ CREATE TABLE IF NOT EXISTS "rule_history" (
 CREATE TABLE IF NOT EXISTS "user_notification" (
   "id" uuid PRIMARY KEY,
   "user_id" uuid NOT NULL,
-  "user_type" varchar NOT NULL,
+  "target" varchar NOT NULL,
   "type" varchar NOT NULL,
   "status" varchar NOT NULL DEFAULT 'pending',
   "external_service_id" uuid,
@@ -252,7 +253,7 @@ COMMENT ON COLUMN "permission_request"."space_event_rule_id" IS 'when space_even
 COMMENT ON COLUMN "permission_request"."status" IS 'pending, assigned, assign_failed, issue_raised, review_approved, review_approved_with_condition, resolve_rejected, resolve_accepted, resolve_dropped';
 COMMENT ON COLUMN "permission_response"."status" IS 'pending, approved, approved_with_condition, rejected';
 COMMENT ON COLUMN "permission_result"."status" IS 'pending, approved, approved_with_condition, rejected';
-COMMENT ON COLUMN "user_notification"."user_type" IS 'space_owner, space_event_orgnaizer, space_event_attendee, permissioner, topic_follower, space_follower, rule_creator';
+COMMENT ON COLUMN "user_notification"."target" IS 'space_owner, space_event_orgnaizer, space_event_attendee, permissioner, topic_follower, space_follower, rule_creator';
 COMMENT ON COLUMN "user_notification"."type" IS 'internal, external';
 COMMENT ON COLUMN "user_notification"."status" IS 'pending, complete, failed';
 DO $$
