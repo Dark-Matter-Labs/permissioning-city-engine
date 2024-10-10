@@ -1,22 +1,32 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { CreateSpaceEventDto, UpdateSpaceEventDto } from './dto';
 import { SpaceEvent } from 'src/database/entity/space-event.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, UpdateResult } from 'typeorm';
+import { In, Repository, UpdateResult } from 'typeorm';
 import dayjs, { ManipulateType } from 'dayjs';
 import { FindAllSpaceEventDto } from './dto/find-all-space-event.dto';
+import { PermissionRequest } from 'src/database/entity/permission-request.entity';
+import { PermissionRequestStatus } from 'src/lib/type';
 
 @Injectable()
 export class SpaceEventService {
   constructor(
     @InjectRepository(SpaceEvent)
     private spaceEventRepository: Repository<SpaceEvent>,
+    @InjectRepository(PermissionRequest)
+    private permissionRequestRepository: Repository<PermissionRequest>,
   ) {}
 
   async findAll(
     findAllSpaceEventDto: FindAllSpaceEventDto,
   ): Promise<{ data: SpaceEvent[]; total: number }> {
     const {
+      page,
+      limit,
       organizerId,
       spaceId,
       externalServiceId,
@@ -26,15 +36,6 @@ export class SpaceEventService {
       startsAfter,
       name,
     } = findAllSpaceEventDto;
-    let { page, limit } = findAllSpaceEventDto;
-
-    if (!page) {
-      page = 1;
-    }
-
-    if (!limit) {
-      limit = 10;
-    }
 
     const where = [];
     const params: any[] = [(page - 1) * limit, limit];
@@ -142,7 +143,10 @@ export class SpaceEventService {
     await this.spaceEventRepository.delete(id);
   }
 
-  create(createSpaceEventDto: CreateSpaceEventDto): Promise<SpaceEvent> {
+  create(
+    organizerId: string,
+    createSpaceEventDto: CreateSpaceEventDto,
+  ): Promise<SpaceEvent> {
     const { duration, startsAt } = createSpaceEventDto;
     const start = dayjs(startsAt);
     const match = duration.match(/^(\d+)([dwMyhms]+)$/);
@@ -158,11 +162,12 @@ export class SpaceEventService {
       throw new BadRequestException();
     }
 
-    const rule = this.spaceEventRepository.create({
-      endsAt: start.add(numberPart, stringPart).toDate(),
+    const spaceEvent = this.spaceEventRepository.create({
       ...createSpaceEventDto,
+      organizerId,
+      endsAt: start.add(numberPart, stringPart).toDate(),
     });
-    return this.spaceEventRepository.save(rule);
+    return this.spaceEventRepository.save(spaceEvent);
   }
 
   update(

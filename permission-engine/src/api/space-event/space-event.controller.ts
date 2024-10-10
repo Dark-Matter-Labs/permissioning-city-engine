@@ -69,8 +69,10 @@ export class SpaceEventController {
   @Post()
   @ApiOperation({ summary: 'Create SpaceEvent' })
   @UseGuards(JwtAuthGuard)
-  create(@Body() createSpaceEventDto: CreateSpaceEventDto) {
-    return this.spaceEventService.create(createSpaceEventDto);
+  async create(@Req() req, @Body() createSpaceEventDto: CreateSpaceEventDto) {
+    const user = await this.userService.findOneByEmail(req.user.email);
+
+    return this.spaceEventService.create(user.id, createSpaceEventDto);
   }
 
   @Put(':id')
