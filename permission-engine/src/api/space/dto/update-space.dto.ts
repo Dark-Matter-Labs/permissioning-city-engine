@@ -1,11 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsInt,
-  IsOptional,
-  IsString,
-  IsUUID,
-  MaxLength,
-} from 'class-validator';
+import { IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 
 export class UpdateSpaceDto {
   @IsUUID()
@@ -19,9 +13,9 @@ export class UpdateSpaceDto {
   name?: string;
 
   @IsOptional()
-  @IsInt()
+  @IsString()
   @ApiProperty({ description: 'Space zipcode' })
-  zipcode?: number;
+  zipcode?: string;
 
   @IsOptional()
   @MaxLength(100)

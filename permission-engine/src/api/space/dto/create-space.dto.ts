@@ -1,11 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsInt,
-  IsNotEmpty,
-  IsString,
-  IsUUID,
-  MaxLength,
-} from 'class-validator';
+import { IsNotEmpty, IsString, IsUUID, MaxLength } from 'class-validator';
 
 export class CreateSpaceDto {
   @IsNotEmpty()
@@ -14,9 +8,9 @@ export class CreateSpaceDto {
   @ApiProperty({ description: 'Space name in string', required: true })
   name: string;
 
-  @IsInt()
+  @IsString()
   @ApiProperty({ description: 'Space zipcode' })
-  zipcode: number;
+  zipcode: string;
 
   @IsNotEmpty()
   @MaxLength(100)
