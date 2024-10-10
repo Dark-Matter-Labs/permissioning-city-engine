@@ -1,70 +1,67 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsInt,
-  IsNotEmpty,
+  IsOptional,
   IsString,
   IsUUID,
   MaxLength,
 } from 'class-validator';
 
 export class UpdateSpaceDto {
-  @IsNotEmpty()
+  @IsUUID()
+  @ApiProperty({ description: 'Space id in uuid' })
+  id: string;
+
+  @IsOptional()
   @IsString()
   @MaxLength(100)
   @ApiProperty({ description: 'Space name in string', required: true })
-  name: string;
+  name?: string;
 
+  @IsOptional()
   @IsInt()
   @ApiProperty({ description: 'Space zipcode' })
-  zipcode: number;
+  zipcode?: number;
 
-  @IsNotEmpty()
+  @IsOptional()
   @MaxLength(100)
   @ApiProperty({ description: 'Country', required: true })
-  country: string;
+  country?: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @MaxLength(100)
   @ApiProperty({ description: 'State|Region', required: true })
-  region: string;
+  region?: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @MaxLength(100)
   @ApiProperty({ description: 'City', required: true })
-  city: string;
+  city?: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @MaxLength(100)
   @ApiProperty({ description: 'District', required: true })
-  district: string;
+  district?: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @ApiProperty({ description: 'Address', required: true })
-  address: string;
+  address?: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @ApiProperty({ description: 'Latitude in string', required: true })
-  latitude: string;
+  latitude?: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @ApiProperty({ description: 'Longitude in string', required: true })
-  longitude: string;
+  longitude?: string;
 
+  @IsOptional()
   @IsUUID('4')
   @ApiProperty({ description: 'Space rule ruleId in uuid' })
-  ruleId: string;
+  ruleId?: string;
 
-  // @IsString()
-  // @Matches(/^(under|over|is)_[0-9]+_(yes|no)$/, {
-  //   message:
-  //     'consent conditions must in format: {under|over|is}_{percent}_{yes|no}',
-  // })
-  // @ApiProperty({
-  //   description: 'Space consent condition: {under|over|is}_{percent}_{yes|no}',
-  // })
-  // consentCondition: string;
-
+  @IsOptional()
   @IsString()
   @ApiProperty({ description: 'Space description' })
-  details: string;
+  details?: string;
 }

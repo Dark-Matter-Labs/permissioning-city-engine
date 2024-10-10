@@ -1,14 +1,20 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, UpdateResult } from 'typeorm';
 import { Space } from '../../database/entity/space.entity';
 import { CreateSpaceDto, UpdateSpaceDto } from './dto';
+import { User } from 'src/database/entity/user.entity';
+import { Rule } from 'src/database/entity/rule.entity';
 
 @Injectable()
 export class SpaceService {
   constructor(
     @InjectRepository(Space)
     private spaceRepository: Repository<Space>,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
+    @InjectRepository(Rule)
+    private ruleRepository: Repository<Rule>,
   ) {}
 
   // TODO. implement dynamic search in the future
@@ -24,6 +30,10 @@ export class SpaceService {
     return this.spaceRepository.findOneBy({ name });
   }
 
+  findByRuleId(ruleId: string): Promise<Space[]> {
+    return this.spaceRepository.findBy({ ruleId });
+  }
+
   async remove(id: string): Promise<void> {
     await this.spaceRepository.delete(id);
   }
@@ -33,7 +43,19 @@ export class SpaceService {
     return this.spaceRepository.save(space);
   }
 
-  update(id: string, updateSpaceDto: UpdateSpaceDto): Promise<UpdateResult> {
+  async update(updateSpaceDto: UpdateSpaceDto): Promise<UpdateResult> {
+    const { id, ruleId } = updateSpaceDto;
+
+    if (ruleId != null) {
+      const rule = await this.ruleRepository.findOneBy({ id: ruleId });
+
+      if (!rule) {
+        throw new BadRequestException(`There is no rule with id: ${ruleId}`);
+      }
+
+      // TODO. check space permissioner group: allow update when there is no permissioner group yet
+    }
+
     return this.spaceRepository.update(id, updateSpaceDto);
   }
 }

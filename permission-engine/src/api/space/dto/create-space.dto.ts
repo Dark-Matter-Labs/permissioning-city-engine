@@ -7,12 +7,6 @@ import {
   MaxLength,
 } from 'class-validator';
 
-export enum SpaceType {
-  individual = 'individual',
-  organization = 'organization',
-  government = 'government',
-}
-
 export class CreateSpaceDto {
   @IsNotEmpty()
   @IsString()
@@ -59,16 +53,6 @@ export class CreateSpaceDto {
   @IsUUID('4')
   @ApiProperty({ description: 'Space rule ruleId in uuid' })
   ruleId: string;
-
-  // @IsString()
-  // @Matches(/^(under|over|is)_[0-9]+_(yes|no)$/, {
-  //   message:
-  //     'consent conditions must in format: {under|over|is}_{percent}_{yes|no}',
-  // })
-  // @ApiProperty({
-  //   description: 'Space consent condition: {under|over|is}_{percent}_{yes|no}',
-  // })
-  // consentCondition: string;
 
   @IsString()
   @ApiProperty({ description: 'Space description' })
