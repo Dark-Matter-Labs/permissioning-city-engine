@@ -44,7 +44,7 @@ Table space_image {
   updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
   
 }
-Ref: space_image.space_id > space.id // check if this is right
+Ref: space_image.space_id > space.id
 
 Table external_service {
   id uuid [primary key]
@@ -236,8 +236,8 @@ Ref: user_notification.external_service_id > external_service.id
 //     (space_id, user_id) [pk]
 //   }
 // }
-// Ref: space_follower.user_id  > user.id // check if this is right
-// Ref: space_follower.space_id > space.id // check if this is right
+// Ref: space_follower.user_id  > user.id
+// Ref: space_follower.space_id > space.id
 
 Table space_permissioner {
   id uuid [primary key]
@@ -248,9 +248,9 @@ Table space_permissioner {
   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
   updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
 }
-Ref: space_permissioner.user_id > user.id // check if this is right
-Ref: space_permissioner.inviter_id > user.id // check if this is right
-Ref: space_permissioner.space_id > space.id // check if this is right
+Ref: space_permissioner.user_id > user.id
+Ref: space_permissioner.inviter_id > user.id
+Ref: space_permissioner.space_id > space.id
 
 Table topic_follower {
   topic_id uuid [not null]
@@ -263,8 +263,8 @@ Table topic_follower {
     (topic_id, user_id) [pk]
   }
 }
-Ref: topic_follower.user_id > user.id // check if this is right
-Ref: topic_follower.topic_id > topic.id // check if this is right
+Ref: topic_follower.user_id > user.id
+Ref: topic_follower.topic_id > topic.id
 
 // Table space_event_attendee {
 //   space_event_id uuid [not null]
@@ -277,19 +277,19 @@ Ref: topic_follower.topic_id > topic.id // check if this is right
 //     (space_event_id, user_id) [pk]
 //   }
 // }
-// Ref: space_event_attendee.user_id > user.id // check if this is right
-// Ref: space_event_attendee.space_event_id > space_event.id // check if this is right
-// Ref: space_event_image.space_event_id > space_event.id // check if this is right
+// Ref: space_event_attendee.user_id > user.id
+// Ref: space_event_attendee.space_event_id > space_event.id
+// Ref: space_event_image.space_event_id > space_event.id
 
 // many-to-many
-Ref external_service_user: external_service.id <> user.id [delete: cascade, update: no action]
+Ref external_service_user: external_service.id <> user.id
 
-Ref space_topic: space.id <> topic.id [delete: restrict]
+Ref space_topic: space.id <> topic.id
 
-Ref space_event_topic: space_event.id <> topic.id [delete: cascade, update: no action]
+Ref space_event_topic: space_event.id <> topic.id
 
-Ref rule_topic: rule.id <> topic.id [delete: cascade, update: no action]
+Ref rule_topic: rule.id <> topic.id
 
-Ref rule_rule_block: rule.id <> rule_block.id [delete: cascade, update: no action]
+Ref rule_rule_block: rule.id <> rule_block.id
 
-Ref permission_request_space_permissioner: permission_request.id <> space_permissioner.id [delete: cascade, update: no action]
+Ref permission_request_space_permissioner: permission_request.id <> space_permissioner.id
