@@ -15,7 +15,7 @@ import { SpaceEventService } from './space-event.service';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { UserService } from '../user/user.service';
-import { SpaceEventStatus } from 'src/lib/type';
+import { FindAllSpaceEventDto } from './dto/find-all-space-event.dto';
 
 @ApiTags('event')
 @Controller('api/v1/event')
@@ -27,24 +27,8 @@ export class SpaceEventController {
 
   @Get()
   @ApiOperation({ summary: 'Get all SpaceEvents' })
-  findAll(
-    @Query('page') page: number | null,
-    @Query('limit') limit: number | null,
-    @Query('organizerId') organizerId: string | null,
-    @Query('spaceId') spaceId: string | null,
-    @Query('externalServiceId') externalServiceId: string | null,
-    @Query('permissionRequestId') permissionRequestId: string | null,
-    @Query('statuses') statuses: SpaceEventStatus[] | null,
-    @Query('topicIds') topicIds: string[] | null,
-    @Query('startsAfter') startsAfter: Date | null,
-    @Query('name') name: string | null,
-  ) {
-    if (limit > 100) {
-      // limit cannot exceed 100
-      throw new ForbiddenException();
-    }
-
-    return this.spaceEventService.findAll(
+  findAll(@Query() query: FindAllSpaceEventDto) {
+    const {
       page,
       limit,
       organizerId,
@@ -55,7 +39,25 @@ export class SpaceEventController {
       topicIds,
       startsAfter,
       name,
-    );
+    } = query;
+
+    if (limit > 100) {
+      // limit cannot exceed 100
+      throw new ForbiddenException();
+    }
+
+    return this.spaceEventService.findAll({
+      page,
+      limit,
+      organizerId,
+      spaceId,
+      externalServiceId,
+      permissionRequestId,
+      statuses,
+      topicIds,
+      startsAfter,
+      name,
+    });
   }
 
   @Get(':id')
@@ -79,7 +81,7 @@ export class SpaceEventController {
     @Param('id') id: string,
     @Body() updateSpaceEventDto: UpdateSpaceEventDto,
   ) {
-    const user = await this.userService.findByEmail(req.user.email);
+    const user = await this.userService.findOneByEmail(req.user.email);
     const spaceEvent = await this.spaceEventService.findOneById(id);
 
     if (spaceEvent.organizerId !== user.id) {

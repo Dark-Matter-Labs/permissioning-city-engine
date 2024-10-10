@@ -3,8 +3,8 @@ import { CreateSpaceEventDto, UpdateSpaceEventDto } from './dto';
 import { SpaceEvent } from 'src/database/entity/space-event.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, UpdateResult } from 'typeorm';
-import { SpaceEventStatus } from 'src/lib/type';
 import dayjs, { ManipulateType } from 'dayjs';
+import { FindAllSpaceEventDto } from './dto/find-all-space-event.dto';
 
 @Injectable()
 export class SpaceEventService {
@@ -14,54 +14,65 @@ export class SpaceEventService {
   ) {}
 
   async findAll(
-    page: number = 1,
-    limit: number = 10,
-    organizerId: string | null = null,
-    spaceId: string | null = null,
-    externalServiceId: string | null = null,
-    permissionRequestId: string | null = null,
-    statuses: SpaceEventStatus[] | null = null,
-    topicIds: string[] | null = [],
-    startsAfter: Date | null = null,
-    name: string | null = null,
+    findAllSpaceEventDto: FindAllSpaceEventDto,
   ): Promise<{ data: SpaceEvent[]; total: number }> {
+    const {
+      organizerId,
+      spaceId,
+      externalServiceId,
+      permissionRequestId,
+      statuses,
+      topicIds,
+      startsAfter,
+      name,
+    } = findAllSpaceEventDto;
+    let { page, limit } = findAllSpaceEventDto;
+
+    if (!page) {
+      page = 1;
+    }
+
+    if (!limit) {
+      limit = 10;
+    }
+
     const where = [];
     const params: any[] = [(page - 1) * limit, limit];
     let paramIndex: number = params.length;
 
     where.push(`is_active = true`);
 
-    if (organizerId !== null) {
+    if (organizerId != null) {
       paramIndex++;
       where.push(`organizer_id = $${paramIndex}`);
       params.push(organizerId);
     }
 
-    if (spaceId !== null) {
+    if (spaceId != null) {
       paramIndex++;
       where.push(`space_id = $${paramIndex}`);
       params.push(spaceId);
     }
 
-    if (externalServiceId !== null) {
+    if (externalServiceId != null) {
       paramIndex++;
       where.push(`external_service_id = $${paramIndex}`);
       params.push(externalServiceId);
     }
 
-    if (permissionRequestId !== null) {
+    if (permissionRequestId != null) {
       paramIndex++;
       where.push(`permission_request_id = $${paramIndex}`);
       params.push(permissionRequestId);
     }
 
-    if (statuses !== null) {
+    if (statuses != null) {
       paramIndex++;
       where.push(`status IN $${paramIndex}`);
       params.push(statuses);
     }
 
-    if (topicIds !== null) {
+    if (topicIds != null) {
       paramIndex++;
       where.push(
         `space_event.id IN (SELECT id FROM space_event_topic WHERE topic_id IN $${paramIndex})`,
@@ -69,18 +80,19 @@ export class SpaceEventService {
       params.push(topicIds);
     }
 
-    if (startsAfter !== null) {
+    if (startsAfter != null) {
       paramIndex++;
       where.push(`starts_at >= $${paramIndex}`);
       params.push(startsAfter);
     }
 
-    if (name !== null) {
+    if (name != null) {
       paramIndex++;
       where.push(`name LIKE $${paramIndex}`);
       params.push(`%${name}%`);
     }
 
+    const whereClause = where.length > 0 ? 'WHERE' : '';
     const query = `
       WITH filtered_data AS (
         SELECT (
@@ -100,14 +112,22 @@ export class SpaceEventService {
           created_at,
           updated_at
         ) FROM space_event
-        WHERE ${where.join(' AND ')}
+        ${whereClause} ${where.join(' AND ')}
       )
       SELECT COUNT(*) AS total, json_agg(filtered_data) AS data
       FROM filtered_data
       LIMIT $2 OFFSET $1;
     `;
 
-    return await this.spaceEventRepository.query(query, params);
+    const [{ data, total }] = await this.spaceEventRepository.query(
+      query,
+      params,
+    );
+
+    return {
+      data: !data ? [] : data,
+      total: parseInt(total),
+    };
   }
 
   findOneById(id: string): Promise<SpaceEvent> {
