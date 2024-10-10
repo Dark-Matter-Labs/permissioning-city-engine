@@ -15,16 +15,7 @@ export class UserNotificationService {
   async findAll(
     findAllUserNotificationDto: FindAllUserNotificationDto,
   ): Promise<{ data: UserNotification[]; total: number }> {
-    const { userId, statuses } = findAllUserNotificationDto;
-    let { page, limit } = findAllUserNotificationDto;
-
-    if (!page) {
-      page = 1;
-    }
-
-    if (!limit) {
-      limit = 10;
-    }
+    const { page, limit, userId, statuses } = findAllUserNotificationDto;
 
     const where: FindOptionsWhere<UserNotification> = {};
 
