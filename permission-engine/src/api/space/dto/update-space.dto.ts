@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 
 export class UpdateSpaceDto {
@@ -9,53 +9,53 @@ export class UpdateSpaceDto {
   @IsOptional()
   @IsString()
   @MaxLength(100)
-  @ApiProperty({ description: 'Space name in string', required: true })
+  @ApiPropertyOptional({ description: 'Space name in string' })
   name?: string;
 
   @IsOptional()
   @IsString()
-  @ApiProperty({ description: 'Space zipcode' })
+  @ApiPropertyOptional({ description: 'Space zipcode' })
   zipcode?: string;
 
   @IsOptional()
   @MaxLength(100)
-  @ApiProperty({ description: 'Country', required: true })
+  @ApiPropertyOptional({ description: 'Country' })
   country?: string;
 
   @IsOptional()
   @MaxLength(100)
-  @ApiProperty({ description: 'State|Region', required: true })
+  @ApiPropertyOptional({ description: 'State|Region' })
   region?: string;
 
   @IsOptional()
   @MaxLength(100)
-  @ApiProperty({ description: 'City', required: true })
+  @ApiPropertyOptional({ description: 'City' })
   city?: string;
 
   @IsOptional()
   @MaxLength(100)
-  @ApiProperty({ description: 'District', required: true })
+  @ApiPropertyOptional({ description: 'District' })
   district?: string;
 
   @IsOptional()
-  @ApiProperty({ description: 'Address', required: true })
+  @ApiPropertyOptional({ description: 'Address' })
   address?: string;
 
   @IsOptional()
-  @ApiProperty({ description: 'Latitude in string', required: true })
+  @ApiPropertyOptional({ description: 'Latitude in string' })
   latitude?: string;
 
   @IsOptional()
-  @ApiProperty({ description: 'Longitude in string', required: true })
+  @ApiPropertyOptional({ description: 'Longitude in string' })
   longitude?: string;
 
   @IsOptional()
   @IsUUID('4')
-  @ApiProperty({ description: 'Space rule ruleId in uuid' })
+  @ApiPropertyOptional({ description: 'Space rule ruleId in uuid' })
   ruleId?: string;
 
   @IsOptional()
   @IsString()
-  @ApiProperty({ description: 'Space description' })
+  @ApiPropertyOptional({ description: 'Space description' })
   details?: string;
 }
