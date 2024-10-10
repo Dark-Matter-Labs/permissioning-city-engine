@@ -12,23 +12,11 @@ export class UserService {
     private userRepository: Repository<User>,
   ) {}
 
-  async findAll(
-    page: number = 1,
-    limit: number = 10,
-  ): Promise<{ data: User[]; total: number }> {
-    const [data, total] = await this.userRepository.findAndCount({
-      where: { isActive: true },
-      skip: (page - 1) * limit,
-      take: limit,
-    });
-    return { data, total };
-  }
-
   findOne(id: string): Promise<User> {
     return this.userRepository.findOneBy({ id });
   }
 
-  findByEmail(email: string): Promise<User> {
+  findOneByEmail(email: string): Promise<User> {
     return this.userRepository.findOneBy({ email });
   }
 
@@ -51,7 +39,7 @@ export class UserService {
     email: string,
     updateUserDto: UpdateUserDto,
   ): Promise<UpdateResult> {
-    const user = await this.findByEmail(email);
+    const user = await this.findOneByEmail(email);
 
     return this.userRepository.update(user.id, {
       updatedAt: new Date(),

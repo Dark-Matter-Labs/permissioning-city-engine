@@ -15,9 +15,10 @@ export class UserController {
   @ApiResponse({ status: 200, description: 'Get self user data', type: User })
   @UseGuards(JwtAuthGuard)
   findSelf(@Req() req): Promise<User> {
-    return this.userService.findByEmail(req.user.email);
+    return this.userService.findOneByEmail(req.user.email);
   }
 
+  // TODO. validate user location information
   @Put()
   @UseGuards(JwtAuthGuard)
   updateSelf(

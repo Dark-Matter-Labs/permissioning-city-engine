@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsEnum, IsOptional, MaxLength, Min } from 'class-validator';
-import { UserType } from '../type';
+import { UserType } from 'src/lib/type';
 
 export class UpdateUserDto {
   @IsOptional()
