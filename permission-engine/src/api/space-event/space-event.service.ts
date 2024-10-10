@@ -170,10 +170,29 @@ export class SpaceEventService {
     return this.spaceEventRepository.save(spaceEvent);
   }
 
-  update(
+  async update(
     id: string,
     updateSpaceEventDto: UpdateSpaceEventDto,
   ): Promise<UpdateResult> {
+    const isOngoingPermissionRequest =
+      await this.permissionRequestRepository.existsBy({
+        spaceEventId: id,
+        status: In([
+          PermissionRequestStatus.pending,
+          PermissionRequestStatus.assigned,
+          PermissionRequestStatus.assignFailed,
+          PermissionRequestStatus.issueRaised,
+          PermissionRequestStatus.reviewApproved,
+          PermissionRequestStatus.reviewApprovedWithCondition,
+        ]),
+      });
+
+    if (isOngoingPermissionRequest === true) {
+      throw new ForbiddenException(
+        'Cannot update when there is ongoing permission request.',
+      );
+    }
+
     return this.spaceEventRepository.update(id, updateSpaceEventDto);
   }
 }
