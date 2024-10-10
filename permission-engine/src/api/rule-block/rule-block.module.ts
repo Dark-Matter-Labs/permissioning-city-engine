@@ -14,6 +14,8 @@ import { PermissionRequest } from 'src/database/entity/permission-request.entity
 import { PermissionRequestService } from '../permission-request/permission-request.service';
 import { SpaceEvent } from 'src/database/entity/space-event.entity';
 import { SpaceEventService } from '../space-event/space-event.service';
+import { SpacePermissioner } from 'src/database/entity/space-permissioner.entity';
+import { SpacePermissionerService } from '../space-permissioner/space-permissioner.service';
 
 @Module({
   imports: [
@@ -25,6 +27,7 @@ import { SpaceEventService } from '../space-event/space-event.service';
       Space,
       PermissionRequest,
       SpaceEvent,
+      SpacePermissioner,
     ]),
   ],
   controllers: [RuleBlockController],
@@ -34,6 +37,7 @@ import { SpaceEventService } from '../space-event/space-event.service';
     SpaceService,
     PermissionRequestService,
     SpaceEventService,
+    SpacePermissionerService,
     Logger,
   ],
 })

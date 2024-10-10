@@ -13,6 +13,8 @@ import { Rule } from 'src/database/entity/rule.entity';
 import { RuleService } from '../rule/rule.service';
 import { RuleBlock } from 'src/database/entity/rule-block.entity';
 import { RuleBlockService } from '../rule-block/rule-block.service';
+import { SpacePermissioner } from 'src/database/entity/space-permissioner.entity';
+import { SpacePermissionerService } from '../space-permissioner/space-permissioner.service';
 
 @Module({
   imports: [
@@ -23,6 +25,7 @@ import { RuleBlockService } from '../rule-block/rule-block.service';
       User,
       Rule,
       RuleBlock,
+      SpacePermissioner,
     ]),
   ],
   controllers: [PermissionRequestController],
@@ -33,6 +36,7 @@ import { RuleBlockService } from '../rule-block/rule-block.service';
     UserService,
     RuleService,
     RuleBlockService,
+    SpacePermissionerService,
   ],
 })
 export class PermissionRequestModule {}
