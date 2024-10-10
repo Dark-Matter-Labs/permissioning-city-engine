@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsUUID, MaxLength } from 'class-validator';
+import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
 import { RuleBlockType } from 'src/lib/type';
 
 export class CreateRuleBlockDto {
@@ -8,10 +8,6 @@ export class CreateRuleBlockDto {
   @MaxLength(100)
   @ApiProperty({ description: 'RuleBlock name', required: true })
   name: string;
-
-  @IsUUID('4')
-  @ApiProperty({ description: 'RuleBlock authorId in uuid', required: true })
-  authorId: string;
 
   @IsString()
   @ApiProperty({

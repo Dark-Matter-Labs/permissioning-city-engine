@@ -6,6 +6,7 @@ import {
   Param,
   Post,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { RuleBlock } from '../../database/entity/rule-block.entity';
@@ -13,11 +14,15 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { CreateRuleBlockDto, FindAllRuleBlockDto } from './dto';
 import { RuleBlockService } from './rule-block.service';
+import { UserService } from '../user/user.service';
 
 @ApiTags('rule')
 @Controller('api/v1/rule/block')
 export class RuleBlockController {
-  constructor(private readonly ruleBlockService: RuleBlockService) {}
+  constructor(
+    private readonly ruleBlockService: RuleBlockService,
+    private readonly userService: UserService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'Get RuleBlock by authorId' })
@@ -50,7 +55,12 @@ export class RuleBlockController {
   @Post()
   @ApiOperation({ summary: 'Create a RuleBlock' })
   @UseGuards(JwtAuthGuard)
-  create(@Body() createRuleBlockDto: CreateRuleBlockDto): Promise<RuleBlock> {
-    return this.ruleBlockService.create(createRuleBlockDto);
+  async create(
+    @Req() req,
+    @Body() createRuleBlockDto: CreateRuleBlockDto,
+  ): Promise<RuleBlock> {
+    const user = await this.userService.findOneByEmail(req.user.email);
+
+    return this.ruleBlockService.create(user.id, createRuleBlockDto);
   }
 }

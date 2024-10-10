@@ -16,16 +16,7 @@ export class RuleBlockService {
   async findAll(
     findAllRuleBlockDto: FindAllRuleBlockDto,
   ): Promise<{ data: RuleBlock[]; total: number }> {
-    const { hash, type, authorId, ids } = findAllRuleBlockDto;
-    let { page, limit } = findAllRuleBlockDto;
-
-    if (!page) {
-      page = 1;
-    }
-
-    if (!limit) {
-      limit = 10;
-    }
+    const { page, limit, hash, type, authorId, ids } = findAllRuleBlockDto;
 
     const where: FindOptionsWhere<RuleBlock> = {};
 
@@ -65,9 +56,13 @@ export class RuleBlockService {
     await this.ruleBlockRepository.delete(id);
   }
 
-  create(createRuleBlockDto: CreateRuleBlockDto): Promise<RuleBlock> {
-    const { type, content } = createRuleBlockDto;
+  create(
+    authorId: string,
+    createRuleBlockDto: CreateRuleBlockDto,
+  ): Promise<RuleBlock> {
+    const { type, content, name } = createRuleBlockDto;
     const trimmedContent = content.trim();
+    const trimmedName = name.trim();
     const hash = Util.hash(trimmedContent);
 
     const ruleBlock = this.ruleBlockRepository.findOneBy({ hash });
@@ -95,7 +90,9 @@ export class RuleBlockService {
 
     const newRuleBlock = this.ruleBlockRepository.create({
       ...createRuleBlockDto,
+      authorId,
       content: trimmedContent,
+      name: trimmedName,
       hash,
     });
 
