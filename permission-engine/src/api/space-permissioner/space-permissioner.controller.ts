@@ -9,15 +9,21 @@ import {
   Put,
   ForbiddenException,
   Query,
+  BadRequestException,
 } from '@nestjs/common';
 import { SpacePermissionerService } from './space-permissioner.service';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { SpacePermissioner } from 'src/database/entity/space-permissioner.entity';
-import { CreateSpacePermissionerDto, UpdateSpacePermissionerDto } from './dto';
+import {
+  FindAllSpacePermissionerByUserIdDto,
+  InviteSpacePermissionerDto,
+  JoinSpacePermissionerDto,
+} from './dto';
 import { UpdateResult } from 'typeorm';
 import { UserService } from '../user/user.service';
 import { PaginationDto } from 'src/lib/dto';
+import { SpaceService } from '../space/space.service';
 
 @ApiTags('permissioner')
 @Controller('api/v1/permissioner')
@@ -25,50 +31,103 @@ export class SpacePermissionerController {
   constructor(
     private readonly spacePermissionerService: SpacePermissionerService,
     private readonly userService: UserService,
+    private readonly spaceService: SpaceService,
   ) {}
 
-  @Get(':id')
-  @ApiOperation({ summary: 'Get spacePermissioner by id' })
-  findOneById(@Param('id') id: string): Promise<SpacePermissioner> {
-    return this.spacePermissionerService.findOneById(id);
+  @Get('self')
+  @ApiOperation({ summary: 'Get SpacePermissioners by userId' })
+  async findSelf(
+    @Req() req,
+    @Query() query: FindAllSpacePermissionerByUserIdDto,
+  ): Promise<{ data: SpacePermissioner[]; total: number }> {
+    const user = await this.userService.findOneByEmail(req.user.email);
+    return this.spacePermissionerService.findAllByUserId(user.id, query);
   }
 
-  @Get('space/:spaceId')
-  @ApiOperation({ summary: 'Get spacePermissioner by spaceId' })
-  findBySpaceId(
+  @Get(':spaceId')
+  @ApiOperation({ summary: 'Get SpacePermissioners by spaceId' })
+  async findBySpaceId(
+    @Req() req,
     @Param('spaceId') spaceId: string,
     @Query() query: PaginationDto,
   ): Promise<{ data: SpacePermissioner[]; total: number }> {
-    return this.spacePermissionerService.findBySpaceId({
-      spaceId,
-      ...query,
+    const user = await this.userService.findOneByEmail(req.user.email);
+    const isSpacePermissioner =
+      await this.spacePermissionerService.isSpacePermissioner(spaceId, user.id);
+
+    if (isSpacePermissioner === false) {
+      throw new ForbiddenException();
+    }
+
+    return this.spacePermissionerService.findBySpaceId(spaceId, query);
+  }
+
+  @Post(':spaceId/invite')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Invite a SpacePermissioner' })
+  async invite(
+    @Req() req,
+    @Param('spaceId') spaceId: string,
+    @Body() inviteSpacePermissionerDto: InviteSpacePermissionerDto,
+  ): Promise<SpacePermissioner> {
+    const user = await this.userService.findOneByEmail(req.user.email);
+    const isSpacePermissioner =
+      await this.spacePermissionerService.isSpacePermissioner(spaceId, user.id);
+
+    if (isSpacePermissioner === false) {
+      throw new ForbiddenException();
+    }
+
+    return this.spacePermissionerService.create({
+      ...inviteSpacePermissionerDto,
+      inviterId: user.id,
     });
   }
 
-  @Post()
+  @Post(':spaceId/join')
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Create a spacePermissioner' })
-  create(
-    @Body() createSpacePermissionerDto: CreateSpacePermissionerDto,
+  @ApiOperation({ summary: 'Join SpacePermissioner' })
+  async join(
+    @Req() req,
+    @Param('spaceId') spaceId: string,
+    @Body() joinSpacePermissionerDto: JoinSpacePermissionerDto,
   ): Promise<SpacePermissioner> {
-    return this.spacePermissionerService.create(createSpacePermissionerDto);
+    const user = await this.userService.findOneByEmail(req.user.email);
+    const isSpacePermissioner =
+      await this.spacePermissionerService.isSpacePermissioner(spaceId, user.id);
+
+    if (isSpacePermissioner === true) {
+      throw new BadRequestException();
+    }
+
+    return this.spacePermissionerService.create(joinSpacePermissionerDto);
   }
 
-  @Put(':id')
+  @Put(':spaceId')
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Update spacePermissioner isActive status' })
+  @ApiOperation({
+    summary: 'Leave or rejoin SpacePermissioner',
+  })
   async update(
     @Req() req,
-    @Body() updateSpacePermissionerDto: UpdateSpacePermissionerDto,
+    @Param('spaceId') spaceId: string,
   ): Promise<UpdateResult> {
     const user = await this.userService.findOneByEmail(req.user.email);
-    const { id } = updateSpacePermissionerDto;
-    const spacePermissioner =
-      await this.spacePermissionerService.findOneById(id);
+    const isOwner = await this.spaceService.isOwner(spaceId, user.id);
 
-    if (spacePermissioner.userId !== user.id) {
-      throw new ForbiddenException();
+    const spacePermissioner =
+      await this.spacePermissionerService.findOneByUserIdAndSpaceId(
+        user.id,
+        spaceId,
+      );
+
+    if (isOwner === true && spacePermissioner.isActive === true) {
+      throw new BadRequestException('Space owner cannot leave permissioner.');
     }
-    return this.spacePermissionerService.update(updateSpacePermissionerDto);
+
+    return this.spacePermissionerService.update({
+      id: spacePermissioner.id,
+      isActive: !spacePermissioner.isActive,
+    });
   }
 }

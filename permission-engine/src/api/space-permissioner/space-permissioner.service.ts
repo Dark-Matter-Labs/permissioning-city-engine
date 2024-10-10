@@ -1,8 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, UpdateResult } from 'typeorm';
-import { CreateSpacePermissionerDto, UpdateSpacePermissionerDto } from './dto';
+import {
+  CreateSpacePermissionerDto,
+  FindAllSpacePermissionerByUserIdDto,
+  UpdateSpacePermissionerDto,
+} from './dto';
 import { SpacePermissioner } from 'src/database/entity/space-permissioner.entity';
+import { PaginationDto } from 'src/lib/dto';
 
 @Injectable()
 export class SpacePermissionerService {
@@ -19,21 +24,18 @@ export class SpacePermissionerService {
     return this.spacePermissionerRepository.findOneBy({ id });
   }
 
-  async findBySpaceId(findAllSpacePermissionerBySpaceIdDto: {
-    spaceId: string;
-    page?: number;
-    limit?: number;
-  }): Promise<{ data: SpacePermissioner[]; total: number }> {
-    const { spaceId } = findAllSpacePermissionerBySpaceIdDto;
-    let { page, limit } = findAllSpacePermissionerBySpaceIdDto;
+  findOneByUserIdAndSpaceId(
+    userId: string,
+    spaceId: string,
+  ): Promise<SpacePermissioner> {
+    return this.spacePermissionerRepository.findOneBy({ userId, spaceId });
+  }
 
-    if (!page) {
-      page = 1;
-    }
-
-    if (!limit) {
-      limit = 10;
-    }
+  async findBySpaceId(
+    spaceId: string,
+    paginationDto: PaginationDto,
+  ): Promise<{ data: SpacePermissioner[]; total: number }> {
+    const { page, limit } = paginationDto;
 
     const [data, total] = await this.spacePermissionerRepository.findAndCount({
       where: { spaceId },
@@ -47,16 +49,45 @@ export class SpacePermissionerService {
     };
   }
 
+  async findAllByUserId(
+    userId: string,
+    findAllSpacePermissionerByUserIdDto: FindAllSpacePermissionerByUserIdDto,
+  ): Promise<{ data: SpacePermissioner[]; total: number }> {
+    const { page, limit, isActive } = findAllSpacePermissionerByUserIdDto;
+
+    const [data, total] = await this.spacePermissionerRepository.findAndCount({
+      where: { userId, isActive },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+
+    return {
+      data: data ?? [],
+      total,
+    };
+  }
+
+  async isSpacePermissioner(spaceId: string, userId: string): Promise<boolean> {
+    return await this.spacePermissionerRepository.existsBy({
+      spaceId,
+      userId,
+      isActive: true,
+    });
+  }
+
   async remove(id: string): Promise<void> {
     await this.spacePermissionerRepository.delete(id);
   }
 
   create(
-    createSpacePermissionerDto: CreateSpacePermissionerDto,
+    createSpacePermissionerDto: Partial<CreateSpacePermissionerDto>,
+    isActive: boolean = false,
   ): Promise<SpacePermissioner> {
-    const spacePermissioner = this.spacePermissionerRepository.create(
-      createSpacePermissionerDto,
-    );
+    const spacePermissioner = this.spacePermissionerRepository.create({
+      ...createSpacePermissionerDto,
+      isActive,
+    });
+
     return this.spacePermissionerRepository.save(spacePermissioner);
   }
 
