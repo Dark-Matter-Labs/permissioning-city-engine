@@ -92,7 +92,7 @@ CREATE TABLE IF NOT EXISTS "rule" (
   "name" varchar NOT NULL,
   "hash" varchar NOT NULL,
   "author_id" uuid NOT NULL,
-  "type" varchar NOT NULL,
+  "target" varchar NOT NULL,
   "parent_rule_id" uuid,
   "is_active" bool NOT NULL DEFAULT true,
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
@@ -126,9 +126,9 @@ CREATE TABLE IF NOT EXISTS "space_history" (
 CREATE TABLE IF NOT EXISTS "permission_request" (
   "id" uuid PRIMARY KEY,
   "space_id" uuid NOT NULL,
-  "space_event_id" uuid NOT NULL,
+  "space_event_id" uuid,
   "space_rule_id" uuid NOT NULL,
-  "space_event_rule_id" uuid NOT NULL,
+  "space_event_rule_id" uuid,
   "status" varchar NOT NULL DEFAULT 'pending',
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
   "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
@@ -247,6 +247,8 @@ COMMENT ON COLUMN "user"."type" IS 'individual, organization, government';
 COMMENT ON COLUMN "user"."birth_year" IS 'year of birth';
 COMMENT ON COLUMN "space_event"."status" IS 'pending, permission_requested, permission_approved, permission_approved_with_condition, permission_rejected, running, complete';
 COMMENT ON COLUMN "space_history"."type" IS 'create, update_details, activate, deactivate, permissioner_opt_in, permissioner_opt_out, permission_request, permission_response';
+COMMENT ON COLUMN "permission_request"."space_event_id" IS 'when space_event_id is null, the permission_request is for the space rule revision';
+COMMENT ON COLUMN "permission_request"."space_event_rule_id" IS 'when space_event_rule_id is null, the permission_request is for the space rule revision';
 COMMENT ON COLUMN "permission_request"."status" IS 'pending, assigned, assign_failed, issue_raised, review_approved, review_approved_with_condition, resolve_rejected, resolve_accepted, resolve_dropped';
 COMMENT ON COLUMN "permission_response"."status" IS 'pending, approved, approved_with_condition, rejected';
 COMMENT ON COLUMN "permission_result"."status" IS 'pending, approved, approved_with_condition, rejected';
