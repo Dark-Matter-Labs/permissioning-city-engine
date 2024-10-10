@@ -79,4 +79,11 @@ export class SpaceService {
 
     return this.spaceRepository.update(id, updateSpaceDto);
   }
+
+  async isOwner(spaceId: string, userId: string): Promise<boolean> {
+    return await this.spaceRepository.existsBy({
+      id: spaceId,
+      ownerId: userId,
+    });
+  }
 }
