@@ -100,7 +100,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   async getProfile(@Req() req) {
     // Access user information from the validated token
-    return req.user;
+    return { ...req.user, name: `${req.user.firstName} ${req.user.lastName}` };
   }
 
   @Post('logout')
