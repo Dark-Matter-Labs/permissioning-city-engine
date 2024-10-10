@@ -19,7 +19,7 @@ Table space {
   id uuid [primary key]
   owner_id uuid [not null]
   name varchar [not null]
-  zipcode integer [not null]
+  zipcode varchar
   country varchar [not null]
   city varchar [not null]
   region varchar [not null]
