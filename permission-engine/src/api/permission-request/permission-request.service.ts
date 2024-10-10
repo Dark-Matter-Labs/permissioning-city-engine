@@ -20,17 +20,8 @@ export class PermissionRequestService {
   async findAll(
     findAllPermissionRequestDto: FindAllPermissionRequestDto,
   ): Promise<{ data: PermissionRequest[]; total: number }> {
-    const { spaceEventId, spaceId, ruleId, statuses } =
+    const { page, limit, spaceEventId, spaceId, ruleId, statuses } =
       findAllPermissionRequestDto;
-    let { page, limit } = findAllPermissionRequestDto;
-
-    if (!page) {
-      page = 1;
-    }
-
-    if (!limit) {
-      limit = 10;
-    }
 
     const where = [];
     const params: any[] = [(page - 1) * limit, limit];
@@ -104,6 +95,7 @@ export class PermissionRequestService {
     const { spaceId, spaceRuleId, spaceEventId } = createPermissionRequestDto;
     const dto: Partial<PermissionRequest> = createPermissionRequestDto;
 
+    // set rule ids
     if (!spaceRuleId) {
       const space = await this.spaceRepository.findOneBy({ id: spaceId });
       createPermissionRequestDto.spaceRuleId = space.ruleId;
