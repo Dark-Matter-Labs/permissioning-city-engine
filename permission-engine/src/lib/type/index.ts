@@ -18,11 +18,10 @@ export enum RuleTarget {
 export enum SpaceEventStatus {
   pending = 'pending',
   permissionRequested = 'permission_requested',
-  permissionApproved = 'permission_approved',
-  permissionRejected = 'permission_rejected',
-  running = 'running',
-  closed = 'closed',
-  complete = 'complete',
+  permissionGranted = 'permission_granted',
+  running = 'running', // set by event organizer or daemon after starts_at
+  closed = 'closed', // closed by daemon after ends_at
+  complete = 'complete', // completed by the event organizer
 }
 
 export enum RuleBlockType {
