@@ -4,6 +4,7 @@ import { FindOptionsWhere, In, Repository, UpdateResult } from 'typeorm';
 import { UserNotification } from '../../database/entity/user-notification.entity';
 import { UserNotificationStatus } from 'src/lib/type';
 import { FindAllUserNotificationDto } from './dto';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class UserNotificationService {
@@ -48,7 +49,10 @@ export class UserNotificationService {
   create(
     userNotificationData: Partial<UserNotification>,
   ): Promise<UserNotification> {
-    const user = this.userNotificationRepository.create(userNotificationData);
+    const user = this.userNotificationRepository.create({
+      ...userNotificationData,
+      id: uuidv4(),
+    });
     return this.userNotificationRepository.save(user);
   }
 
