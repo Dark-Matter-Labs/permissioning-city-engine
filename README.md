@@ -6,7 +6,7 @@
 1. Clone this repo
 
    ```bash
-   git clone https://github.com/Dark-Matter-Labs/permissioning-city-engine.git
+   git clone --recurse-submodules https://github.com/Dark-Matter-Labs/permissioning-city-engine.git
    ```
 
 1. Set `.env` file with reference `.env.example`
