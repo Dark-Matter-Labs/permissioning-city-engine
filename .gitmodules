@@ -1,0 +1,3 @@
+[submodule "ptc-dashboard"]
+	path = ptc-dashboard
+	url = https://github.com/Dark-Matter-Labs/ptc-dashboard.git
