@@ -8,6 +8,7 @@ import {
 } from './dto';
 import { SpacePermissioner } from 'src/database/entity/space-permissioner.entity';
 import { PaginationDto } from 'src/lib/dto';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class SpacePermissionerService {
@@ -85,6 +86,7 @@ export class SpacePermissionerService {
   ): Promise<SpacePermissioner> {
     const spacePermissioner = this.spacePermissionerRepository.create({
       ...createSpacePermissionerDto,
+      id: uuidv4(),
       isActive,
     });
 
