@@ -5,12 +5,15 @@ import { RuleBlock } from '../../database/entity/rule-block.entity';
 import { CreateRuleBlockDto, FindAllRuleBlockDto } from './dto';
 import { RuleBlockType } from 'src/lib/type';
 import * as Util from 'src/lib/util/util';
+import { Logger } from 'src/lib/logger/logger.service';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class RuleBlockService {
   constructor(
     @InjectRepository(RuleBlock)
     private ruleBlockRepository: Repository<RuleBlock>,
+    private logger: Logger,
   ) {}
 
   async findAll(
@@ -56,7 +59,7 @@ export class RuleBlockService {
     await this.ruleBlockRepository.delete(id);
   }
 
-  create(
+  async create(
     authorId: string,
     createRuleBlockDto: CreateRuleBlockDto,
   ): Promise<RuleBlock> {
@@ -65,10 +68,14 @@ export class RuleBlockService {
     const trimmedName = name.trim();
     const hash = Util.hash(trimmedContent);
 
-    const ruleBlock = this.ruleBlockRepository.findOneBy({ hash });
+    try {
+      const ruleBlock = await this.ruleBlockRepository.findOneBy({ hash });
 
-    if (ruleBlock) {
-      return ruleBlock;
+      if (ruleBlock) {
+        return ruleBlock;
+      }
+    } catch (error) {
+      this.logger.log('Create a new RuleBlock');
     }
 
     if (type === RuleBlockType.spaceConsentMethod) {
@@ -90,6 +97,7 @@ export class RuleBlockService {
 
     const newRuleBlock = this.ruleBlockRepository.create({
       ...createRuleBlockDto,
+      id: uuidv4(),
       authorId,
       content: trimmedContent,
       name: trimmedName,

@@ -15,6 +15,7 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { CreateRuleBlockDto, FindAllRuleBlockDto } from './dto';
 import { RuleBlockService } from './rule-block.service';
 import { UserService } from '../user/user.service';
+import { Logger } from 'src/lib/logger/logger.service';
 
 @ApiTags('rule')
 @Controller('api/v1/rule/block')
@@ -22,6 +23,7 @@ export class RuleBlockController {
   constructor(
     private readonly ruleBlockService: RuleBlockService,
     private readonly userService: UserService,
+    private readonly logger: Logger,
   ) {}
 
   @Get()
@@ -60,7 +62,7 @@ export class RuleBlockController {
     @Body() createRuleBlockDto: CreateRuleBlockDto,
   ): Promise<RuleBlock> {
     const user = await this.userService.findOneByEmail(req.user.email);
-
+    this.logger.log('create a rule block with user', user);
     return this.ruleBlockService.create(user.id, createRuleBlockDto);
   }
 }
