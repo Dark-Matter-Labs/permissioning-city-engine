@@ -1,21 +1,32 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsDate, IsInt, IsString, IsUUID, MaxLength } from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsArray,
+  IsDateString,
+  IsInt,
+  IsString,
+  IsUUID,
+  MaxLength,
+} from 'class-validator';
 
 export class UpdateSpaceEventDto {
   @IsString()
   @MaxLength(100)
-  @ApiProperty({ description: 'SpaceEvent name', required: true })
+  @ApiPropertyOptional({ description: 'SpaceEvent name', required: true })
   name?: string;
 
   @IsUUID('4')
-  @ApiProperty({
+  @ApiPropertyOptional({ description: 'SpaceEvent ruleId in uuid' })
+  ruleId?: string;
+
+  @IsUUID('4')
+  @ApiPropertyOptional({
     description: 'SpaceEvent permissionRequestId in uuid',
     nullable: true,
   })
   permissionRequestId?: string;
 
   @IsUUID('4')
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'SpaceEvent externalServiceId in uuid',
     nullable: true,
   })
@@ -23,24 +34,31 @@ export class UpdateSpaceEventDto {
 
   @IsString()
   @MaxLength(1000)
-  @ApiProperty({ description: 'SpaceEvent details' })
+  @ApiPropertyOptional({ description: 'SpaceEvent details' })
   details?: string;
 
   @IsString()
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'SpaceEvent link for registration or purchase tickets',
   })
   link?: string;
 
   @IsInt()
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'SpaceEvent duration in {number}{d|w|M|y|h|m|s} format',
   })
   duration?: string;
 
-  @IsDate()
-  @ApiProperty({
+  @IsDateString()
+  @ApiPropertyOptional({
     description: 'SpaceEvent start timestamp',
   })
   startsAt?: Date;
+
+  @IsArray()
+  @IsUUID('4', { each: true })
+  @ApiPropertyOptional({
+    description: 'SpaceEventImage uuids to remove',
+  })
+  removeSpaceEventImageIds?: string[];
 }

@@ -1,11 +1,12 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsNotEmpty,
   IsString,
   MaxLength,
   IsUUID,
-  IsInt,
-  IsDate,
+  IsOptional,
+  Matches,
+  IsDateString,
 } from 'class-validator';
 
 export class CreateSpaceEventDto {
@@ -22,44 +23,61 @@ export class CreateSpaceEventDto {
   })
   organizerId: string;
 
+  @IsOptional()
   @IsUUID('4')
-  @ApiProperty({ description: 'SpaceEvent spaceId in uuid', nullable: true })
+  @ApiPropertyOptional({
+    description: 'SpaceEvent spaceId in uuid',
+    nullable: true,
+  })
   spaceId?: string;
 
   @IsUUID('4')
-  @ApiProperty({
-    description: 'SpaceEvent permissionRequestId in uuid',
-    nullable: true,
-  })
-  permissionRequestId?: string;
+  @ApiProperty({ description: 'SpaceEvent ruleId in uuid' })
+  ruleId: string;
 
+  @IsOptional()
   @IsUUID('4')
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'SpaceEvent externalServiceId in uuid',
     nullable: true,
   })
   externalServiceId?: string;
 
+  @IsOptional()
   @IsString()
-  @ApiProperty({ description: 'SpaceEvent details', nullable: true })
+  @ApiPropertyOptional({ description: 'SpaceEvent details', nullable: true })
   details?: string;
 
+  @IsOptional()
   @IsString()
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'SpaceEvent link for registration or purchase tickets',
     nullable: true,
   })
   link?: string;
 
-  @IsInt()
+  @IsString()
+  @Matches(/^\d+[dwMyhms]$/, {
+    message: 'SpaceEvent duration must in format: {number}{d|w|M|y|h|m|s}',
+  })
   @ApiProperty({
     description: 'SpaceEvent duration in {number}{d|w|M|y|h|m|s} format',
   })
   duration: string;
 
-  @IsDate()
+  @IsDateString()
   @ApiProperty({
     description: 'SpaceEvent start date',
   })
   startsAt: Date;
+
+  // @ApiPropertyOptional({
+  //   description: 'SpaceEvent images',
+  //   type: 'array',
+  //   items: {
+  //     type: 'string',
+  //     format: 'binary',
+  //   },
+  // })
+  // images: Array<Express.Multer.File>;
 }
