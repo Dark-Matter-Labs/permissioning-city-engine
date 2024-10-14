@@ -8,6 +8,6 @@ FROM node:22.2.0-bullseye
 
   COPY . $WORKDIR
 
-  RUN rm -rf node_modules package-lock.json
   RUN npm i
   RUN npm run build
+  
