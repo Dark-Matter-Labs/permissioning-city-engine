@@ -11,7 +11,7 @@ import { SpaceEvent } from './space-event.entity';
 import { Topic } from './topic.entity';
 
 @Entity()
-export class Space {
+export class PermissionResult {
   @PrimaryGeneratedColumn('uuid')
   @ApiProperty({ description: 'uuid' })
   id: string;
@@ -26,7 +26,7 @@ export class Space {
 
   @Column()
   @ApiProperty({ description: 'Space zipcode' })
-  zipcode: number;
+  zipcode: string;
 
   @Column()
   @ApiProperty({ description: 'Country' })

@@ -6,8 +6,10 @@ import {
   JoinColumn,
   ManyToOne,
   CreateDateColumn,
+  OneToMany,
 } from 'typeorm';
 import { User } from './user.entity';
+import { SpaceEvent } from './space-event.entity';
 
 @Entity()
 export class ExternalService {
@@ -46,4 +48,7 @@ export class ExternalService {
   @Column()
   @ApiProperty({ description: 'Updated timestamp' })
   updatedAt: Date;
+
+  @OneToMany(() => SpaceEvent, (spaceEvent) => spaceEvent.externalService)
+  spaceEvents: SpaceEvent[];
 }

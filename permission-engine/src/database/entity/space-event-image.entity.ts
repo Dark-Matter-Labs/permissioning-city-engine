@@ -7,20 +7,20 @@ import {
   ManyToOne,
   CreateDateColumn,
 } from 'typeorm';
-import { Space } from './space.entity';
+import { SpaceEvent } from './space-event.entity';
 
 @Entity()
-export class SpaceImage {
+export class SpaceEventImage {
   @PrimaryGeneratedColumn('uuid')
   @ApiProperty({ description: 'uuid' })
   id: string;
 
-  @ManyToOne(() => Space, (space) => space.spaceEvents)
+  @ManyToOne(() => SpaceEvent, (spaceEvent) => spaceEvent.spaceEventImages)
   @JoinColumn()
-  space: Space;
+  spaceEvent: SpaceEvent;
 
   @Column()
-  spaceId: string;
+  spaceEventId: string;
 
   @Column()
   link: string;

@@ -17,6 +17,8 @@ import { Matches } from 'class-validator';
 import { SpaceEventStatus } from 'src/lib/type';
 import { Rule } from './rule.entity';
 import { PermissionRequest } from './permission-request.entity';
+import { ExternalService } from './external-service.entity';
+import { SpaceEventImage } from './space-event-image.entity';
 
 @Entity()
 export class SpaceEvent {
@@ -51,12 +53,15 @@ export class SpaceEvent {
   @ApiProperty({ description: 'SpaceEvent ruleId in uuid' })
   ruleId: string;
 
-  @ManyToMany(() => Topic, (topic) => topic.spaceEvents)
-  @JoinTable()
-  topics: Topic;
-
   @Column()
   permissionRequestId: string;
+
+  @ManyToOne(
+    () => ExternalService,
+    (externalService) => externalService.spaceEvents,
+  )
+  @JoinColumn()
+  externalService: ExternalService;
 
   @Column()
   externalServiceId: string;
@@ -107,4 +112,14 @@ export class SpaceEvent {
     (permissionRequest) => permissionRequest.space,
   )
   permissionRequests: PermissionRequest[];
+
+  @OneToMany(
+    () => SpaceEventImage,
+    (spaceEventImage) => spaceEventImage.spaceEvent,
+  )
+  spaceEventImages: SpaceEventImage[];
+
+  @ManyToMany(() => Topic, (topic) => topic.spaceEvents)
+  @JoinTable({ name: 'space_event_topic' })
+  topics: Topic;
 }

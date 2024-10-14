@@ -11,7 +11,7 @@ import { SpaceEvent } from './space-event.entity';
 import { Topic } from './topic.entity';
 
 @Entity()
-export class Space {
+export class RuleHistory {
   @PrimaryGeneratedColumn('uuid')
   @ApiProperty({ description: 'uuid' })
   id: string;

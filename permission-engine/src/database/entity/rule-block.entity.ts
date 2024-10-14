@@ -52,6 +52,6 @@ export class RuleBlock {
   updatedAt: Date;
 
   @ManyToMany(() => Rule, (rule) => rule.ruleBlocks)
-  @JoinTable()
+  @JoinTable({ name: 'rule_rule_block' })
   rules: Rule;
 }

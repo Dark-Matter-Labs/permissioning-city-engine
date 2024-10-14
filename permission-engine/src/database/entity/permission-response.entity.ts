@@ -14,7 +14,7 @@ import { Topic } from './topic.entity';
 import { User } from './user.entity';
 
 @Entity()
-export class Space {
+export class PermissionReqponse {
   @PrimaryGeneratedColumn('uuid')
   @ApiProperty({ description: 'uuid' })
   id: string;
@@ -33,7 +33,7 @@ export class Space {
 
   @Column()
   @ApiProperty({ description: 'Space zipcode' })
-  zipcode: number;
+  zipcode: string;
 
   @Column()
   @ApiProperty({ description: 'Country' })

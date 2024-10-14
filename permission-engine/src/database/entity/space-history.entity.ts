@@ -26,7 +26,7 @@ export class SpaceHistory {
 
   @Column()
   @ApiProperty({ description: 'Space zipcode' })
-  zipcode: number;
+  zipcode: string;
 
   @Column()
   @ApiProperty({ description: 'Country' })
