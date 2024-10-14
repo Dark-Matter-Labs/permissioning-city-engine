@@ -84,12 +84,13 @@ services:
     env_file:
       - .env
     volumes:
-      - ./logs/ptc-dashboard:/app/log
+      - ./ptc-dashboard:/app
+      - /app/node_modules
     logging:
       options:
         max-size: "10m"
         max-file: "5"
-    command: ["npm", "run", "start"] # TODO. update prod script
+    command: ["npm", "run", "start"]
     depends_on:
       - permission-engine
     restart: always
