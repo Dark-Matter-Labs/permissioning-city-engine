@@ -24,10 +24,14 @@ import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { UserService } from '../user/user.service';
 import { SpaceService } from '../space/space.service';
-import { FileInterceptor } from '@nestjs/platform-express';
+import {
+  FileFieldsInterceptor,
+  FileInterceptor,
+} from '@nestjs/platform-express';
 import { S3Service } from 'src/lib/s3/s3.service';
 import { SpaceEventImageService } from '../space-event-image/space-event-image.service';
 import { Logger } from 'src/lib/logger/logger.service';
+import { Express } from 'express';
 
 @ApiTags('event')
 @Controller('api/v1/event')
@@ -96,7 +100,7 @@ export class SpaceEventController {
         details: { type: 'string' },
         link: { type: 'string' },
         duration: { type: 'string' },
-        startsAt: { type: 'datetimestring' },
+        startsAt: { type: 'string', format: 'date-time' },
         images: {
           type: 'array',
           items: {
@@ -108,18 +112,16 @@ export class SpaceEventController {
     },
   })
   @UseInterceptors(
-    FileInterceptor('images', {
-      limits: {
-        files: 5,
-        fileSize: 1024 * 1024 * 10, // 10MB
-      },
-      fileFilter: (req, file, cb) => {
+    FileFieldsInterceptor([{ name: 'images', maxCount: 5 }], {
+      fileFilter(req, file, cb) {
         if (
           ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'].includes(
             file.mimetype,
           ) === false
         ) {
-          cb(new Error('Invalid file type'), false);
+          cb(new BadRequestException('file must be an image'), false);
+        } else {
+          cb(null, true);
         }
       },
     }),
@@ -128,33 +130,33 @@ export class SpaceEventController {
   @ApiOperation({ summary: 'Create SpaceEvent' })
   async create(
     @Req() req,
-    @UploadedFiles() images: Array<Express.Multer.File>,
+    @UploadedFiles() uploadedFiles: { images: Express.MulterS3.File[] },
     @Body() createSpaceEventDto: CreateSpaceEventDto,
   ) {
     const user = await this.userService.findOneByEmail(req.user.email);
     this.logger.log('user', user);
+
     const spaceEvent = await this.spaceEventService.create(
       user.id,
       createSpaceEventDto,
     );
     this.logger.log('spaceEvent', spaceEvent);
 
-    images?.map(async (file) => {
-      try {
-        this.logger.log('uploading file', file);
-        const fileUrl = await this.s3Service.uploadFile(file);
-        this.logger.log('fileUrl', fileUrl);
+    const { images } = uploadedFiles;
 
+    images?.map(async (s3File) => {
+      try {
         await this.spaceEventImageService
           .create({
+            id: s3File.key.split('_')[0],
             spaceEventId: spaceEvent.id,
-            link: fileUrl,
+            link: s3File.location,
           })
           .then((res) => {
             this.logger.log('spaceEventImage created', res);
           });
       } catch (error) {
-        this.logger.error('Failed to upload image', error);
+        this.logger.error('Failed to create spaceEventImage', error);
       }
     });
 

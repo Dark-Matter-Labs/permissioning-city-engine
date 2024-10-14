@@ -29,7 +29,7 @@ export class SpaceEventImageService {
   ): Promise<SpaceEventImage> {
     const spaceEventImage = this.spaceEventImageRepository.create({
       ...createSpaceEventImageDto,
-      id: uuidv4(),
+      id: createSpaceEventImageDto.id ?? uuidv4(),
     });
 
     return this.spaceEventImageRepository.save(spaceEventImage);

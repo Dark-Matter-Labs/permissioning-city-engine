@@ -20,8 +20,12 @@ import { S3Service } from 'src/lib/s3/s3.service';
 import { S3Module } from 'src/lib/s3/s3.module';
 import { SpaceEventImage } from 'src/database/entity/space-event-image.entity';
 import { SpaceEventImageService } from '../space-event-image/space-event-image.service';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import configuration from 'src/config/configuration';
+import { MulterModule } from '@nestjs/platform-express';
+import multerS3 from 'multer-s3';
+import { S3Client } from '@aws-sdk/client-s3';
+import { v4 as uuidv4 } from 'uuid';
 
 @Module({
   imports: [
@@ -38,6 +42,25 @@ import configuration from 'src/config/configuration';
       SpacePermissioner,
       RuleBlock,
     ]),
+    MulterModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        storage: multerS3({
+          s3: new S3Client({
+            credentials: {
+              accessKeyId: configService.get('AWS_ACCESS_KEY_ID'),
+              secretAccessKey: configService.get('AWS_SECRET_ACCESS_KEY'),
+            },
+            region: configService.get('AWS_REGION'),
+          }),
+          bucket: configService.get('AWS_S3_BUCKET_NAME'),
+          key: (req, file, cb) => {
+            cb(null, `${uuidv4()}_${file.originalname}`);
+          },
+        }),
+      }),
+    }),
     S3Module,
   ],
   controllers: [SpaceEventController],
