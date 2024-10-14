@@ -42,7 +42,6 @@ Table space_image {
   link text [not null]
   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
   updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
-  
 }
 Ref: space_image.space_id > space.id
 
@@ -79,7 +78,7 @@ Table space_event {
   status varchar [not null, default: 'pending', note: 'pending, permission_requested, permission_approved, permission_approved_with_condition, permission_rejected, running, complete']
   details text
   is_active bool [not null, default: true]
-  link text [not null]
+  link text 
   duration varchar [not null]
   starts_at timestamptz [not null]
   ends_at timestamptz [not null]
