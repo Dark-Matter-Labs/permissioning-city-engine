@@ -10,6 +10,9 @@ import { CreateSpaceDto, UpdateSpaceDto } from './dto';
 import { User } from 'src/database/entity/user.entity';
 import { Rule } from 'src/database/entity/rule.entity';
 import { SpacePermissioner } from 'src/database/entity/space-permissioner.entity';
+import { v4 as uuidv4 } from 'uuid';
+import { RuleBlockType } from 'src/lib/type';
+import { RuleBlock } from 'src/database/entity/rule-block.entity';
 
 @Injectable()
 export class SpaceService {
@@ -48,6 +51,7 @@ export class SpaceService {
   create(ownerId: string, createSpaceDto: CreateSpaceDto): Promise<Space> {
     const space = this.spaceRepository.create({
       ...createSpaceDto,
+      id: uuidv4(),
       ownerId,
     });
 
@@ -85,5 +89,17 @@ export class SpaceService {
       id: spaceId,
       ownerId: userId,
     });
+  }
+
+  async findPostEventCheckRuleBlocks(id: string): Promise<RuleBlock[]> {
+    const space = await this.spaceRepository.findOneBy({ id });
+    const rule = await this.ruleRepository.findOne({
+      where: { id: space.ruleId },
+      relations: ['ruleBlocks'],
+    });
+
+    return rule.ruleBlocks.filter(
+      (item) => item.type === RuleBlockType.spacePostEventCheck,
+    );
   }
 }

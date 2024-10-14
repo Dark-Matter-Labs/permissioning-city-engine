@@ -16,6 +16,7 @@ import { SpaceEvent } from 'src/database/entity/space-event.entity';
 import { SpaceEventService } from '../space-event/space-event.service';
 import { SpacePermissioner } from 'src/database/entity/space-permissioner.entity';
 import { SpacePermissionerService } from '../space-permissioner/space-permissioner.service';
+import { Logger } from 'src/lib/logger/logger.service';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { SpacePermissionerService } from '../space-permissioner/space-permission
     PermissionRequestService,
     SpaceEventService,
     SpacePermissionerService,
+    Logger,
   ],
 })
 export class SpaceModule {}
