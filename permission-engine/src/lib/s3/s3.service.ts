@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import * as AWS from 'aws-sdk';
 import * as fs from 'fs';
 import { Logger } from '../logger/logger.service';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class S3Service {
@@ -21,7 +22,7 @@ export class S3Service {
     });
   }
 
-  async uploadFile(filePath: string, key: string) {
+  async uploadFileFromPath(filePath: string, key: string) {
     const fileContent = fs.readFileSync(filePath);
 
     // Setting up S3 upload parameters
@@ -53,6 +54,20 @@ export class S3Service {
     } catch (error) {
       this.logger.error('Failed to upload file', error);
     }
+  }
+
+  async uploadFile(file: Express.Multer.File): Promise<string> {
+    const key = `${uuidv4()}-${file.originalname}`;
+
+    const params = {
+      Bucket: this.bucket,
+      Key: key,
+      Body: file.buffer,
+      ContentType: file.mimetype,
+    };
+
+    const uploadResult = await this.s3.upload(params).promise();
+    return uploadResult.Location;
   }
 
   async downloadFile(key: string, downloadPath: string) {
