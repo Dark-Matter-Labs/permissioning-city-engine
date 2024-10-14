@@ -1,19 +1,15 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, In, Repository, UpdateResult } from 'typeorm';
+import { FindOptionsWhere, In, Repository } from 'typeorm';
 import { Rule } from '../../database/entity/rule.entity';
-import {
-  CreateRuleDto,
-  FindAllRuleDto,
-  ForkRuleDto,
-  UpdateRuleDto,
-} from './dto';
+import { CreateRuleDto, FindAllRuleDto, UpdateRuleDto } from './dto';
 import { RuleBlockType, RuleTarget } from 'src/lib/type';
 import { RuleBlock } from 'src/database/entity/rule-block.entity';
 import { User } from 'src/database/entity/user.entity';
 import { PermissionRequest } from 'src/database/entity/permission-request.entity';
 import { Space } from 'src/database/entity/space.entity';
 import * as Util from 'src/lib/util/util';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class RuleService {
@@ -67,11 +63,19 @@ export class RuleService {
   }
 
   findOneById(id: string): Promise<Rule> {
-    return this.ruleRepository.findOneBy({ id });
+    return this.ruleRepository.findOne({
+      where: {
+        id,
+      },
+      relations: ['ruleBlocks', 'topics'],
+    });
   }
 
   findOneByName(name: string): Promise<Rule> {
-    return this.ruleRepository.findOneBy({ name });
+    return this.ruleRepository.findOne({
+      where: { name },
+      relations: ['ruleBlocks', 'topics'],
+    });
   }
 
   async remove(id: string): Promise<void> {
@@ -91,7 +95,7 @@ export class RuleService {
     );
 
     if (target === RuleTarget.space) {
-      if (ruleBlocks.find((item) => item.type.startsWith('space_event'))) {
+      if (ruleBlocks.find((item) => item.type.startsWith('space_event:'))) {
         throw new BadRequestException('Target mismatch');
       }
 
@@ -99,13 +103,13 @@ export class RuleService {
         (item) => item.type === RuleBlockType.spaceConsentMethod,
       );
 
-      if (spaceConsentMethodBlocks.length > 1) {
+      if (spaceConsentMethodBlocks.length !== 1) {
         throw new BadRequestException(
-          'There can be only one RuleBlock with space:consent_method type.',
+          'There should be one RuleBlock with space:consent_method type.',
         );
       }
     } else if (target === RuleTarget.spaceEvent) {
-      if (ruleBlocks.find((item) => item.type.startsWith('space'))) {
+      if (ruleBlocks.find((item) => item.type.startsWith('space:'))) {
         throw new BadRequestException('Target mismatch');
       }
     } else {
@@ -114,6 +118,7 @@ export class RuleService {
 
     const rule = this.ruleRepository.create({
       ...createRuleDto,
+      id: uuidv4(),
       authorId,
       ruleBlocks,
       hash,
@@ -122,7 +127,10 @@ export class RuleService {
     return this.ruleRepository.save(rule);
   }
 
-  async fork(authorId: string, forkRuleDto: ForkRuleDto): Promise<Rule> {
+  async fork(
+    authorId: string,
+    forkRuleDto: { id: string; name?: string },
+  ): Promise<Rule> {
     const { name, id } = forkRuleDto;
     const rule = await this.ruleRepository.findOneBy({ id });
 
@@ -131,10 +139,11 @@ export class RuleService {
     }
 
     const newRule = this.ruleRepository.create({
+      ...rule,
+      id: uuidv4(),
       parentRuleId: id,
       authorId,
       name: name ?? rule.name,
-      ...rule,
     });
 
     return this.ruleRepository.save(newRule);
@@ -145,12 +154,15 @@ export class RuleService {
    * Cannot update space rule
    * Cannot update spaceEvent rule when permission is requested
    */
-  async update(
+  async archiveAndUpdate(
     id: string,
     updateRuleDto: UpdateRuleDto,
-  ): Promise<UpdateResult> {
+  ): Promise<{ archivedRule: Rule; updatedRule: Rule }> {
     const { name, ruleBlockIds } = updateRuleDto;
-    const rule = await this.ruleRepository.findOneBy({ id });
+    const rule = await this.ruleRepository.findOne({
+      where: { id },
+      relations: ['ruleBlocks'],
+    });
 
     if (!rule) {
       throw new BadRequestException();
@@ -179,14 +191,15 @@ export class RuleService {
         (item) => item.type === RuleBlockType.spaceConsentMethod,
       );
 
-      if (spaceConsentMethodBlocks.length > 1) {
+      if (spaceConsentMethodBlocks.length !== 1) {
         throw new BadRequestException(
-          'There can be only one RuleBlock with space:consent_method type.',
+          'There should be one RuleBlock with space:consent_method type.',
         );
       }
 
       // check if space assigned: it needs permission from the space permissioners
       const space = await this.spaceRepository.findOneBy({ ruleId: id });
+
       if (space) {
         throw new BadRequestException(
           'This rule is being used. Try forking it.',
@@ -203,6 +216,7 @@ export class RuleService {
         await this.permissionRequestRepository.findOneBy({
           spaceEventRuleId: id,
         });
+
       if (permissionRequest) {
         throw new BadRequestException(
           'This rule is being used. Try forking it or wait until permission request is resolved.',
@@ -212,10 +226,28 @@ export class RuleService {
       throw new BadRequestException();
     }
 
-    return this.ruleRepository.update(rule.id, {
+    // fork rule for archive
+    const archive = this.ruleRepository.create({
+      ...rule,
+      id: uuidv4(),
+      parentRuleId: rule.id,
+      authorId: rule.authorId,
+      name: `${rule.name}-${Date.now()}`,
+      ruleBlocks: rule.ruleBlocks,
+    });
+
+    // save archive
+    const archivedRule = await this.ruleRepository.save(archive);
+    const updatedRule = await this.ruleRepository.save({
+      ...rule,
       name: name ?? rule.name,
       hash,
       ruleBlocks,
     });
+
+    return {
+      archivedRule,
+      updatedRule,
+    };
   }
 }

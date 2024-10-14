@@ -9,6 +9,7 @@ import {
   Query,
   Req,
   Put,
+  BadRequestException,
 } from '@nestjs/common';
 import { RuleService } from './rule.service';
 import { Rule } from '../../database/entity/rule.entity';
@@ -16,7 +17,6 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateRuleDto } from './dto/create-rule.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { ForkRuleDto, UpdateRuleDto } from './dto';
-import { UpdateResult } from 'typeorm';
 import { FindAllRuleDto } from './dto';
 import { UserService } from '../user/user.service';
 
@@ -66,31 +66,38 @@ export class RuleController {
     return this.ruleService.create(user.id, createRuleDto);
   }
 
-  @Post('fork')
+  @Post(':id/fork')
   @ApiOperation({ summary: 'Fork a rule' })
   @UseGuards(JwtAuthGuard)
-  async fork(@Req() req, @Body() forkRuleDto: ForkRuleDto): Promise<Rule> {
+  async fork(
+    @Req() req,
+    @Param('id') id: string,
+    @Body() forkRuleDto: ForkRuleDto,
+  ): Promise<Rule> {
     const user = await this.userService.findOneByEmail(req.user.email);
 
-    return this.ruleService.fork(user.id, forkRuleDto);
+    return this.ruleService.fork(user.id, { ...forkRuleDto, id });
   }
 
   @Put(':id')
-  @ApiOperation({ summary: 'Update rule' })
+  @ApiOperation({ summary: 'Update and archive rule' })
   @UseGuards(JwtAuthGuard)
-  async update(
+  async archiveAndUpdate(
     @Req() req,
     @Param('id') id: string,
     @Body() updateRuleDto: UpdateRuleDto,
-  ): Promise<UpdateResult> {
+  ): Promise<{ archivedRule: Rule; updatedRule: Rule }> {
     const user = await this.userService.findOneByEmail(req.user.email);
-
     const rule = await this.ruleService.findOneById(id);
+
+    if (!rule) {
+      throw new BadRequestException();
+    }
 
     if (rule.authorId !== user.id) {
       throw new ForbiddenException();
     }
 
-    return this.ruleService.update(id, updateRuleDto);
+    return this.ruleService.archiveAndUpdate(id, updateRuleDto);
   }
 }

@@ -1,5 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import {
+  ArrayMaxSize,
+  ArrayMinSize,
+  IsArray,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MaxLength,
+} from 'class-validator';
 
 export class UpdateRuleDto {
   @IsOptional()
@@ -10,6 +18,9 @@ export class UpdateRuleDto {
 
   @IsOptional()
   @IsUUID('4', { each: true })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(100)
   @ApiProperty({ description: 'Array of ruleBlockIds', required: true })
   ruleBlockIds?: string[];
 }
