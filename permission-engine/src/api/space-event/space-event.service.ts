@@ -94,27 +94,30 @@ export class SpaceEventService {
       params.push(`%${name}%`);
     }
 
-    const whereClause = where.length > 0 ? 'WHERE' : '';
     const query = `
       WITH filtered_data AS (
         SELECT (
-          id,
-          name,
-          organizer_id,
-          space_id,
-          permission_request_id,
-          external_service_id,
-          status,
-          details,
-          is_active,
-          link,
-          duration,
-          starts_at,
-          ends_at,
-          created_at,
-          updated_at
+          space_event.id,
+          space_event.name,
+          space_event.organizer_id,
+          space_event.space_id,
+          space_event.permission_request_id,
+          space_event.external_service_id,
+          space_event.status,
+          space_event.details,
+          space_event.is_active,
+          space_event.link,
+          space_event.duration,
+          space_event.starts_at,
+          space_event.ends_at,
+          space_event.created_at,
+          space_event.updated_at,
+          ARRAY_AGG(space_event_image)
         ) FROM space_event
-        ${whereClause} ${where.join(' AND ')}
+        LEFT JOIN space_event_image
+        ON space_event.id = space_event_image.space_event_id
+        WHERE space_event.id = space_event_image.space_event_id AND ${where.join(' AND ')}
+        GROUP BY space_event.id
       )
       SELECT COUNT(*) AS total, json_agg(filtered_data) AS data
       FROM filtered_data
@@ -146,6 +149,7 @@ export class SpaceEventService {
           endsAt: item.row.f13,
           createdAt: item.row.f14,
           updatedAt: item.row.f15,
+          spaceEventImages: item.row.f16,
         };
       });
     }
