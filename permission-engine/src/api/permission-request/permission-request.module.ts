@@ -15,6 +15,7 @@ import { RuleBlock } from 'src/database/entity/rule-block.entity';
 import { RuleBlockService } from '../rule-block/rule-block.service';
 import { SpacePermissioner } from 'src/database/entity/space-permissioner.entity';
 import { SpacePermissionerService } from '../space-permissioner/space-permissioner.service';
+import { Logger } from 'src/lib/logger/logger.service';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { SpacePermissionerService } from '../space-permissioner/space-permission
     RuleService,
     RuleBlockService,
     SpacePermissionerService,
+    Logger,
   ],
 })
 export class PermissionRequestModule {}

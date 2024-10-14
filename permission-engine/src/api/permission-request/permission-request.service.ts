@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Space } from 'src/database/entity/space.entity';
 import { SpaceEvent } from 'src/database/entity/space-event.entity';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class PermissionRequestService {
@@ -109,7 +110,10 @@ export class PermissionRequestService {
       dto.spaceEventRuleId = spaceEvent.ruleId;
     }
 
-    const permissionRequest = this.permissionRequestRepository.create(dto);
+    const permissionRequest = this.permissionRequestRepository.create({
+      ...dto,
+      id: uuidv4(),
+    });
 
     return this.permissionRequestRepository.save(permissionRequest);
   }
