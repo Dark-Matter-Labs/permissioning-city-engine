@@ -79,6 +79,27 @@ services:
     networks:
       - permission_engine_network
 
+  ptc-dashboard:
+    build:
+      context: ./ptc-dashboard
+    container_name: ptc-dashboard
+    env_file:
+      - .env
+    volumes:
+      - ./logs/ptc-dashboard:/app/log
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "5"
+    ports:
+      - "5173:5173"
+    command: ["npm", "run", "start"] # TODO. update prod script
+    depends_on:
+      - permission-engine
+    restart: always
+    networks:
+      - permission_engine_network
+
 networks:
   permission_engine_network:
     driver: bridge

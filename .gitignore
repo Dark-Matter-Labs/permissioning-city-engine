@@ -27,3 +27,5 @@ logs/
 data/
 certbot/
 letsencrypt/
+
+TODO.md
