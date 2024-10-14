@@ -70,8 +70,6 @@ services:
       options:
         max-size: "10m"
         max-file: "5"
-    ports:
-      - "3000:3000"
     command: ["npm", "run", "start:prod"]
     depends_on:
       - postgres
@@ -91,8 +89,6 @@ services:
       options:
         max-size: "10m"
         max-file: "5"
-    ports:
-      - "5173:5173"
     command: ["npm", "run", "start"] # TODO. update prod script
     depends_on:
       - permission-engine
