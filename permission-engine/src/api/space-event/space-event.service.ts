@@ -93,7 +93,7 @@ export class SpaceEventService {
       where.push(`name LIKE $${paramIndex}`);
       params.push(`%${name}%`);
     }
-
+    const whereClause = where.length > 0 ? 'WHERE' : '';
     const query = `
       WITH filtered_data AS (
         SELECT (
@@ -101,6 +101,7 @@ export class SpaceEventService {
           space_event.name,
           space_event.organizer_id,
           space_event.space_id,
+          space_event.rule_id,
           space_event.permission_request_id,
           space_event.external_service_id,
           space_event.status,
@@ -116,7 +117,7 @@ export class SpaceEventService {
         ) FROM space_event
         LEFT JOIN space_event_image
         ON space_event.id = space_event_image.space_event_id
-        WHERE space_event.id = space_event_image.space_event_id AND ${where.join(' AND ')}
+        ${whereClause} ${where.join(' AND ')}
         GROUP BY space_event.id
       )
       SELECT COUNT(*) AS total, json_agg(filtered_data) AS data
