@@ -61,18 +61,30 @@ CREATE TABLE "topic" (
   "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
 );
 
+CREATE TABLE "space_equipment" (
+  "id" uuid PRIMARY KEY,
+  "space_id" uuid,
+  "name" varchar NOT NULL,
+  "type" varchar,
+  "quantity" integer NOT NULL DEFAULT 1,
+  "details" text,
+  "is_active" bool NOT NULL DEFAULT true,
+  "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
+  "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
+);
+
 CREATE TABLE "space_event" (
   "id" uuid PRIMARY KEY,
   "organizer_id" uuid NOT NULL,
   "space_id" uuid,
-  "rule_id" uuid NOT NULL,
+  "rule_id" uuid,
   "permission_request_id" uuid,
   "external_service_id" uuid,
   "name" varchar NOT NULL,
   "status" varchar NOT NULL DEFAULT 'pending',
   "details" text,
   "is_active" bool NOT NULL DEFAULT true,
-  "link" text NOT NULL,
+  "link" text,
   "duration" varchar NOT NULL,
   "starts_at" timestamptz NOT NULL,
   "ends_at" timestamptz NOT NULL,
@@ -239,6 +251,8 @@ ALTER TABLE "space" ADD FOREIGN KEY ("rule_id") REFERENCES "rule" ("id");
 ALTER TABLE "space_image" ADD FOREIGN KEY ("space_id") REFERENCES "space" ("id");
 
 ALTER TABLE "external_service" ADD FOREIGN KEY ("owner_id") REFERENCES "user" ("id");
+
+ALTER TABLE "space_equipment" ADD FOREIGN KEY ("space_id") REFERENCES "space" ("id");
 
 ALTER TABLE "space_event" ADD FOREIGN KEY ("organizer_id") REFERENCES "user" ("id");
 

@@ -78,7 +78,7 @@ Table space_equipment {
   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
   updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
 }
-Ref: space_event.space_id > space.id
+Ref: space_equipment.space_id > space.id
 
 Table space_event {
   id uuid [primary key]

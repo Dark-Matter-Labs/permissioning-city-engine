@@ -57,5 +57,8 @@ export class DatabaseService implements OnModuleInit {
     await this._runSQLQueryByName(
       '/migrations/space-event-rule-id-drop-not-null',
     );
+    await this._runSQLQueryByName(
+      '/migrations/space-equipment-add-column-quantity',
+    );
   }
 }
