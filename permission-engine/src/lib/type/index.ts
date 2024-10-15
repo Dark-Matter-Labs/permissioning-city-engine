@@ -32,6 +32,7 @@ export enum RuleBlockType {
   // spaceEvent
   spaceEventGeneral = 'space_event:general',
   spaceEventAccess = 'space_event:access',
+  spaceEventRequireEquipment = 'space_event:require_equipment',
 }
 
 export enum PermissionRequestStatus {

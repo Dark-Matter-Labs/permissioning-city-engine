@@ -72,6 +72,7 @@ Table space_equipment {
   space_id uuid
   name varchar [not null]
   type varchar
+  quantity integer [not null, default: 1]
   details text
   is_active bool [not null, default: true]
   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
