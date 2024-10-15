@@ -31,8 +31,27 @@ export enum RuleBlockType {
   spacePostEventCheck = 'space:post_event_check',
   // spaceEvent
   spaceEventGeneral = 'space_event:general',
-  spaceEventAccess = 'space_event:access',
-  spaceEventRequireEquipment = 'space_event:require_equipment',
+  spaceEventAccess = 'space_event:access', // {public|invited}:{free|paid}
+  spaceEventRequireEquipment = 'space_event:require_equipment', // {equipment}:{number}
+  spaceEventExpectedAttendeeCount = 'space_event:expected_attendee_count', // number
+  spaceEventException = 'space_event:exception', // uuid of space rule block
+  spaceEventBenefit = 'space_event:benefit',
+  spaceEventRisk = 'space_event:risk',
+}
+
+export enum SpaceEquipmentType {
+  general = 'general',
+  audio = 'audio',
+  video = 'video',
+  lighting = 'lighting',
+  stationery = 'stationery',
+  furniture = 'furniture',
+  sports = 'sports',
+  kitchen = 'kitchen',
+  craft = 'craft',
+  safty = 'safty',
+  computer = 'computer',
+  facility = 'facility',
 }
 
 export enum PermissionRequestStatus {
