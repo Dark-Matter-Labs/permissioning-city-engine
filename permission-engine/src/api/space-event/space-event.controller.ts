@@ -92,16 +92,50 @@ export class SpaceEventController {
     schema: {
       type: 'object',
       properties: {
-        name: { type: 'string' },
-        organizerId: { type: 'string' },
-        ruleId: { type: 'string' },
-        spaceId: { type: 'string' },
-        externalServiceId: { type: 'string' },
-        details: { type: 'string' },
-        link: { type: 'string' },
-        duration: { type: 'string' },
-        startsAt: { type: 'string', format: 'date-time' },
+        name: {
+          type: 'string',
+          description: 'SpaceEvent name',
+        },
+        organizerId: {
+          type: 'string',
+          description: 'SpaceEvent organizerId in uuid',
+        },
+        ruleId: {
+          type: 'string',
+          nullable: true,
+          description: 'SpaceEvent ruleId in uuid',
+        },
+        spaceId: {
+          type: 'string',
+          nullable: true,
+          description: 'SpaceEvent spaceId in uuid',
+        },
+        externalServiceId: {
+          type: 'string',
+          nullable: true,
+          description: 'SpaceEvent externalServiceId in uuid',
+        },
+        details: {
+          type: 'string',
+          nullable: true,
+          description: 'SpaceEvent details',
+        },
+        link: {
+          type: 'string',
+          nullable: true,
+          description: 'SpaceEvent link for registration or purchase tickets',
+        },
+        duration: {
+          type: 'string',
+          description: 'SpaceEvent duration in {number}{d|w|M|y|h|m|s} format',
+        },
+        startsAt: {
+          type: 'string',
+          format: 'date-time',
+          description: 'SpaceEvent start date',
+        },
         images: {
+          description: 'SpaceEvent images in jpeg|jpg|png|gif',
           type: 'array',
           items: {
             type: 'string',
@@ -134,27 +168,21 @@ export class SpaceEventController {
     @Body() createSpaceEventDto: CreateSpaceEventDto,
   ) {
     const user = await this.userService.findOneByEmail(req.user.email);
-    this.logger.log('user', user);
 
     const spaceEvent = await this.spaceEventService.create(
       user.id,
       createSpaceEventDto,
     );
-    this.logger.log('spaceEvent', spaceEvent);
 
     const { images } = uploadedFiles;
 
     images?.map(async (s3File) => {
       try {
-        await this.spaceEventImageService
-          .create({
-            id: s3File.key.split('_')[0],
-            spaceEventId: spaceEvent.id,
-            link: s3File.location,
-          })
-          .then((res) => {
-            this.logger.log('spaceEventImage created', res);
-          });
+        await this.spaceEventImageService.create({
+          id: s3File.key.split('_')[0],
+          spaceEventId: spaceEvent.id,
+          link: s3File.location,
+        });
       } catch (error) {
         this.logger.error('Failed to create spaceEventImage', error);
       }
@@ -168,18 +196,16 @@ export class SpaceEventController {
   @ApiConsumes('multipart/form-data')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(
-    FileInterceptor('images', {
-      limits: {
-        files: 5,
-        fileSize: 1024 * 1024 * 10, // 10MB
-      },
-      fileFilter: (req, file, cb) => {
+    FileFieldsInterceptor([{ name: 'images', maxCount: 5 }], {
+      fileFilter(req, file, cb) {
         if (
-          ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'].includes[
-            file.mimetype
-          ] === false
+          ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'].includes(
+            file.mimetype,
+          ) === false
         ) {
-          cb(new Error('Invalid file type'), false);
+          cb(new BadRequestException('file must be an image'), false);
+        } else {
+          cb(null, true);
         }
       },
     }),
@@ -187,11 +213,12 @@ export class SpaceEventController {
   async update(
     @Req() req,
     @Param('id') id: string,
+    @UploadedFiles() uploadedFiles: { images: Express.MulterS3.File[] },
     @Body() updateSpaceEventDto: UpdateSpaceEventDto,
-    @UploadedFiles() images: Express.Multer.File[],
   ) {
     const user = await this.userService.findOneByEmail(req.user.email);
     const spaceEvent = await this.spaceEventService.findOneById(id);
+    const { images } = uploadedFiles;
 
     if (spaceEvent.organizerId !== user.id) {
       throw new ForbiddenException();
@@ -205,22 +232,25 @@ export class SpaceEventController {
       spaceEventImages.length -
         removeSpaceEventImageIds.length +
         images.length >
-      10
+      5
     ) {
-      throw new BadRequestException('Up to 10 images are allowed.');
+      throw new BadRequestException('Up to 5 images are allowed.');
     }
 
     removeSpaceEventImageIds.map(async (id) => {
       await this.spaceEventImageService.remove(id);
     });
 
-    images?.map(async (file) => {
-      const fileUrl = await this.s3Service.uploadFile(file);
-
-      await this.spaceEventImageService.create({
-        spaceEventId: spaceEvent.id,
-        link: fileUrl,
-      });
+    images?.map(async (s3File) => {
+      try {
+        await this.spaceEventImageService.create({
+          id: s3File.key.split('_')[0],
+          spaceEventId: spaceEvent.id,
+          link: s3File.location,
+        });
+      } catch (error) {
+        this.logger.error('Failed to create spaceEventImage', error);
+      }
     });
 
     return this.spaceEventService.update(id, updateSpaceEventDto);

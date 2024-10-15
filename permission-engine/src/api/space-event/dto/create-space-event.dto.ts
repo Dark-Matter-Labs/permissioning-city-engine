@@ -31,9 +31,13 @@ export class CreateSpaceEventDto {
   })
   spaceId?: string;
 
+  @IsOptional()
   @IsUUID('4')
-  @ApiProperty({ description: 'SpaceEvent ruleId in uuid' })
-  ruleId: string;
+  @ApiPropertyOptional({
+    description: 'SpaceEvent ruleId in uuid',
+    nullable: true,
+  })
+  ruleId?: string;
 
   @IsOptional()
   @IsUUID('4')
@@ -70,14 +74,4 @@ export class CreateSpaceEventDto {
     description: 'SpaceEvent start date',
   })
   startsAt: Date;
-
-  // @ApiPropertyOptional({
-  //   description: 'SpaceEvent images',
-  //   type: 'array',
-  //   items: {
-  //     type: 'string',
-  //     format: 'binary',
-  //   },
-  // })
-  // images: Array<Express.Multer.File>;
 }
