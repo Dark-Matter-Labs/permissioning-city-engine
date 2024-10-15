@@ -68,6 +68,7 @@ services:
       - ./logs/permission-engine:/app/log
       - ./permission-engine:/app
       - /app/node_modules
+      - /app/dist
     logging:
       options:
         max-size: "10m"
