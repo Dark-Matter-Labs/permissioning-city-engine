@@ -66,11 +66,13 @@ services:
       - .env
     volumes:
       - ./logs/permission-engine:/app/log
+      - ./permission-engine:/app
+      - /app/node_modules
     logging:
       options:
         max-size: "10m"
         max-file: "5"
-    command: ["npm", "run", "start:prod"]
+    command: ["npm", "run", "start:dev"]
     depends_on:
       - postgres
     restart: always
