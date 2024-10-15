@@ -67,6 +67,18 @@ Table topic {
   updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
 }
 
+Table space_equipment {
+  id uuid [primary key]
+  space_id uuid
+  name varchar [not null]
+  type varchar
+  details text
+  is_active bool [not null, default: true]
+  created_at timestamptz [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
+}
+Ref: space_event.space_id > space.id
+
 Table space_event {
   id uuid [primary key]
   organizer_id uuid [not null]
