@@ -60,5 +60,17 @@ export class DatabaseService implements OnModuleInit {
     await this._runSQLQueryByName(
       '/migrations/space-equipment-add-column-quantity',
     );
+    if (process.env.NODE_ENV === 'dev') {
+      try {
+        const mockUpData = await this.pool.query(
+          `SELECT * FROM space_event WHERE name = 'test-space-event-1';`,
+        );
+        if (mockUpData == null) {
+          await this._runSQLQueryByName('/test/insert-mockup-data');
+        }
+      } catch (error) {
+        this.logger.error('Failed to insert mock up data', error);
+      }
+    }
   }
 }
