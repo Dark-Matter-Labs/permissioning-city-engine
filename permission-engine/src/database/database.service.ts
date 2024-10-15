@@ -60,13 +60,15 @@ export class DatabaseService implements OnModuleInit {
     await this._runSQLQueryByName(
       '/migrations/space-equipment-add-column-quantity',
     );
-    // dev environment
+    // mockup data for dev environment
     if (process.env.NODE_ENV === 'dev') {
       try {
+        const testUser = await this.pool.query(`SELECT * FROM "user";`);
         const mockUpData = await this.pool.query(
-          `SELECT * FROM space_event WHERE name = 'test-space-event-1';`,
+          `SELECT * FROM "space_event" WHERE name = 'test-space-event-1';`,
         );
-        if (mockUpData == null) {
+
+        if (testUser.rows.length > 0 && mockUpData.rows.length === 0) {
           await this._runSQLQueryByName('/test/insert-mockup-data');
         }
       } catch (error) {
