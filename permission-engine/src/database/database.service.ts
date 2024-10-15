@@ -53,6 +53,9 @@ export class DatabaseService implements OnModuleInit {
     await this._runSQLQueryByName('tables');
     // indexes
     await this._runSQLQueryByName('indexes');
-    // TODO. migrations
+    // migrations
+    await this._runSQLQueryByName(
+      '/migrations/space-event-rule-id-drop-not-null',
+    );
   }
 }

@@ -1,0 +1,2 @@
+ALTER TABLE space_event
+ALTER COLUMN rule_id DROP NOT NULL;
