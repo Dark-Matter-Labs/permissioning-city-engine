@@ -24,3 +24,26 @@
    - You will be redirected to domain's root path after google login
    - There will be `accessToken` and `refreshToken` set in your cookie
 1. Come back to `http://localhost/api` to continue with Swagger UI
+
+### Clear database and insert mockup data
+
+1. Run clear-database command to remove and backup current data
+
+   ```bash
+   ./script/clear-database.sh
+   ```
+
+1. Run services with `docker compose`
+
+   ```bash
+   docker compose up -d --build
+   ```
+
+1. Go to http://localhost and login to create a user
+1. Restart `permission-engine` container
+
+   ```bash
+   docker restart permission-engine
+   ```
+
+1. Go to http://localhost/api#/space/SpaceController_findAll to check mockup data exists
