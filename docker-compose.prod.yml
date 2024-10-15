@@ -66,8 +66,6 @@ services:
       - .env
     volumes:
       - ./logs/permission-engine:/app/log
-      - ./permission-engine:/app
-      - /app/node_modules
     logging:
       options:
         max-size: "10m"
