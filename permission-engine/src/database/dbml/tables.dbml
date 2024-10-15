@@ -71,7 +71,7 @@ Table space_event {
   id uuid [primary key]
   organizer_id uuid [not null]
   space_id uuid
-  rule_id uuid [not null]
+  rule_id uuid
   permission_request_id uuid
   external_service_id uuid
   name varchar [not null]
