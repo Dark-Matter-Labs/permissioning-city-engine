@@ -11,33 +11,6 @@
 
 1. Set `.env` file with reference `.env.example`
 
-1. To use `http://localhost/api` for development, replace `nginx/conf.d/engine.permissioning.city.conf` with this content (skip this in prod)
-
-   ```nginx
-   server {
-      listen 80;
-      server_name localhost;
-
-      add_header 'Access-Control-Allow-Origin' '*';
-      add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS, PUT, DELETE';
-      add_header 'Access-Control-Allow-Headers' 'Origin, Content-Type, Accept, Authorization';
-      add_header 'Access-Control-Allow-Credentials' 'true';
-
-      location / {
-         proxy_pass http://ptc-dashboard:5173;
-      }
-
-      location /api {
-         proxy_pass http://permission-engine:3000/api;
-         proxy_set_header Host $host;
-         proxy_set_header X-Real-IP $remote_addr;
-         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-         proxy_set_header X-Forwarded-Proto $scheme;
-      }
-   }
-
-   ```
-
 1. Run services with `docker compose`
 
    ```bash
