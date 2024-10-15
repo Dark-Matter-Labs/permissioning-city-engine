@@ -7,7 +7,7 @@
   "license": "GPL-3.0-only",
   "scripts": {
     "build": "nest build",
-    "postbuild": "npm run dbml2sql:table && mkdir -p dist/database/sql && cp src/database/sql/*.sql dist/database/sql",
+    "postbuild": "npm run dbml2sql:table && mkdir -p dist/database/sql && cp src/database/sql/*.sql dist/database/sql && cp src/database/sql/migrations/*.sql dist/database/sql/migrations",
     "dbml2sql:table": "cd src/database && dbml2sql dbml/tables.dbml --postgres > sql/tables.dbml.sql && ts-node script/refine-sql.ts sql/tables.dbml.sql > sql/tables.sql",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
