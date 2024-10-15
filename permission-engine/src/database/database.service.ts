@@ -29,7 +29,12 @@ export class DatabaseService implements OnModuleInit {
   }
 
   async _runSQLQueryByName(name: string): Promise<void> {
-    const queryPath = path.join(__dirname, `sql/${name}.sql`);
+    let queryPath = path.join(__dirname, `sql/${name}.sql`);
+
+    if (process.env.NODE_ENV === 'dev') {
+      queryPath = `/app/src/database/sql/${name}.sql`;
+    }
+
     const querySQL = fs.readFileSync(queryPath, 'utf-8');
     try {
       await this.pool.query(querySQL);
@@ -40,9 +45,14 @@ export class DatabaseService implements OnModuleInit {
   }
 
   async createSchema(): Promise<void> {
+    // extensions
     await this._runSQLQueryByName('extensions');
+    // types
     await this._runSQLQueryByName('types');
+    // tables
     await this._runSQLQueryByName('tables');
+    // indexes
     await this._runSQLQueryByName('indexes');
+    // TODO. migrations
   }
 }
