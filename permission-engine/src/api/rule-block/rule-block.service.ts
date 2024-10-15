@@ -66,7 +66,7 @@ export class RuleBlockService {
     const { type, content, name } = createRuleBlockDto;
     const trimmedContent = content.trim();
     const trimmedName = name.trim();
-    const hash = Util.hash(trimmedContent);
+    const hash = Util.hash([type, trimmedContent].join(':'));
 
     try {
       const ruleBlock = await this.ruleBlockRepository.findOneBy({ hash });
