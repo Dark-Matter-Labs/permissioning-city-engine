@@ -1,0 +1,26 @@
+name: Deploy to Prod
+
+on:
+  push:
+    branches:
+      - prod
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Set up SSH to connect to server
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.5.4
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      # Step 3: Deploy the application
+      - name: Deploy to Prod Server
+        run: |
+          ssh ${{ secrets.PROD_SERVER_USER }}@${{ secrets.PROD_SERVER_IP }} "cd /mnt/ptc/permissioning-city-engine && git pull origin prod && ./scripts/deploy.sh"
