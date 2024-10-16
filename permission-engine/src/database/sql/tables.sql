@@ -220,6 +220,15 @@ CREATE TABLE IF NOT EXISTS "topic_follower" (
   PRIMARY KEY ("topic_id", "user_id")
 );
 
+CREATE TABLE IF NOT EXISTS "migration" (
+  "id" uuid PRIMARY KEY,
+  "name" varchar NOT NULL,
+  "is_successful" bool NOT NULL DEFAULT true,
+  "error_message" text,
+  "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
+  "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
+);
+
 CREATE TABLE IF NOT EXISTS "external_service_user" (
   "external_service_id" uuid,
   "user_id" uuid,

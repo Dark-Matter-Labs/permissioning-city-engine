@@ -1,6 +1,5 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-const fs = require('fs');
+import fs from 'fs';
 
 function addForeignKeysIfNotExists(originalSQL: string) {
   // Split the SQL string by lines

@@ -220,6 +220,15 @@ CREATE TABLE "topic_follower" (
   PRIMARY KEY ("topic_id", "user_id")
 );
 
+CREATE TABLE "migration" (
+  "id" uuid PRIMARY KEY,
+  "name" varchar NOT NULL,
+  "is_successful" bool NOT NULL DEFAULT true,
+  "error_message" text,
+  "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
+  "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
+);
+
 COMMENT ON COLUMN "user"."type" IS 'individual, organization, government';
 
 COMMENT ON COLUMN "user"."birth_year" IS 'year of birth';

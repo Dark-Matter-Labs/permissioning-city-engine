@@ -278,6 +278,15 @@ Table topic_follower {
 Ref: topic_follower.user_id > user.id
 Ref: topic_follower.topic_id > topic.id
 
+Table migration {
+  id uuid [primary key]
+  name varchar [not null]
+  is_successful bool [not null, default: true]
+  error_message text
+  created_at timestamptz [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
+}
+
 // Table space_event_attendee {
 //   space_event_id uuid [not null]
 //   user_id uuid [not null]
