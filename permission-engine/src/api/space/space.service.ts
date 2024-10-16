@@ -58,8 +58,11 @@ export class SpaceService {
     return this.spaceRepository.save(space);
   }
 
-  async update(updateSpaceDto: UpdateSpaceDto): Promise<UpdateResult> {
-    const { id, ruleId } = updateSpaceDto;
+  async update(
+    id: string,
+    updateSpaceDto: UpdateSpaceDto,
+  ): Promise<UpdateResult> {
+    const { ruleId } = updateSpaceDto;
 
     if (ruleId != null) {
       const rule = await this.ruleRepository.findOneBy({ id: ruleId });

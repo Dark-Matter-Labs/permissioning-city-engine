@@ -1,11 +1,13 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsArray,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MaxLength,
+} from 'class-validator';
 
 export class UpdateSpaceDto {
-  @IsUUID()
-  @ApiProperty({ description: 'Space id in uuid' })
-  id: string;
-
   @IsOptional()
   @IsString()
   @MaxLength(100)
@@ -58,4 +60,16 @@ export class UpdateSpaceDto {
   @IsString()
   @ApiPropertyOptional({ description: 'Space description' })
   details?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ApiPropertyOptional({
+    description: 'Space images in jpeg|jpg|png|gif',
+    type: 'array',
+    items: {
+      type: 'string',
+      format: 'binary',
+    },
+  })
+  images?: Express.Multer.File[];
 }
