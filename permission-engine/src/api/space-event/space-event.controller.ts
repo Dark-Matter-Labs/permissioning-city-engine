@@ -108,14 +108,12 @@ export class SpaceEventController {
     @UploadedFiles() uploadedFiles: { images: Express.MulterS3.File[] },
     @Body() createSpaceEventDto: CreateSpaceEventDto,
   ) {
+    const { images } = uploadedFiles;
     const user = await this.userService.findOneByEmail(req.user.email);
-
     const spaceEvent = await this.spaceEventService.create(
       user.id,
       createSpaceEventDto,
     );
-
-    const { images } = uploadedFiles;
 
     images?.map(async (s3File) => {
       try {

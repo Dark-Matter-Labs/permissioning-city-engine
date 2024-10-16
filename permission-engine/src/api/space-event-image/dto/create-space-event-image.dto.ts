@@ -5,7 +5,7 @@ export class CreateSpaceEventImageDto {
   @IsOptional()
   @IsUUID('4')
   @ApiProperty({
-    description: 'SpaceEventImage spaceId in uuid',
+    description: 'SpaceEventImage id in uuid',
     nullable: true,
   })
   id?: string;
@@ -13,7 +13,7 @@ export class CreateSpaceEventImageDto {
   @IsNotEmpty()
   @IsUUID('4')
   @ApiProperty({
-    description: 'SpaceEventImage spaceId in uuid',
+    description: 'SpaceEventImage spaceEventId in uuid',
     required: true,
   })
   spaceEventId: string;
