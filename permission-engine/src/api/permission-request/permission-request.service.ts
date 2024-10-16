@@ -76,8 +76,25 @@ export class PermissionRequestService {
       query,
       params,
     );
+
+    let result = [];
+
+    if (data != null) {
+      result = data.map((item) => {
+        return {
+          id: item.row.f1,
+          spaceId: item.row.f2,
+          spaceEventId: item.row.f3,
+          spaceRuleId: item.row.f4,
+          spaceEventRuleId: item.row.f5,
+          status: item.row.f6,
+          createdAt: item.row.f7,
+          updatedAt: item.row.f8,
+        };
+      });
+    }
     return {
-      data: !data ? [] : data,
+      data: result,
       total: parseInt(total),
     };
   }
