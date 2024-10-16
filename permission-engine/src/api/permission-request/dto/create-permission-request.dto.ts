@@ -19,7 +19,8 @@ export class CreatePermissionRequestDto {
   @IsOptional()
   @IsUUID('4')
   @ApiProperty({
-    description: 'Desired spaceRuleId to replace the current spaceRuleId',
+    description:
+      'Desired spaceRuleId to replace the current spaceRuleId (Only allowed to SpacePermissioners)',
     nullable: true,
   })
   spaceRuleId?: string;
