@@ -14,8 +14,6 @@ import { SpacePermissionerService } from '../space-permissioner/space-permission
 import { RuleBlock } from 'src/database/entity/rule-block.entity';
 import { RuleBlockService } from '../rule-block/rule-block.service';
 import { Logger } from 'src/lib/logger/logger.service';
-import { S3Service } from 'src/lib/s3/s3.service';
-import { S3Module } from 'src/lib/s3/s3.module';
 import { SpaceEquipment } from 'src/database/entity/space-equipment.entity';
 import { SpaceEventService } from '../space-event/space-event.service';
 import { SpaceEquipmentService } from './space-equipment.service';
@@ -33,7 +31,6 @@ import { SpaceEquipmentController } from './space-equipment.controller';
       SpacePermissioner,
       RuleBlock,
     ]),
-    S3Module,
   ],
   controllers: [SpaceEquipmentController],
   providers: [
@@ -47,7 +44,6 @@ import { SpaceEquipmentController } from './space-equipment.controller';
     RuleBlockService,
     SpaceService,
     Logger,
-    S3Service,
   ],
 })
 export class SpaceEquipmentModule {}

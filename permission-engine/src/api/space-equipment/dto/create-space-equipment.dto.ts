@@ -28,7 +28,8 @@ export class CreateSpaceEquipmentDto {
 
   @IsString()
   @ApiProperty({
-    description: 'SpaceEquipment type',
+    description:
+      'SpaceEquipment type: general|audio|video|lighting|stationery|furniture|sports|kitchen|craft|safty|computer|facility',
     required: true,
   })
   type: SpaceEquipmentType;

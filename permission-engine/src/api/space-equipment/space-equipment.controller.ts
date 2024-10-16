@@ -23,8 +23,8 @@ import { UserService } from '../user/user.service';
 import { SpaceService } from '../space/space.service';
 import { Logger } from 'src/lib/logger/logger.service';
 
-@ApiTags('event')
-@Controller('api/v1/event')
+@ApiTags('space')
+@Controller('api/v1/space/equipment')
 export class SpaceEquipmentController {
   constructor(
     private readonly spaceEquipmentService: SpaceEquipmentService,

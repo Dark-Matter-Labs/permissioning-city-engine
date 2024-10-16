@@ -1,7 +1,15 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsInt, IsString, MaxLength, Min } from 'class-validator';
+import {
+  IsBoolean,
+  IsInt,
+  IsOptional,
+  IsString,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 export class UpdateSpaceEquipmentDto {
+  @IsOptional()
   @IsString()
   @MaxLength(100)
   @ApiPropertyOptional({
@@ -10,6 +18,7 @@ export class UpdateSpaceEquipmentDto {
   })
   name?: string;
 
+  @IsOptional()
   @IsInt()
   @Min(1)
   @ApiPropertyOptional({
@@ -18,6 +27,7 @@ export class UpdateSpaceEquipmentDto {
   })
   quantity?: number;
 
+  @IsOptional()
   @IsString()
   @MaxLength(1000)
   @ApiPropertyOptional({
@@ -26,6 +36,7 @@ export class UpdateSpaceEquipmentDto {
   })
   details?: string;
 
+  @IsOptional()
   @IsBoolean()
   @ApiPropertyOptional({
     description: 'SpaceEquipment active state',

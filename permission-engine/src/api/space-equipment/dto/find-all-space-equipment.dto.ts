@@ -5,18 +5,18 @@ import {
   IsString,
   IsUUID,
 } from 'class-validator';
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { SpaceEquipmentType } from 'src/lib/type';
 import { PaginationDto } from 'src/lib/dto';
 import { Transform } from 'class-transformer';
 
 export class FindAllSpaceEquipmentDto extends PaginationDto {
   @IsUUID()
-  @ApiPropertyOptional({
+  @ApiProperty({
     description: 'SpaceEquipment spaceId in uuid',
     type: String,
   })
-  spaceId?: string;
+  spaceId: string;
 
   @IsOptional()
   @Transform(({ value }) => (Array.isArray(value) ? value : value.split(',')))
