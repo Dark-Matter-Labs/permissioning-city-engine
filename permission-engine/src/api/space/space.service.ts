@@ -81,7 +81,10 @@ export class SpaceService {
       }
     }
 
-    return this.spaceRepository.update(id, updateSpaceDto);
+    return this.spaceRepository.update(id, {
+      ...updateSpaceDto,
+      updatedAt: new Date(),
+    });
   }
 
   async isOwner(spaceId: string, userId: string): Promise<boolean> {

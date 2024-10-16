@@ -100,6 +100,7 @@ export class SpacePermissionerService {
 
     return this.spacePermissionerRepository.update(id, {
       isActive,
+      updatedAt: new Date(),
     });
   }
 }

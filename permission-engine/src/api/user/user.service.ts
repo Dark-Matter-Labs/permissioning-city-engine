@@ -42,8 +42,8 @@ export class UserService {
     const user = await this.findOneByEmail(email);
 
     return this.userRepository.update(user.id, {
-      updatedAt: new Date(),
       ...updateUserDto,
+      updatedAt: new Date(),
     });
   }
 }

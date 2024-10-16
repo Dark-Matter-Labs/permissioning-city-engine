@@ -59,6 +59,7 @@ export class UserNotificationService {
   complete(id: string): Promise<UpdateResult> {
     return this.userNotificationRepository.update(id, {
       status: UserNotificationStatus.complete,
+      updatedAt: new Date(),
     });
   }
 }
