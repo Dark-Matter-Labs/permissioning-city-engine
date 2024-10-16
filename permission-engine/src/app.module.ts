@@ -24,6 +24,7 @@ import { RuleModule } from './api/rule/rule.module';
 import { SpacePermissionerModule } from './api/space-permissioner/space-permissioner.module';
 import { UserNotificationModule } from './api/user-notification/user-notification.module';
 import { RuleBlockModule } from './api/rule-block/rule-block.module';
+import { SpaceEquipmentModule } from './api/space-equipment/space-equipment.module';
 
 @Module({
   imports: [
@@ -76,6 +77,7 @@ import { RuleBlockModule } from './api/rule-block/rule-block.module';
     UserModule,
     SpaceEventModule,
     SpacePermissionerModule,
+    SpaceEquipmentModule,
     SpaceModule,
     RuleBlockModule,
     RuleModule,
