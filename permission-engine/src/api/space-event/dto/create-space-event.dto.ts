@@ -7,6 +7,7 @@ import {
   IsOptional,
   Matches,
   IsDateString,
+  IsArray,
 } from 'class-validator';
 
 export class CreateSpaceEventDto {
@@ -74,4 +75,16 @@ export class CreateSpaceEventDto {
     description: 'SpaceEvent start date',
   })
   startsAt: Date;
+
+  @IsOptional()
+  @IsArray()
+  @ApiPropertyOptional({
+    description: 'SpaceEvent images in jpeg|jpg|png|gif',
+    type: 'array',
+    items: {
+      type: 'string',
+      format: 'binary',
+    },
+  })
+  images?: Express.Multer.File[];
 }

@@ -24,10 +24,7 @@ import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { UserService } from '../user/user.service';
 import { SpaceService } from '../space/space.service';
-import {
-  FileFieldsInterceptor,
-  FileInterceptor,
-} from '@nestjs/platform-express';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { S3Service } from 'src/lib/s3/s3.service';
 import { SpaceEventImageService } from '../space-event-image/space-event-image.service';
 import { Logger } from 'src/lib/logger/logger.service';
@@ -88,63 +85,7 @@ export class SpaceEventController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        name: {
-          type: 'string',
-          description: 'SpaceEvent name',
-        },
-        organizerId: {
-          type: 'string',
-          description: 'SpaceEvent organizerId in uuid',
-        },
-        ruleId: {
-          type: 'string',
-          nullable: true,
-          description: 'SpaceEvent ruleId in uuid',
-        },
-        spaceId: {
-          type: 'string',
-          nullable: true,
-          description: 'SpaceEvent spaceId in uuid',
-        },
-        externalServiceId: {
-          type: 'string',
-          nullable: true,
-          description: 'SpaceEvent externalServiceId in uuid',
-        },
-        details: {
-          type: 'string',
-          nullable: true,
-          description: 'SpaceEvent details',
-        },
-        link: {
-          type: 'string',
-          nullable: true,
-          description: 'SpaceEvent link for registration or purchase tickets',
-        },
-        duration: {
-          type: 'string',
-          description: 'SpaceEvent duration in {number}{d|w|M|y|h|m|s} format',
-        },
-        startsAt: {
-          type: 'string',
-          format: 'date-time',
-          description: 'SpaceEvent start date',
-        },
-        images: {
-          description: 'SpaceEvent images in jpeg|jpg|png|gif',
-          type: 'array',
-          items: {
-            type: 'string',
-            format: 'binary',
-          },
-        },
-      },
-    },
-  })
+  @ApiBody({ type: CreateSpaceEventDto })
   @UseInterceptors(
     FileFieldsInterceptor([{ name: 'images', maxCount: 5 }], {
       fileFilter(req, file, cb) {
@@ -192,9 +133,10 @@ export class SpaceEventController {
   }
 
   @Put(':id')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Update SpaceEvent' })
   @ApiConsumes('multipart/form-data')
-  @UseGuards(JwtAuthGuard)
+  @ApiBody({ type: UpdateSpaceEventDto })
   @UseInterceptors(
     FileFieldsInterceptor([{ name: 'images', maxCount: 5 }], {
       fileFilter(req, file, cb) {
@@ -224,41 +166,68 @@ export class SpaceEventController {
       throw new ForbiddenException();
     }
 
+    const result = {
+      removedSpaceEventImageIds: [],
+      addedSpaceEventImageIds: [],
+      spaceEventUpdate: null,
+    };
     const removeSpaceEventImageIds =
       updateSpaceEventDto.removeSpaceEventImageIds ?? [];
     const spaceEventImages = spaceEvent.spaceEventImages ?? [];
+    const newImages = images ?? [];
 
     if (
       spaceEventImages.length -
         removeSpaceEventImageIds.length +
-        images.length >
+        newImages.length >
       5
     ) {
       throw new BadRequestException('Up to 5 images are allowed.');
     }
 
-    removeSpaceEventImageIds.map(async (id) => {
-      await this.spaceEventImageService.remove(id);
-    });
+    for (const spaceEventImageId of removeSpaceEventImageIds) {
+      await this.spaceEventImageService.remove(spaceEventImageId).then(() => {
+        result.removedSpaceEventImageIds.push(spaceEventImageId);
+      });
+    }
 
-    images?.map(async (s3File) => {
+    for (const s3File of newImages) {
       try {
-        await this.spaceEventImageService.create({
-          id: s3File.key.split('_')[0],
+        const id = s3File.key.split('_')[0];
+        const spaceEventImage = await this.spaceEventImageService.create({
+          id,
           spaceEventId: spaceEvent.id,
           link: s3File.location,
         });
+
+        result.addedSpaceEventImageIds.push(spaceEventImage.id);
       } catch (error) {
         this.logger.error('Failed to create spaceEventImage', error);
       }
-    });
+    }
 
-    return this.spaceEventService.update(id, updateSpaceEventDto);
+    if (
+      updateSpaceEventDto.name != null ||
+      updateSpaceEventDto.ruleId != null ||
+      updateSpaceEventDto.permissionRequestId != null ||
+      updateSpaceEventDto.externalServiceId != null ||
+      updateSpaceEventDto.details != null ||
+      updateSpaceEventDto.link != null ||
+      updateSpaceEventDto.duration != null ||
+      updateSpaceEventDto.startsAt != null
+    ) {
+      result.spaceEventUpdate = await this.spaceEventService.update(
+        id,
+        updateSpaceEventDto,
+      );
+    }
+
+    return result;
   }
 
   @Post(':id/run')
-  @ApiOperation({ summary: 'Run SpaceEvent' })
   @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Run SpaceEvent' })
   async run(@Req() req, @Param('id') id: string) {
     const user = await this.userService.findOneByEmail(req.user.email);
     const spaceEvent = await this.spaceEventService.findOneById(id);
@@ -272,8 +241,8 @@ export class SpaceEventController {
   }
 
   @Get(':id/complete')
-  @ApiOperation({ summary: 'Get post event check lists of SpaceEvent' })
   @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Get post event check lists of SpaceEvent' })
   async findPostEventCheckRuleBlocks(@Req() req, @Param('id') id: string) {
     const user = await this.userService.findOneByEmail(req.user.email);
     const spaceEvent = await this.spaceEventService.findOneById(id);
@@ -290,22 +259,21 @@ export class SpaceEventController {
   }
 
   @Post(':id/complete')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Complete SpaceEvent' })
   @ApiConsumes('multipart/form-data')
-  @UseGuards(JwtAuthGuard)
+  @ApiBody({ type: CompleteSpaceEventDto })
   @UseInterceptors(
-    FileInterceptor('images', {
-      limits: {
-        files: 5,
-        fileSize: 1024 * 1024 * 10, // 10MB
-      },
-      fileFilter: (req, file, cb) => {
+    FileFieldsInterceptor([{ name: 'images', maxCount: 5 }], {
+      fileFilter(req, file, cb) {
         if (
-          ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'].includes[
-            file.mimetype
-          ] === false
+          ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'].includes(
+            file.mimetype,
+          ) === false
         ) {
-          cb(new Error('Invalid file type'), false);
+          cb(new BadRequestException('file must be an image'), false);
+        } else {
+          cb(null, true);
         }
       },
     }),
@@ -313,28 +281,77 @@ export class SpaceEventController {
   async complete(
     @Req() req,
     @Param('id') id: string,
+    @UploadedFiles() uploadedFiles: { images: Express.MulterS3.File[] },
     @Body() completeSpaceEventDto: CompleteSpaceEventDto,
-    @UploadedFiles() images: Express.Multer.File[],
   ) {
     const user = await this.userService.findOneByEmail(req.user.email);
     const spaceEvent = await this.spaceEventService.findOneById(id);
+    const { images } = uploadedFiles;
 
     if (spaceEvent.organizerId !== user.id) {
       throw new ForbiddenException();
     }
 
-    images?.map(async (file) => {
-      const fileUrl = await this.s3Service.uploadFile(file);
+    const result = {
+      addedSpaceEventImageIds: [],
+      spaceEventUpdate: null,
+    };
+    const newImages = images ?? [];
+    const incompletePostEventCheckRuleBlockIds =
+      completeSpaceEventDto.incompletePostEventCheckRuleBlockIds ?? [];
+    const { completePostEventCheckRuleBlockIds, details } =
+      completeSpaceEventDto;
 
-      await this.spaceEventImageService.create({
-        spaceEventId: spaceEvent.id,
-        link: fileUrl,
-      });
-    });
+    if (newImages.length > 5) {
+      throw new ForbiddenException('Up to 5 images are allowed');
+    }
+
+    for (const s3File of newImages) {
+      try {
+        const id = s3File.key.split('_')[0];
+        const spaceEventImage = await this.spaceEventImageService.create({
+          id,
+          spaceEventId: spaceEvent.id,
+          link: s3File.location,
+        });
+
+        result.addedSpaceEventImageIds.push(spaceEventImage.id);
+      } catch (error) {
+        this.logger.error('Failed to create spaceEventImage', error);
+      }
+    }
 
     // TODO. create SpaceHistory record with completeSpaceEventDto data
     // TODO. if there is completeSpaceEventDto.details: issue reported to space -> recored as `issue_report` type to SpaceHistory -> notification sent to PG
+    const postEventCheckList =
+      await this.spaceService.findPostEventCheckRuleBlocks(spaceEvent.spaceId);
 
-    return this.spaceEventService.complete(id);
+    if (
+      postEventCheckList
+        .map((item) => item.id)
+        .sort()
+        .join() !==
+      [
+        ...completePostEventCheckRuleBlockIds,
+        ...incompletePostEventCheckRuleBlockIds,
+      ]
+        .sort()
+        .join()
+    ) {
+      throw new BadRequestException('Post event check list does not match');
+    }
+
+    if (incompletePostEventCheckRuleBlockIds.length > 0) {
+      if (details == null) {
+        throw new BadRequestException('Please provide details');
+      }
+    }
+
+    result.spaceEventUpdate = await this.spaceEventService.complete(
+      id,
+      completeSpaceEventDto,
+    );
+
+    return result;
   }
 }
