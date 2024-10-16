@@ -1,7 +1,8 @@
-import { IsOptional, IsUUID, IsString } from 'class-validator';
+import { IsOptional, IsUUID, IsString, IsArray } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { RuleBlockType } from 'src/lib/type';
 import { PaginationDto } from 'src/lib/dto';
+import { Transform } from 'class-transformer';
 
 export class FindAllRuleBlockDto extends PaginationDto {
   @IsOptional()
@@ -30,11 +31,11 @@ export class FindAllRuleBlockDto extends PaginationDto {
   hash?: string;
 
   @IsOptional()
+  @Transform(({ value }) => (Array.isArray(value) ? value : value.split(',')))
+  @IsArray()
   @IsUUID('4', { each: true })
   @ApiPropertyOptional({
     description: 'RuleBlock ids',
-    type: String,
-    isArray: true,
   })
   ids?: string[];
 }

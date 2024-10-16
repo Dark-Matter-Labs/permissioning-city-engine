@@ -1,7 +1,8 @@
-import { IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsArray, IsOptional, IsString, IsUUID } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { SpaceEventStatus } from 'src/lib/type';
 import { PaginationDto } from 'src/lib/dto';
+import { Transform } from 'class-transformer';
 
 export class FindAllSpaceEventDto extends PaginationDto {
   @IsOptional()
@@ -37,20 +38,20 @@ export class FindAllSpaceEventDto extends PaginationDto {
   permissionRequestId?: string;
 
   @IsOptional()
+  @Transform(({ value }) => (Array.isArray(value) ? value : value.split(',')))
+  @IsArray()
   @IsString({ each: true })
   @ApiPropertyOptional({
     description: 'SpaceEvent statuses',
-    type: String,
-    isArray: true,
   })
   statuses?: SpaceEventStatus[];
 
   @IsOptional()
+  @Transform(({ value }) => (Array.isArray(value) ? value : value.split(',')))
+  @IsArray()
   @IsUUID('4', { each: true })
   @ApiPropertyOptional({
     description: 'SpaceEvent topicIds in uuid',
-    type: String,
-    isArray: true,
   })
   topicIds?: string[];
 
