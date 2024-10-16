@@ -30,7 +30,7 @@
 1. Run clear-database command to remove and backup current data
 
    ```bash
-   ./script/clear-database.sh
+   ./scripts/clear-database.sh
    ```
 
 1. Run services with `docker compose`
