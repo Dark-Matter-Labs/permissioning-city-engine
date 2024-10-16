@@ -1,6 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
+  ArrayMaxSize,
   IsArray,
   IsDateString,
   IsOptional,
@@ -83,6 +84,7 @@ export class UpdateSpaceEventDto {
 
   @IsOptional()
   @IsArray()
+  @ArrayMaxSize(5)
   @ApiPropertyOptional({
     description: 'SpaceEvent images in jpeg|jpg|png|gif',
     type: 'array',
@@ -90,6 +92,7 @@ export class UpdateSpaceEventDto {
       type: 'string',
       format: 'binary',
     },
+    maxItems: 5,
   })
   images?: Express.Multer.File[];
 }

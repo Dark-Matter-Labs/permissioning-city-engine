@@ -8,6 +8,7 @@ import {
   Matches,
   IsDateString,
   IsArray,
+  ArrayMaxSize,
 } from 'class-validator';
 
 export class CreateSpaceEventDto {
@@ -78,6 +79,7 @@ export class CreateSpaceEventDto {
 
   @IsOptional()
   @IsArray()
+  @ArrayMaxSize(5)
   @ApiPropertyOptional({
     description: 'SpaceEvent images in jpeg|jpg|png|gif',
     type: 'array',
@@ -85,6 +87,7 @@ export class CreateSpaceEventDto {
       type: 'string',
       format: 'binary',
     },
+    maxItems: 5,
   })
   images?: Express.Multer.File[];
 }

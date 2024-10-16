@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  ArrayMaxSize,
   IsArray,
   IsNotEmpty,
   IsOptional,
@@ -61,6 +62,7 @@ export class CreateSpaceDto {
 
   @IsOptional()
   @IsArray()
+  @ArrayMaxSize(5)
   @ApiPropertyOptional({
     description: 'Space images in jpeg|jpg|png|gif',
     type: 'array',
@@ -68,6 +70,7 @@ export class CreateSpaceDto {
       type: 'string',
       format: 'binary',
     },
+    maxItems: 5,
   })
   images?: Express.Multer.File[];
 }
