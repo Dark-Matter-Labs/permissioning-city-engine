@@ -3,7 +3,11 @@ import {
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
-import { CreateSpaceEventDto, UpdateSpaceEventDto } from './dto';
+import {
+  CompleteSpaceEventDto,
+  CreateSpaceEventDto,
+  UpdateSpaceEventDto,
+} from './dto';
 import { SpaceEvent } from 'src/database/entity/space-event.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, UpdateResult } from 'typeorm';
@@ -139,18 +143,19 @@ export class SpaceEventService {
           name: item.row.f2,
           organizerId: item.row.f3,
           spaceId: item.row.f4,
-          permissionRequestId: item.row.f5,
-          externalServiceId: item.row.f6,
-          status: item.row.f7,
-          details: item.row.f8,
-          isActive: item.row.f9,
-          link: item.row.f10,
-          duration: item.row.f11,
-          startsAt: item.row.f12,
-          endsAt: item.row.f13,
-          createdAt: item.row.f14,
-          updatedAt: item.row.f15,
-          spaceEventImages: item.row.f16,
+          ruleId: item.row.f5,
+          permissionRequestId: item.row.f6,
+          externalServiceId: item.row.f7,
+          status: item.row.f8,
+          details: item.row.f9,
+          isActive: item.row.f10,
+          link: item.row.f11,
+          duration: item.row.f12,
+          startsAt: item.row.f13,
+          endsAt: item.row.f14,
+          createdAt: item.row.f15,
+          updatedAt: item.row.f16,
+          spaceEventImages: item.row.f17,
         };
       });
     }
@@ -219,11 +224,29 @@ export class SpaceEventService {
     const spaceEvent = await this.spaceEventRepository.findOneBy({ id });
 
     if (spaceEvent.status !== SpaceEventStatus.pending) {
-      // TODO. allow update spaceEvent after permission granted?
       throw new ForbiddenException('Cannot update after pending state.');
     }
 
-    return this.spaceEventRepository.update(id, updateSpaceEventDto);
+    let { duration, startsAt } = updateSpaceEventDto;
+
+    if (startsAt == null) {
+      startsAt = spaceEvent.startsAt;
+    }
+
+    if (duration == null) {
+      duration = spaceEvent.duration;
+    }
+
+    const start = dayjs(new Date(startsAt));
+    const match = duration.match(/^(\d+)([dwMyhms]+)$/);
+    const numberPart = parseInt(match[1], 10);
+    const stringPart: dayjs.ManipulateType = match[2] as dayjs.ManipulateType;
+
+    return this.spaceEventRepository.update(id, {
+      ...updateSpaceEventDto,
+      endsAt: start.add(numberPart, stringPart).toDate(),
+      updatedAt: new Date(),
+    });
   }
 
   async run(id: string): Promise<UpdateResult> {
@@ -245,12 +268,35 @@ export class SpaceEventService {
     }
 
     return this.spaceEventRepository.update(id, {
-      status: SpaceEventStatus.complete,
+      status: SpaceEventStatus.running,
+      updatedAt: new Date(),
     });
   }
 
-  async complete(id: string): Promise<UpdateResult> {
+  async close(id: string): Promise<UpdateResult> {
     const spaceEvent = await this.spaceEventRepository.findOneBy({ id });
+
+    if ([SpaceEventStatus.running].includes(spaceEvent.status) === false) {
+      throw new ForbiddenException(
+        `Cannot close ${spaceEvent.status} SpaceEvent.`,
+      );
+    }
+
+    return this.spaceEventRepository.update(id, {
+      status: SpaceEventStatus.closed,
+      updatedAt: new Date(),
+    });
+  }
+
+  async complete(
+    id: string,
+    completeSpaceEventDto: CompleteSpaceEventDto,
+  ): Promise<UpdateResult> {
+    const spaceEvent = await this.spaceEventRepository.findOneBy({ id });
+    const dto: Partial<SpaceEvent> = {
+      status: SpaceEventStatus.complete,
+      updatedAt: new Date(),
+    };
 
     if (
       [
@@ -269,10 +315,10 @@ export class SpaceEventService {
       throw new ForbiddenException('Can complete after SpaceEvent starts.');
     }
 
-    // check space rule blocks with `space:post_event_check`
+    if (completeSpaceEventDto.details != null) {
+      dto.details = completeSpaceEventDto.details;
+    }
 
-    return this.spaceEventRepository.update(id, {
-      status: SpaceEventStatus.complete,
-    });
+    return this.spaceEventRepository.update(id, dto);
   }
 }
