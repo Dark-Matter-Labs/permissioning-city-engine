@@ -54,6 +54,10 @@ export class PermissionRequest {
   @ApiProperty({ description: 'PermissionRequest status', default: 'pending' })
   status: PermissionRequestStatus;
 
+  @Column()
+  @ApiProperty({ description: 'PermissionRequest permissionCode' })
+  permissionCode: string;
+
   @CreateDateColumn()
   @ApiProperty({ description: 'Created timestamp' })
   createdAt: Date;
