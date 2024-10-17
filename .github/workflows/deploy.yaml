@@ -29,3 +29,14 @@ jobs:
       - name: Deploy to Prod Server
         run: |
           ssh ${{ secrets.PROD_SERVER_USER }}@${{ secrets.PROD_SERVER_IP }} "cd /mnt/ptc/permissioning-city-engine && git pull origin prod && ./scripts/deploy.sh"
+
+      # Step 4: Send results to Slack
+      - name: Send success notification to Slack
+        if: success()
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{"text":"Deployment succeeded :white_check_mark:"}' ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Send failure notification to Slack
+        if: failure()
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{"text":"Deployment failed :x:"}' ${{ secrets.SLACK_WEBHOOK_URL }}
