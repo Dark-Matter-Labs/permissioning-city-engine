@@ -18,13 +18,14 @@ import { SpaceModule } from './api/space/space.module';
 import { SpaceEventModule } from './api/space-event/space-event.module';
 import { JwtModule } from '@nestjs/jwt';
 import { RedisModule } from '@liaoliaots/nestjs-redis';
-import { EmailSenderModule } from './lib/email-sender/email-sender.module';
+import { NotificationSenderModule } from './lib/notification-sender/notification-sender.module';
 import { PermissionRequestModule } from './api/permission-request/permission-request.module';
 import { RuleModule } from './api/rule/rule.module';
 import { SpacePermissionerModule } from './api/space-permissioner/space-permissioner.module';
 import { UserNotificationModule } from './api/user-notification/user-notification.module';
 import { RuleBlockModule } from './api/rule-block/rule-block.module';
 import { SpaceEquipmentModule } from './api/space-equipment/space-equipment.module';
+import { NotificationSenderService } from './lib/notification-sender/notification-sender.service';
 
 @Module({
   imports: [
@@ -71,7 +72,7 @@ import { SpaceEquipmentModule } from './api/space-equipment/space-equipment.modu
       },
     }),
     ValidatorModule,
-    EmailSenderModule,
+    NotificationSenderModule,
     AuthModule,
     UserNotificationModule,
     UserModule,
@@ -87,7 +88,10 @@ import { SpaceEquipmentModule } from './api/space-equipment/space-equipment.modu
   providers: [AppService, Logger],
 })
 export class AppModule implements OnModuleInit {
-  constructor(private readonly databaseService: DatabaseService) {}
+  constructor(
+    private readonly databaseService: DatabaseService,
+    private readonly notificationSenderService: NotificationSenderService,
+  ) {}
 
   async onModuleInit() {
     // Ensure the schema is created at startup
