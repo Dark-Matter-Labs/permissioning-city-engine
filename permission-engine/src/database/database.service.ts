@@ -1,5 +1,5 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
-import { Pool } from 'pg';
+import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { Pool, PoolClient } from 'pg';
 import { ConfigService } from '@nestjs/config';
 import { Logger } from '../lib/logger/logger.service';
 import { readdir, readFile } from 'node:fs/promises';
@@ -14,8 +14,9 @@ interface DatabaseConfig {
 }
 
 @Injectable()
-export class DatabaseService implements OnModuleInit {
+export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   private pool: Pool;
+  private client: PoolClient;
 
   constructor(
     private readonly configService: ConfigService,
@@ -25,7 +26,17 @@ export class DatabaseService implements OnModuleInit {
   }
 
   async onModuleInit() {
+    if (!this.client) {
+      this.client = await this.pool.connect();
+    }
+
     await this.createSchema();
+  }
+
+  onModuleDestroy() {
+    if (this.client) {
+      this.client.release();
+    }
   }
 
   async _runSQLQueryByName(name: string): Promise<void> {
@@ -37,9 +48,12 @@ export class DatabaseService implements OnModuleInit {
 
     const querySQL = await readFile(queryPath, 'utf-8');
     try {
-      await this.pool.query(querySQL);
+      await this.client.query('BEGIN');
+      await this.client.query(querySQL);
+      await this.client.query('COMMIT');
       this.logger.log(`Database schema.${name} applied successfully.`);
     } catch (error) {
+      await this.client.query('ROLLBACK');
       this.logger.error(`Error applying schema.${name}:`, error);
     }
   }
@@ -50,68 +64,79 @@ export class DatabaseService implements OnModuleInit {
     if (process.env.NODE_ENV === 'dev') {
       migrationDir = `/app/src/database/sql/migrations`;
     }
-    const migrationFileNames = await readdir(migrationDir).then((files) => {
+    const migrationFiles = await readdir(migrationDir).then((files) => {
       return files.filter((file) => path.extname(file) === '.sql');
     });
 
-    const pastMigrationNames = await this.pool.query(
+    const pastMigrations = await this.client.query(
       `SELECT name FROM "migration" WHERE is_successful = true;`,
     );
+    const pastMigrationNames = pastMigrations.rows.map((item) => item.name);
+    const pendingMigrationNames = migrationFiles.filter(
+      (item) => !pastMigrationNames.includes(item),
+    );
 
-    for (const migrationFileName of migrationFileNames.sort((a, b) => {
+    for (const migrationName of pendingMigrationNames.sort((a, b) => {
       const timestampA = parseInt(a.split('_')[0], 10);
       const timestampB = parseInt(b.split('_')[0], 10);
       return timestampA - timestampB;
     })) {
-      if (
-        !pastMigrationNames.rows
-          .map((item) => item.name)
-          .includes(migrationFileName)
-      ) {
+      try {
+        await this.client.query('BEGIN');
         await this._runSQLQueryByName(
-          `migrations/${migrationFileName.split('.')[0]}`,
-        )
-          .then(async () => {
-            await this.pool.query(
-              `INSERT INTO "migration" (id, name, is_successful) VALUES (uuid_generate_v4(), $1, TRUE)`,
-              [migrationFileName],
-            );
-          })
-          .catch(async (error) => {
-            await this.pool.query(
-              `INSERT INTO "migration" (id, name, is_successful, error_message) VALUES (uuid_generate_v4(), $1, FALSE, $2)`,
-              [migrationFileName, error.message],
-            );
-          });
+          `migrations/${migrationName.split('.')[0]}`,
+        ).then(async () => {
+          await this.client.query(
+            `INSERT INTO "migration" (id, name, is_successful) VALUES (uuid_generate_v4(), $1, TRUE)`,
+            [migrationName],
+          );
+        });
+        await this.client.query('COMMIT');
+      } catch (error) {
+        await this.client.query('ROLLBACK');
+        if (
+          !error.message.startsWith(
+            'duplicate key value violates unique constraint "migration_unique_name_is_successful"',
+          )
+        ) {
+          await this.client.query(
+            `INSERT INTO "migration" (id, name, is_successful, error_message) VALUES (uuid_generate_v4(), $1, FALSE, $2)`,
+            [migrationName, error.message],
+          );
+        }
       }
     }
   }
 
   async createSchema(): Promise<void> {
-    // extensions
-    await this._runSQLQueryByName('extensions');
-    // types
-    await this._runSQLQueryByName('types');
-    // tables
-    await this._runSQLQueryByName('tables');
-    // indexes
-    await this._runSQLQueryByName('indexes');
-    // migrations
-    await this._runMigrations();
-    // mockup data for dev environment
-    if (process.env.NODE_ENV === 'dev') {
-      try {
-        const testUser = await this.pool.query(`SELECT * FROM "user";`);
-        const mockUpData = await this.pool.query(
-          `SELECT * FROM "space_event" WHERE name = 'test-space-event-1';`,
-        );
+    try {
+      // extensions
+      await this._runSQLQueryByName('extensions');
+      // types
+      await this._runSQLQueryByName('types');
+      // tables
+      await this._runSQLQueryByName('tables');
+      // indexes
+      await this._runSQLQueryByName('indexes');
+      // migrations
+      await this._runMigrations();
+      // mockup data for dev environment
+      if (process.env.NODE_ENV === 'dev') {
+        try {
+          const testUser = await this.client.query(`SELECT * FROM "user";`);
+          const mockUpData = await this.client.query(
+            `SELECT * FROM "space_event" WHERE name = 'test-space-event-1';`,
+          );
 
-        if (testUser.rows.length > 0 && mockUpData.rows.length === 0) {
-          await this._runSQLQueryByName('/test/insert-mockup-data');
+          if (testUser.rows.length > 0 && mockUpData.rows.length === 0) {
+            await this._runSQLQueryByName('/test/insert-mockup-data');
+          }
+        } catch (error) {
+          this.logger.error('Failed to insert mock up data', error);
         }
-      } catch (error) {
-        this.logger.error('Failed to insert mock up data', error);
       }
+    } catch (error) {
+      this.logger.error('Failed to create schema', error);
     }
   }
 }
