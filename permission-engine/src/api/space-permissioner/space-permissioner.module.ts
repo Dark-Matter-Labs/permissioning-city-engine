@@ -17,10 +17,13 @@ import { SpaceEvent } from 'src/database/entity/space-event.entity';
 import { SpaceEventService } from '../space-event/space-event.service';
 import { SpaceService } from '../space/space.service';
 import { Logger } from 'src/lib/logger/logger.service';
+import configuration from 'src/config/configuration';
 
 @Module({
   imports: [
-    ConfigModule,
+    ConfigModule.forRoot({
+      load: [configuration],
+    }),
     TypeOrmModule.forFeature([
       Space,
       User,
