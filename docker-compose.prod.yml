@@ -19,7 +19,7 @@ services:
       - "80:80"
       - "443:443"
     depends_on:
-      - permission-engine
+      - permission-engine-api
     networks:
       - permission_engine_network
 
@@ -58,14 +58,37 @@ services:
     networks:
       - permission_engine_network
 
-  permission-engine:
+  permission-engine-api:
     build:
       context: ./permission-engine
-    container_name: permission-engine
+    container_name: permission-engine-api
     env_file:
       - .env
+    environment:
+      - ENGINE_MODE=api
     volumes:
-      - ./logs/permission-engine:/app/log
+      - ./logs/permission-engine-api:/app/log
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "5"
+    command: ["npm", "run", "start:prod"]
+    depends_on:
+      - postgres
+    restart: always
+    networks:
+      - permission_engine_network
+
+  permission-engine-daemon:
+    build:
+      context: ./permission-engine
+    container_name: permission-engine-daemon
+    env_file:
+      - .env
+    environment:
+      - ENGINE_MODE=daemon
+    volumes:
+      - ./logs/permission-engine-daemon:/app/log
     logging:
       options:
         max-size: "10m"
@@ -92,7 +115,7 @@ services:
         max-file: "5"
     command: ["npm", "run", "start"]
     depends_on:
-      - permission-engine
+      - permission-engine-api
     restart: always
     networks:
       - permission_engine_network
