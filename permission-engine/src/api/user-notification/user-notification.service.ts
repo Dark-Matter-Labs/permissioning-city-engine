@@ -2,9 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, In, Repository, UpdateResult } from 'typeorm';
 import { UserNotification } from '../../database/entity/user-notification.entity';
-import { UserNotificationStatus } from 'src/lib/type';
+import { UserNotificationStatus, UserNotificationType } from 'src/lib/type';
 import { FindAllUserNotificationDto } from './dto';
 import { v4 as uuidv4 } from 'uuid';
+import { EmailTemplate } from 'src/lib/email-template';
 
 @Injectable()
 export class UserNotificationService {
@@ -38,6 +39,20 @@ export class UserNotificationService {
     };
   }
 
+  async findPendingExternal(limit: number = 100): Promise<UserNotification[]> {
+    return await this.userNotificationRepository.find({
+      where: {
+        status: UserNotificationStatus.pending,
+        type: UserNotificationType.external,
+      },
+      relations: ['user'],
+      order: {
+        createdAt: 'ASC',
+      },
+      take: limit,
+    });
+  }
+
   findOne(id: string): Promise<UserNotification> {
     return this.userNotificationRepository.findOneBy({ id });
   }
@@ -54,6 +69,30 @@ export class UserNotificationService {
       id: uuidv4(),
     });
     return this.userNotificationRepository.save(user);
+  }
+
+  updateToQueued(id: string, email: EmailTemplate): Promise<UpdateResult> {
+    return this.userNotificationRepository.update(id, {
+      status: UserNotificationStatus.queued,
+      subjectPart: email.subject,
+      textPart: email.text,
+      htmlPart: email.html,
+      updatedAt: new Date(),
+    });
+  }
+
+  updateToNoticed(id: string): Promise<UpdateResult> {
+    return this.userNotificationRepository.update(id, {
+      status: UserNotificationStatus.noticed,
+      updatedAt: new Date(),
+    });
+  }
+
+  updateToNoticeFailed(id: string): Promise<UpdateResult> {
+    return this.userNotificationRepository.update(id, {
+      status: UserNotificationStatus.noticeFailed,
+      updatedAt: new Date(),
+    });
   }
 
   complete(id: string): Promise<UpdateResult> {

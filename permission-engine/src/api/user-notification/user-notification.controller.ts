@@ -6,6 +6,7 @@ import {
   Param,
   Put,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { UserNotificationService } from './user-notification.service';
@@ -14,12 +15,14 @@ import { Logger } from 'src/lib/logger/logger.service';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { FindAllUserNotificationDto } from './dto';
+import { UserService } from '../user/user.service';
 
 @ApiTags('user')
 @Controller('api/v1/user/notification')
 export class UserNotificationController {
   constructor(
     private readonly userNotificationService: UserNotificationService,
+    private readonly userService: UserService,
     private readonly logger: Logger,
   ) {}
 
@@ -54,19 +57,20 @@ export class UserNotificationController {
   @Put(':id')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Update pending UserNotification to complete' })
-  complete(@Param('id') id: string): Promise<boolean> {
-    return this.userNotificationService
-      .complete(id)
-      .then((res) => {
-        if (res.affected === 1) {
-          return true;
-        } else {
-          throw new BadRequestException(`Notification does not exist: ${id}`);
-        }
-      })
-      .catch((e) => {
-        this.logger.debug(e.message);
-        return false;
-      });
+  async complete(@Req() req, @Param('id') id: string): Promise<boolean> {
+    const user = await this.userService.findOneByEmail(req.user.email);
+    const userNotification = await this.userNotificationService.findOne(id);
+
+    if (!userNotification) {
+      throw new BadRequestException(`Notification does not exist: ${id}`);
+    }
+
+    if (userNotification.userId !== user.id) {
+      throw new ForbiddenException();
+    }
+
+    const completeResult = await this.userNotificationService.complete(id);
+
+    return completeResult?.affected === 1;
   }
 }
