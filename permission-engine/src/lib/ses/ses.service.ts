@@ -1,11 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
+import { SendEmailCommand, SESClient } from '@aws-sdk/client-ses';
 import { Logger } from '../logger/logger.service';
+import { EmailTemplate } from '../email-template';
 
 @Injectable()
 export class SESService {
   private sesClient: SESClient;
+  private emailFrom: string;
 
   constructor(
     private readonly configService: ConfigService,
@@ -20,22 +22,23 @@ export class SESService {
         ),
       },
     });
+    this.emailFrom = this.configService.get<string>('EMAIL_FROM'); // Make sure the email is verified in SES
   }
 
-  async send(to: string, subject: string, body: string) {
+  async send(to: string, email: EmailTemplate) {
     const command = new SendEmailCommand({
-      Source: this.configService.get<string>('EMAIL_FROM'), // Make sure the email is verified in SES
+      Source: this.emailFrom,
       Destination: {
         ToAddresses: [to],
       },
       Message: {
         Body: {
-          Html: {
-            Data: body,
-          },
+          Text: { Data: email.text },
+          Html: { Data: email.html },
         },
         Subject: {
-          Data: subject,
+          Data: email.subject,
+          Charset: 'UTF-8',
         },
       },
     });
