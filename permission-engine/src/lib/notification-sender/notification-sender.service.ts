@@ -29,8 +29,12 @@ export class NotificationSenderService
 
   onModuleInit() {
     const engineMode = this.configService.get('ENGINE_MODE');
-    const daemons = this.configService.get('DAEMONS')?.split(',') ?? [];
-    if (engineMode === 'daemon' && daemons.includes('notification-sender')) {
+    const daemons = this.configService.get('DAEMONS');
+    if (
+      engineMode === 'daemon' &&
+      daemons &&
+      daemons?.includes('notification-sender')
+    ) {
       this.isActive = true;
       this.start();
     }
