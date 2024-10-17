@@ -1,13 +1,15 @@
+import { EmailTemplate } from '../email-template/email-template.interface';
+
 export type ValidationJobData = {
   pdfFile: Buffer;
   userId: string;
   targetId: string;
 };
 
-export type EmailSendJobData = {
-  pdfFile: Buffer;
-  userId: string;
-  targetId: string;
+export type NotificationSendJobData = {
+  id: string;
+  to: string;
+  email: EmailTemplate;
 };
 
 export enum RuleTarget {
@@ -32,7 +34,7 @@ export enum RuleBlockType {
   // spaceEvent
   spaceEventGeneral = 'space_event:general',
   spaceEventAccess = 'space_event:access', // {public|invited}:{free|paid}
-  spaceEventRequireEquipment = 'space_event:require_equipment', // {equipment}:{number}
+  spaceEventRequireEquipment = 'space_event:require_equipment', // {equipment}:{quantity}
   spaceEventExpectedAttendeeCount = 'space_event:expected_attendee_count', // number
   spaceEventException = 'space_event:exception', // uuid of space rule block
   spaceEventBenefit = 'space_event:benefit',
@@ -85,6 +87,7 @@ export enum UserNotificationTarget {
   topicFollower = 'topic_follower',
   spaceFollower = 'space_follower',
   ruleAuthor = 'rule_author',
+  general = 'general',
 }
 
 export enum UserNotificationType {
@@ -93,9 +96,23 @@ export enum UserNotificationType {
 }
 
 export enum UserNotificationStatus {
+  // notice created
   pending = 'pending',
+  // notice queued
+  queued = 'queued',
+  // notice sent via email
+  noticed = 'noticed',
+  // user marked as complete
   complete = 'complete',
-  failed = 'failed',
+  // send notice failed
+  noticeFailed = 'notice_failed',
+}
+
+export enum UserNotificationTemplateName {
+  welcome = 'welcome',
+  permissionRequested = 'permission-requested',
+  permissionGranted = 'permission-granted',
+  spaceCreated = 'space-created',
 }
 
 export enum RuleType {
