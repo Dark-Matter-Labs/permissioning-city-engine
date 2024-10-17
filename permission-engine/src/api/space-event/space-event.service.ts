@@ -249,7 +249,7 @@ export class SpaceEventService {
     });
   }
 
-  async run(id: string): Promise<UpdateResult> {
+  async updateToRunning(id: string): Promise<UpdateResult> {
     const spaceEvent = await this.spaceEventRepository.findOneBy({ id });
 
     if (
@@ -273,7 +273,7 @@ export class SpaceEventService {
     });
   }
 
-  async close(id: string): Promise<UpdateResult> {
+  async updateToClosed(id: string): Promise<UpdateResult> {
     const spaceEvent = await this.spaceEventRepository.findOneBy({ id });
 
     if ([SpaceEventStatus.running].includes(spaceEvent.status) === false) {
@@ -288,7 +288,7 @@ export class SpaceEventService {
     });
   }
 
-  async complete(
+  async updateToComplete(
     id: string,
     completeSpaceEventDto: CompleteSpaceEventDto,
   ): Promise<UpdateResult> {

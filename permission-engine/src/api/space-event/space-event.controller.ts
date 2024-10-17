@@ -235,7 +235,7 @@ export class SpaceEventController {
     }
     // TODO. create SpaceHistory record
 
-    return this.spaceEventService.run(id);
+    return this.spaceEventService.updateToRunning(id);
   }
 
   @Get(':id/complete')
@@ -345,7 +345,7 @@ export class SpaceEventController {
       }
     }
 
-    result.spaceEventUpdate = await this.spaceEventService.complete(
+    result.spaceEventUpdate = await this.spaceEventService.updateToComplete(
       id,
       completeSpaceEventDto,
     );
