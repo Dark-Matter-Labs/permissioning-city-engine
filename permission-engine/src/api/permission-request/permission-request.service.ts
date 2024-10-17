@@ -2,10 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { CreatePermissionRequestDto, FindAllPermissionRequestDto } from './dto';
 import { PermissionRequest } from 'src/database/entity/permission-request.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, UpdateResult } from 'typeorm';
 import { Space } from 'src/database/entity/space.entity';
 import { SpaceEvent } from 'src/database/entity/space-event.entity';
 import { v4 as uuidv4 } from 'uuid';
+import { PermissionRequestStatus } from 'src/lib/type';
+import * as Util from 'src/lib/util/util';
 
 @Injectable()
 export class PermissionRequestService {
@@ -133,5 +135,70 @@ export class PermissionRequestService {
     });
 
     return this.permissionRequestRepository.save(permissionRequest);
+  }
+
+  updateToAssigned(id: string): Promise<UpdateResult> {
+    return this.permissionRequestRepository.update(id, {
+      status: PermissionRequestStatus.assigned,
+      updatedAt: new Date(),
+    });
+  }
+
+  updateToAssignFailed(id: string): Promise<UpdateResult> {
+    return this.permissionRequestRepository.update(id, {
+      status: PermissionRequestStatus.assignFailed,
+      updatedAt: new Date(),
+    });
+  }
+
+  updateToIssueRaised(id: string): Promise<UpdateResult> {
+    return this.permissionRequestRepository.update(id, {
+      status: PermissionRequestStatus.issueRaised,
+      updatedAt: new Date(),
+    });
+  }
+
+  updateToReviewApproved(id: string): Promise<UpdateResult> {
+    return this.permissionRequestRepository.update(id, {
+      status: PermissionRequestStatus.reviewApproved,
+      updatedAt: new Date(),
+    });
+  }
+
+  updateToReviewApprovedWithCondition(id: string): Promise<UpdateResult> {
+    return this.permissionRequestRepository.update(id, {
+      status: PermissionRequestStatus.reviewApprovedWithCondition,
+      updatedAt: new Date(),
+    });
+  }
+
+  updateToResolveRejected(id: string): Promise<UpdateResult> {
+    return this.permissionRequestRepository.update(id, {
+      status: PermissionRequestStatus.resolveRejected,
+      updatedAt: new Date(),
+    });
+  }
+
+  // only for review_approved* status
+  updateToResolveAccepted(id: string): Promise<UpdateResult> {
+    return this.permissionRequestRepository.update(id, {
+      status: PermissionRequestStatus.resolveAccepted,
+      permissionCode: Util.generateRandomCode(),
+      updatedAt: new Date(),
+    });
+  }
+
+  updateToResolveDropped(id: string): Promise<UpdateResult> {
+    return this.permissionRequestRepository.update(id, {
+      status: PermissionRequestStatus.resolveDropped,
+      updatedAt: new Date(),
+    });
+  }
+
+  updateToResolveCancelled(id: string): Promise<UpdateResult> {
+    return this.permissionRequestRepository.update(id, {
+      status: PermissionRequestStatus.resolveCancelled,
+      updatedAt: new Date(),
+    });
   }
 }
