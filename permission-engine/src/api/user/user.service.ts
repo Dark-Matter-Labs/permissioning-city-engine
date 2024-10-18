@@ -26,11 +26,11 @@ export class UserService {
 
   async create(createUserDto: CreateUserDto): Promise<User> {
     const user = this.userRepository.create({
+      ...createUserDto,
       id: uuidv4(),
       isActive: true,
       createdAt: new Date(),
       updatedAt: new Date(),
-      ...createUserDto,
     });
     return await this.userRepository.save(user);
   }
