@@ -121,3 +121,11 @@ export enum RuleType {
   space = 'space',
   spaceEvent = 'space_event',
 }
+
+export enum PermissionResponseStatus {
+  pending = 'pending',
+  approved = 'approved',
+  approvedWithCondition = 'approved_with_condition',
+  rejected = 'rejected',
+}
+
