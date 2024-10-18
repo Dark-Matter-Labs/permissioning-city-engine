@@ -33,12 +33,14 @@ export enum RuleBlockType {
   spacePostEventCheck = 'space:post_event_check',
   // spaceEvent
   spaceEventGeneral = 'space_event:general',
-  spaceEventAccess = 'space_event:access', // {public|invited}:{free|paid}
-  spaceEventRequireEquipment = 'space_event:require_equipment', // {equipment}:{quantity}
+  spaceEventAccess = 'space_event:access', // content: {public|invited}:{free|paid}
+  spaceEventRequireEquipment = 'space_event:require_equipment', // content: {equipment}:{quantity}
   spaceEventExpectedAttendeeCount = 'space_event:expected_attendee_count', // number
-  spaceEventException = 'space_event:exception', // uuid of space rule block
+  spaceEventException = 'space_event:exception', // content: {spaceRuleBlockId}:{reason}
   spaceEventBenefit = 'space_event:benefit',
   spaceEventRisk = 'space_event:risk',
+  spaceEventSelfRiskAssesment = 'space_event:self_risk_assesment',
+  spaceEventInsurance = 'space_event:insurance', // content: file download path: s3
 }
 
 export enum SpaceEquipmentType {
