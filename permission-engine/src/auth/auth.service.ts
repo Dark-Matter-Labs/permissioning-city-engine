@@ -7,6 +7,8 @@ import { RefreshTokenService } from './token/refresh-token.service';
 import { CreateUserDto } from 'src/api/user/dto';
 import { JwtPayloadDto } from './token/dto';
 import { Logger } from 'src/lib/logger/logger.service';
+import { ConfigService } from '@nestjs/config';
+import axios from 'axios';
 
 @Injectable()
 export class AuthService {
@@ -14,21 +16,59 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly userService: UserService,
     private readonly refreshTokenService: RefreshTokenService,
+    private readonly configService: ConfigService,
     private readonly logger: Logger,
   ) {}
 
-  async findOrCreateUser(profile: CreateUserDto): Promise<User> {
-    let user = await this.userService.findOneByEmail(profile.email);
+  async findOrCreateUser(
+    createUserDto: CreateUserDto,
+    ipAddress?: string,
+  ): Promise<User> {
+    let user = await this.userService.findOneByEmail(createUserDto.email);
+
+    // TODO. remove dev code after test
+    if (process.env.NODE_ENV === 'dev') {
+      try {
+        const ipLocationProvider = this.configService.get<string>(
+          'IP_LOCATION_PROVIDER',
+        );
+        const ipLocationInfo = await axios
+          .get(`${ipLocationProvider}/json/${ipAddress}`)
+          .then((res) => res.data);
+        this.logger.log('ip location info', ipLocationInfo);
+      } catch (error) {
+        this.logger.error('Failed to get location info from request ip', error);
+      }
+    }
+
     if (!user) {
-      user = await this.userService.create({
-        email: profile.email,
-        name: profile.name,
-      });
+      if (typeof ipAddress === 'string') {
+        try {
+          const ipLocationProvider = this.configService.get<string>(
+            'IP_LOCATION_PROVIDER',
+          );
+          const ipLocationInfo = await axios
+            .get(`${ipLocationProvider}/json/${ipAddress}`)
+            .then((res) => res.data);
+
+          if (ipLocationInfo) {
+            createUserDto.country = ipLocationInfo.countryCode;
+            createUserDto.region = ipLocationInfo.regionName;
+            createUserDto.city = ipLocationInfo.city;
+          }
+        } catch (error) {
+          this.logger.error(
+            'Failed to get location info from request ip',
+            error,
+          );
+        }
+      }
+      user = await this.userService.create(createUserDto);
     }
     return user;
   }
 
-  async generateTokens(profile: any) {
+  async generateTokens(profile: any, ipAddress?: string) {
     const payload: JwtPayloadDto = {
       email: profile.email,
       firstName: profile.firstName,
@@ -41,10 +81,15 @@ export class AuthService {
       expiresIn: `${process.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME}s`,
     });
 
-    const registeredUser = await this.findOrCreateUser({
+    const createUserDto: CreateUserDto = {
       name: profile.firstName,
       email: profile.email,
-    });
+    };
+
+    const registeredUser = await this.findOrCreateUser(
+      createUserDto,
+      ipAddress,
+    );
     const refreshToken = await this.generateRefreshToken(registeredUser);
 
     return { accessToken, refreshToken };

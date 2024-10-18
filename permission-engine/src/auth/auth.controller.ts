@@ -28,7 +28,8 @@ export class AuthController {
   })
   @UseGuards(AuthGuard('google'))
   async googleAuthRedirect(@Req() req, @Res() res: Response) {
-    const tokens = await this.authService.generateTokens(req.user);
+    const ipAddress = req.headers['x-forwarded-for'] || req.ip;
+    const tokens = await this.authService.generateTokens(req.user, ipAddress);
 
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
