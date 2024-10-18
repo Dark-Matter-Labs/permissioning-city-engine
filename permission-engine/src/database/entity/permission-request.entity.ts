@@ -6,11 +6,13 @@ import {
   CreateDateColumn,
   JoinColumn,
   ManyToOne,
+  OneToMany,
 } from 'typeorm';
 import { PermissionRequestStatus } from 'src/lib/type';
 import { Rule } from './rule.entity';
 import { SpaceEvent } from './space-event.entity';
 import { Space } from './space.entity';
+import { PermissionResponse } from './permission-response.entity';
 
 @Entity()
 export class PermissionRequest {
@@ -58,6 +60,10 @@ export class PermissionRequest {
   @ApiProperty({ description: 'PermissionRequest permissionCode' })
   permissionCode: string;
 
+  @Column()
+  @ApiProperty({ description: 'PermissionRequest responseSummary' })
+  responseSummary: string;
+
   @CreateDateColumn()
   @ApiProperty({ description: 'Created timestamp' })
   createdAt: Date;
@@ -66,10 +72,9 @@ export class PermissionRequest {
   @ApiProperty({ description: 'Updated timestamp' })
   updatedAt: Date;
 
-  // TODO. work on permissioner.entity
-  // @ManyToMany(
-  //   () => Permissioner,
-  //   (permissioner) => permissioner.permissionRequests,
-  // )
-  // permissioners: Permissioner[];
+  @OneToMany(
+    () => PermissionResponse,
+    (permissionResponse) => permissionResponse.spacePermissioner,
+  )
+  permissionResponses: PermissionResponse[];
 }

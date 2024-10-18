@@ -6,9 +6,11 @@ import {
   CreateDateColumn,
   JoinColumn,
   ManyToOne,
+  OneToMany,
 } from 'typeorm';
 import { Space } from './space.entity';
 import { User } from './user.entity';
+import { PermissionResponse } from './permission-response.entity';
 
 @Entity()
 export class SpacePermissioner {
@@ -50,4 +52,10 @@ export class SpacePermissioner {
   @Column()
   @ApiProperty({ description: 'Updated timestamp' })
   updatedAt: Date;
+
+  @OneToMany(
+    () => PermissionResponse,
+    (permissionResponse) => permissionResponse.spacePermissioner,
+  )
+  permissionResponses: PermissionResponse[];
 }
