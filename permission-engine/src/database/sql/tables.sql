@@ -143,6 +143,8 @@ CREATE TABLE IF NOT EXISTS "permission_request" (
   "space_rule_id" uuid NOT NULL,
   "space_event_rule_id" uuid,
   "status" varchar NOT NULL DEFAULT 'pending',
+  "permission_code" varchar,
+  "response_summary" text,
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
   "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
 );
@@ -150,24 +152,12 @@ CREATE TABLE IF NOT EXISTS "permission_request" (
 CREATE TABLE IF NOT EXISTS "permission_response" (
   "id" uuid PRIMARY KEY,
   "permission_request_id" uuid NOT NULL,
-  "permissioner_id" uuid,
+  "space_permissioner_id" uuid,
   "status" varchar NOT NULL,
   "conditions" text[],
   "excitements" text[],
   "worries" text[],
   "timeout_at" timestamptz,
-  "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
-  "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
-);
-
-CREATE TABLE IF NOT EXISTS "permission_result" (
-  "id" uuid PRIMARY KEY,
-  "permission_request_id" uuid NOT NULL,
-  "status" varchar NOT NULL,
-  "conditions" text[],
-  "excitements" text[],
-  "worries" text[],
-  "summary" text,
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
   "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
 );
@@ -194,9 +184,9 @@ CREATE TABLE IF NOT EXISTS "user_notification" (
   "external_service_id" uuid,
   "link" text,
   "template_name" varchar NOT NULL,
-  "subject_part" text NOT NULL,
-  "text_part" text NOT NULL,
-  "html_part" text NOT NULL,
+  "subject_part" text,
+  "text_part" text,
+  "html_part" text,
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
   "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
 );
@@ -272,8 +262,8 @@ COMMENT ON COLUMN "space_history"."type" IS 'create, update_details, activate, d
 COMMENT ON COLUMN "permission_request"."space_event_id" IS 'when space_event_id is null, the permission_request is for the space rule revision';
 COMMENT ON COLUMN "permission_request"."space_event_rule_id" IS 'when space_event_rule_id is null, the permission_request is for the space rule revision';
 COMMENT ON COLUMN "permission_request"."status" IS 'pending, assigned, assign_failed, issue_raised, review_approved, review_approved_with_condition, resolve_rejected, resolve_accepted, resolve_dropped';
+COMMENT ON COLUMN "permission_request"."permission_code" IS 'assigned after permission granted';
 COMMENT ON COLUMN "permission_response"."status" IS 'pending, approved, approved_with_condition, rejected';
-COMMENT ON COLUMN "permission_result"."status" IS 'pending, approved, approved_with_condition, rejected';
 COMMENT ON COLUMN "user_notification"."target" IS 'space_owner, space_event_orgnaizer, space_event_attendee, permissioner, topic_follower, space_follower, rule_creator';
 COMMENT ON COLUMN "user_notification"."type" IS 'internal, external';
 COMMENT ON COLUMN "user_notification"."status" IS 'pending, complete, failed';
@@ -592,25 +582,11 @@ BEGIN
         FROM information_schema.table_constraints
         WHERE constraint_type = 'FOREIGN KEY'
         AND table_name = 'permission_response'
-        AND constraint_name = 'permission_response_fkey_permissioner_id'
+        AND constraint_name = 'permission_response_fkey_space_permissioner_id'
     ) THEN
         ALTER TABLE permission_response
-        ADD CONSTRAINT permission_response_fkey_permissioner_id
-        FOREIGN KEY ("permissioner_id") REFERENCES "user" ("id");
-    END IF;
-END $$;
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1
-        FROM information_schema.table_constraints
-        WHERE constraint_type = 'FOREIGN KEY'
-        AND table_name = 'permission_result'
-        AND constraint_name = 'permission_result_fkey_permission_request_id'
-    ) THEN
-        ALTER TABLE permission_result
-        ADD CONSTRAINT permission_result_fkey_permission_request_id
-        FOREIGN KEY ("permission_request_id") REFERENCES "permission_request" ("id");
+        ADD CONSTRAINT permission_response_fkey_space_permissioner_id
+        FOREIGN KEY ("space_permissioner_id") REFERENCES "space_permissioner" ("id");
     END IF;
 END $$;
 DO $$
