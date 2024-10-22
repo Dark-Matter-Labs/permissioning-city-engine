@@ -34,13 +34,20 @@ export enum RuleBlockType {
   // spaceEvent
   spaceEventGeneral = 'space_event:general',
   spaceEventAccess = 'space_event:access', // content: {public|invited}:{free|paid}
-  spaceEventRequireEquipment = 'space_event:require_equipment', // content: {equipment}:{quantity}
+  spaceEventRequireEquipment = 'space_event:require_equipment', // content: {spaceEquipmentId}:{quantity}
   spaceEventExpectedAttendeeCount = 'space_event:expected_attendee_count', // number
   spaceEventException = 'space_event:exception', // content: {spaceRuleBlockId}:{reason}
   spaceEventBenefit = 'space_event:benefit',
   spaceEventRisk = 'space_event:risk',
   spaceEventSelfRiskAssesment = 'space_event:self_risk_assesment',
   spaceEventInsurance = 'space_event:insurance', // content: file download path: s3
+}
+
+export enum SpaceEventAccessType {
+  publicFree = 'public:free',
+  publicPaid = 'public:paid',
+  privateFree = 'private:free',
+  privatePaid = 'private:paid',
 }
 
 export enum SpaceEquipmentType {
@@ -68,6 +75,9 @@ export enum PermissionRequestStatus {
   issueRaised = 'issue_raised',
   reviewApproved = 'review_approved',
   reviewApprovedWithCondition = 'review_approved_with_condition',
+}
+
+export enum PermissionRequestResolveStatus {
   // resolved by event organizer
   resolveRejected = 'resolve_rejected',
   resolveAccepted = 'resolve_accepted',
