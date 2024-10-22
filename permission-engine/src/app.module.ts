@@ -26,6 +26,7 @@ import { UserNotificationModule } from './api/user-notification/user-notificatio
 import { RuleBlockModule } from './api/rule-block/rule-block.module';
 import { SpaceEquipmentModule } from './api/space-equipment/space-equipment.module';
 import { NotificationSenderService } from './lib/notification-sender/notification-sender.service';
+import { PermissionResponseModule } from './api/permission-response/permission-response.module';
 
 @Module({
   imports: [
@@ -83,6 +84,7 @@ import { NotificationSenderService } from './lib/notification-sender/notificatio
     RuleBlockModule,
     RuleModule,
     PermissionRequestModule,
+    PermissionResponseModule,
   ],
   controllers: [AppController],
   providers: [AppService, Logger],
