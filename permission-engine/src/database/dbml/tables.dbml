@@ -147,7 +147,7 @@ Table space_history {
   space_event_id uuid
   permissioner_ids uuid[]
   is_active bool [not null, default: true]
-  type varchar [not null, note: 'create, update_details, activate, deactivate, permissioner_opt_in, permissioner_opt_out, permission_request, permission_response']
+  type varchar [not null, note: 'create, update_details, activate, deactivate, permissioner_join, permissioner_leave, permission_request, permission_response']
   details text
   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
 }
@@ -162,7 +162,8 @@ Table permission_request {
   space_event_id uuid [note: 'when space_event_id is null, the permission_request is for the space rule revision']
   space_rule_id uuid [not null]
   space_event_rule_id uuid [note: 'when space_event_rule_id is null, the permission_request is for the space rule revision']
-  status varchar [not null, default: 'pending', note: 'pending, assigned, assign_failed, issue_raised, review_approved, review_approved_with_condition, resolve_rejected, resolve_accepted, resolve_dropped']
+  status varchar [not null, default: 'pending', note: 'pending, assigned, assign_failed, issue_raised, review_approved, review_approved_with_condition']
+  resolve_status varchar [note: 'resolve_rejected, resolve_accepted, resolve_dropped']
   permission_code varchar [note: 'assigned after permission granted']
   response_summary text
   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
@@ -176,7 +177,7 @@ Ref: permission_request.space_event_rule_id > rule.id
 Table permission_response {
   id uuid [primary key]
   permission_request_id uuid [not null]
-  space_permissioner_id uuid
+  space_permissioner_id uuid [not null]
   status varchar [not null, note: 'pending, approved, approved_with_condition, rejected']
   conditions text[]
   excitements text[]

@@ -65,18 +65,6 @@ VALUES (
       WHERE key = 'user'
     ),
     'space_event:access',
-    'public|paid'
-  ),
-  (
-    uuid_generate_v4(),
-    'test-space-event-rule-block-1',
-    encode(digest(gen_random_bytes(32), 'sha256'), 'hex'),
-    (
-      SELECT id
-      FROM test_var
-      WHERE key = 'user'
-    ),
-    'space_event:access',
     'public:free'
   ),
   (

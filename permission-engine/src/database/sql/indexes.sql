@@ -19,3 +19,12 @@ CREATE INDEX IF NOT EXISTS space_idx_lognitude ON "space" (longitude)
 WHERE is_active = true;
 CREATE INDEX IF NOT EXISTS space_idx_rule_id ON "space" (rule_id)
 WHERE is_active = true;
+
+-- rule_block
+CREATE INDEX IF NOT EXISTS rule_block_idx_type_content ON "rule_block" (content)
+WHERE type IN(
+    'space_event:access',
+    'space_event:require_equipment',
+    'space_event:expected_attendee_count',
+    'space_event:exception'
+  );
