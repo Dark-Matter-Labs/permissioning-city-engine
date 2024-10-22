@@ -77,8 +77,14 @@ export class SpacePermissionerController {
         spaceId,
         inviter.id,
       );
+
+    const existingSpacePermissioner =
+      await this.spacePermissionerService.findOneByUserIdAndSpaceId(
+        userId,
+        spaceId,
+      );
     const isSpacePermissioner =
-      await this.spacePermissionerService.isSpacePermissioner(spaceId, userId);
+      existingSpacePermissioner && existingSpacePermissioner.isActive === true;
 
     if (isInviterSpacePermissioner === false) {
       throw new ForbiddenException();
@@ -86,6 +92,10 @@ export class SpacePermissionerController {
 
     if (isSpacePermissioner === true) {
       throw new BadRequestException('Already a permissioner');
+    }
+
+    if (existingSpacePermissioner) {
+      throw new BadRequestException('Already invited');
     }
 
     return this.spacePermissionerService.create(
@@ -106,20 +116,34 @@ export class SpacePermissionerController {
     @Param('spaceId') spaceId: string,
   ): Promise<SpacePermissioner> {
     const user = await this.userService.findOneByEmail(req.user.email);
+    const existingSpacePermissioner =
+      await this.spacePermissionerService.findOneByUserIdAndSpaceId(
+        user.id,
+        spaceId,
+      );
     const isSpacePermissioner =
-      await this.spacePermissionerService.isSpacePermissioner(spaceId, user.id);
+      existingSpacePermissioner && existingSpacePermissioner.isActive === true;
 
     if (isSpacePermissioner === true) {
       throw new BadRequestException(`Already a permissioner.`);
     }
 
-    return this.spacePermissionerService.create(
-      {
-        spaceId,
-        userId: user.id,
-      },
-      true,
-    );
+    if (existingSpacePermissioner) {
+      await this.spacePermissionerService.update({
+        id: existingSpacePermissioner.id,
+        isActive: true,
+      });
+
+      return { ...existingSpacePermissioner, isActive: true };
+    } else {
+      return this.spacePermissionerService.create(
+        {
+          spaceId,
+          userId: user.id,
+        },
+        true,
+      );
+    }
   }
 
   @Post(':spaceId/leave')
