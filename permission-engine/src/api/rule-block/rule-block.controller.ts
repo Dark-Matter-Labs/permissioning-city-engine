@@ -44,9 +44,8 @@ export class RuleBlockController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get RuleBlock by id' })
-  @UseGuards(JwtAuthGuard)
-  findOne(@Param('id') id: string): Promise<RuleBlock> {
-    return this.ruleBlockService.findOne(id);
+  findOneById(@Param('id') id: string): Promise<RuleBlock> {
+    return this.ruleBlockService.findOneById(id);
   }
 
   @Post()

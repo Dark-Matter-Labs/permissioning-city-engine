@@ -51,7 +51,7 @@ export class RuleBlockService {
     };
   }
 
-  findOne(id: string): Promise<RuleBlock> {
+  findOneById(id: string): Promise<RuleBlock> {
     return this.ruleBlockRepository.findOneBy({ id });
   }
 
