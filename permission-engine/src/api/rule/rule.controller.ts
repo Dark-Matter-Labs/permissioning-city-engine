@@ -16,7 +16,7 @@ import { Rule } from '../../database/entity/rule.entity';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateRuleDto } from './dto/create-rule.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-import { ForkRuleDto, UpdateRuleDto } from './dto';
+import { FindAllMatchedRuleDto, ForkRuleDto, UpdateRuleDto } from './dto';
 import { FindAllRuleDto } from './dto';
 import { UserService } from '../user/user.service';
 
@@ -40,6 +40,33 @@ export class RuleController {
       authorId,
       parentRuleId,
       hash,
+    });
+  }
+
+  @Get('match/:spaceId')
+  @ApiOperation({
+    summary: 'Get matching rule templates by spaceId and condition',
+  })
+  findAllMatched(
+    @Param('spaceId') spaceId: string,
+    @Query() query: FindAllMatchedRuleDto,
+  ) {
+    const {
+      page,
+      limit,
+      spaceEventAccess,
+      spaceEventRequireEquipments,
+      spaceEventExpectedAttendeeCount,
+      spaceEventExceptions,
+    } = query;
+
+    return this.ruleService.findAllMatched(spaceId, {
+      page,
+      limit,
+      spaceEventAccess,
+      spaceEventRequireEquipments,
+      spaceEventExpectedAttendeeCount,
+      spaceEventExceptions,
     });
   }
 

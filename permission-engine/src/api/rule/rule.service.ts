@@ -2,7 +2,12 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, In, Repository } from 'typeorm';
 import { Rule } from '../../database/entity/rule.entity';
-import { CreateRuleDto, FindAllRuleDto, UpdateRuleDto } from './dto';
+import {
+  CreateRuleDto,
+  FindAllMatchedRuleDto,
+  FindAllRuleDto,
+  UpdateRuleDto,
+} from './dto';
 import { RuleBlockType, RuleTarget } from 'src/lib/type';
 import { RuleBlock } from 'src/database/entity/rule-block.entity';
 import { User } from 'src/database/entity/user.entity';
@@ -59,6 +64,135 @@ export class RuleService {
     return {
       data: data ?? [],
       total,
+    };
+  }
+
+  async findAllMatched(
+    spaceId: string,
+    findAllMatchedRuleDto: FindAllMatchedRuleDto,
+  ): Promise<{ data: Rule[]; total: number }> {
+    const {
+      page,
+      limit,
+      spaceEventAccess,
+      spaceEventExpectedAttendeeCount,
+      spaceEventRequireEquipments,
+      spaceEventExceptions,
+    } = findAllMatchedRuleDto;
+
+    const where = [];
+    const params: any[] = [(page - 1) * limit, limit, spaceId];
+    let paramIndex: number = params.length;
+
+    if (spaceEventAccess != null) {
+      paramIndex++;
+      where.push(
+        `(rb.type = 'space_event:access' AND rb.content = $${paramIndex})`,
+      );
+      params.push(spaceEventAccess);
+    }
+
+    if (spaceEventExpectedAttendeeCount != null) {
+      paramIndex++;
+      where.push(
+        `(rb.type = 'space_event:expected_attendee_count' AND CAST(rb.content AS INTEGER) >= $${paramIndex})`,
+      );
+      params.push(spaceEventExpectedAttendeeCount);
+    }
+
+    if (spaceEventRequireEquipments != null) {
+      spaceEventRequireEquipments.forEach((spaceEventRequireEquipment) => {
+        const [spaceEquipmentId, quantity] =
+          spaceEventRequireEquipment.split(':');
+        where.push(
+          `(rb.type = 'space_event:require_equipments' AND rb.content LIKE $${paramIndex + 1} AND CAST(split_part(rb.content, ':', 2) AS INTEGER) >= $${paramIndex + 2})`,
+        );
+        paramIndex = paramIndex + 2;
+        params.push(`${spaceEquipmentId}%`, quantity);
+      });
+    }
+
+    if (spaceEventExceptions != null) {
+      spaceEventExceptions.forEach((spaceEventException) => {
+        paramIndex++;
+        where.push(
+          `(rb.type = 'space_event:exception' AND rb.content LIKE $${paramIndex})`,
+        );
+        params.push(`${spaceEventException.split(':')[0]}%`);
+      });
+    }
+
+    function buildWhereClause(conditions = []) {
+      if (!conditions || conditions.length === 0) {
+        return '';
+      }
+
+      return `AND (
+        ${where.join(' OR ')}
+      )`;
+    }
+
+    paramIndex++;
+    params.push(where.length);
+
+    const query = `
+      WITH filtered_data AS (
+        SELECT
+          r.id,
+          r.name,
+          r.hash,
+          r.author_id,
+          r.target,
+          r.parent_rule_id,
+          r.is_active,
+          r.created_at,
+          r.updated_at
+        FROM rule r
+        JOIN rule_rule_block rrb ON r.id = rrb.rule_id
+        JOIN rule_block rb ON rrb.rule_block_id = rb.id
+        WHERE 
+        (
+          rrb.rule_id IN (
+            SELECT
+              space_event_rule_id
+            FROM
+              permission_request
+            WHERE
+              space_id = $3
+            AND
+              status IN ('review_approved', 'review_approved_with_condition')
+          ) 
+        )
+        ${buildWhereClause(where)}
+        GROUP BY r.id
+        HAVING COUNT(DISTINCT rb.id) >= $${paramIndex}
+      )
+      SELECT COUNT(*) AS total, json_agg(filtered_data) AS data
+      FROM filtered_data
+      LIMIT $2 OFFSET $1;
+    `;
+
+    const [{ data, total }] = await this.ruleRepository.query(query, params);
+
+    let result = [];
+    if (data != null) {
+      result = data.map((item) => {
+        return {
+          id: item.id,
+          name: item.name,
+          hash: item.hash,
+          authorId: item.author_id,
+          target: item.target,
+          parentRuleId: item.parent_rule_id,
+          isActive: item.is_active,
+          createdAt: item.created_at,
+          updatedAt: item.updated_at,
+        };
+      });
+    }
+    return {
+      data: result,
+      total: parseInt(total),
     };
   }
 
