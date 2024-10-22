@@ -14,7 +14,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Set up SSH to connect to server
+      # Step 2: Display commit info
+      - name: Display commit info
+        run: |
+          echo "Commit Hash: ${{ github.sha }}"
+          echo "Commit Author: ${{ github.event.head_commit.author.name }}"
+          echo "Commit Message: ${{ github.event.head_commit.message }}"
+
+      # Step 3: Set up SSH to connect to server
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.5.4
         with:
@@ -25,18 +32,18 @@ jobs:
           ssh-keyscan -H ${{ secrets.PROD_SERVER_IP }} >> ~/.ssh/known_hosts
 
 
-      # Step 3: Deploy the application
+      # Step 4: Deploy the application
       - name: Deploy to Prod Server
         run: |
           ssh ${{ secrets.PROD_SERVER_USER }}@${{ secrets.PROD_SERVER_IP }} "cd /mnt/ptc/permissioning-city-engine && git pull origin prod && ./scripts/deploy.sh"
 
-      # Step 4: Send results to Slack
+      # Step 5: Send results to Slack
       - name: Send success notification to Slack
         if: success()
         run: |
-          curl -X POST -H 'Content-type: application/json' --data '{"text":"Deployment succeeded :white_check_mark:"}' ${{ secrets.SLACK_WEBHOOK_URL }}
+          curl -X POST -H 'Content-type: application/json' --data '{"text":"Deployment triggered by commit: `'"${{ github.sha }}"'` \nAuthor: '"${{ github.event.head_commit.author.name }}"' \nMessage: '"${{ github.event.head_commit.message }}"' \n\nResult: Deployment succeeded :white_check_mark:"}' ${{ secrets.SLACK_WEBHOOK_URL }}
 
       - name: Send failure notification to Slack
         if: failure()
         run: |
-          curl -X POST -H 'Content-type: application/json' --data '{"text":"Deployment failed :x:"}' ${{ secrets.SLACK_WEBHOOK_URL }}
+          curl -X POST -H 'Content-type: application/json' --data '{"text":"Deployment triggered by commit: `'"${{ github.sha }}"'` \nAuthor: '"${{ github.event.head_commit.author.name }}"' \nMessage: '"${{ github.event.head_commit.message }}"' \n\nResult: Deployment failed :x:"}' ${{ secrets.SLACK_WEBHOOK_URL }}
