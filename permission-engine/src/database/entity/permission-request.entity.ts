@@ -8,7 +8,10 @@ import {
   ManyToOne,
   OneToMany,
 } from 'typeorm';
-import { PermissionRequestStatus } from 'src/lib/type';
+import {
+  PermissionRequestResolveStatus,
+  PermissionRequestStatus,
+} from 'src/lib/type';
 import { Rule } from './rule.entity';
 import { SpaceEvent } from './space-event.entity';
 import { Space } from './space.entity';
@@ -55,6 +58,12 @@ export class PermissionRequest {
   @Column()
   @ApiProperty({ description: 'PermissionRequest status', default: 'pending' })
   status: PermissionRequestStatus;
+
+  @Column()
+  @ApiProperty({
+    description: 'PermissionRequest resolve status',
+  })
+  resolveStatus: PermissionRequestResolveStatus;
 
   @Column()
   @ApiProperty({ description: 'PermissionRequest permissionCode' })
