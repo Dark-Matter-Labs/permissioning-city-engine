@@ -74,14 +74,14 @@ export class SpaceEventService {
 
     if (statuses != null) {
       paramIndex++;
-      where.push(`status IN $${paramIndex}`);
+      where.push(`status = ANY($${paramIndex})`);
       params.push(statuses);
     }
 
     if (topicIds != null) {
       paramIndex++;
       where.push(
-        `space_event.id IN (SELECT id FROM space_event_topic WHERE topic_id IN $${paramIndex})`,
+        `space_event.id IN (SELECT id FROM space_event_topic WHERE topic_id = ANY($${paramIndex}))`,
       );
       params.push(topicIds);
     }

@@ -39,7 +39,7 @@ export class SpaceEquipmentService {
 
     if (types != null) {
       paramIndex++;
-      where.push(`type IN $${paramIndex}`);
+      where.push(`type = ANY($${paramIndex})`);
       params.push(types);
     }
 
