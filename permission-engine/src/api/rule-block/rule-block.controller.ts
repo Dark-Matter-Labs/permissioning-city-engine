@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  ForbiddenException,
   Get,
   Param,
   Post,
@@ -33,10 +32,6 @@ export class RuleBlockController {
   ): Promise<{ data: RuleBlock[]; total: number }> {
     const { page, limit, hash, type, authorId, ids } = query;
 
-    if (limit > 100) {
-      // limit cannot exceed 100
-      throw new ForbiddenException();
-    }
     return await this.ruleBlockService.findAll({
       page,
       limit,

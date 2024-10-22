@@ -34,11 +34,6 @@ export class UserNotificationController {
   ): Promise<{ data: UserNotification[]; total: number }> {
     const { page, limit, userId, statuses } = query;
 
-    if (limit > 100) {
-      // limit cannot exceed 100
-      throw new ForbiddenException();
-    }
-
     return this.userNotificationService.findAll({
       page,
       limit,

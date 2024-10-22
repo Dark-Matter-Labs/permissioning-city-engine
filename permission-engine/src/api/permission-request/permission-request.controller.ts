@@ -37,11 +37,6 @@ export class PermissionRequestController {
   findAll(@Query() query: FindAllPermissionRequestDto) {
     const { page, limit, spaceEventId, spaceId, ruleId, statuses } = query;
 
-    if (limit > 100) {
-      // limit cannot exceed 100
-      throw new ForbiddenException();
-    }
-
     return this.permissionRequestService.findAll({
       page,
       limit,

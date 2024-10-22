@@ -33,11 +33,6 @@ export class RuleController {
   findAll(@Query() query: FindAllRuleDto) {
     const { page, limit, target, authorId, parentRuleId, hash } = query;
 
-    if (limit > 100) {
-      // limit cannot exceed 100
-      throw new ForbiddenException();
-    }
-
     return this.ruleService.findAll({
       page,
       limit,

@@ -58,11 +58,6 @@ export class SpaceEventController {
       name,
     } = query;
 
-    if (limit > 100) {
-      // limit cannot exceed 100
-      throw new ForbiddenException();
-    }
-
     return this.spaceEventService.findAll({
       page,
       limit,

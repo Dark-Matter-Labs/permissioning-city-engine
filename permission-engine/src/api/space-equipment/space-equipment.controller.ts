@@ -38,11 +38,6 @@ export class SpaceEquipmentController {
   findAll(@Query() query: FindAllSpaceEquipmentDto) {
     const { page, limit, spaceId, types, isActive } = query;
 
-    if (limit > 100) {
-      // limit cannot exceed 100
-      throw new ForbiddenException();
-    }
-
     return this.spaceEquipmentService.findAll({
       page,
       limit,
