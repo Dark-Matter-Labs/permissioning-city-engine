@@ -10,7 +10,7 @@ import {
 } from './dto';
 import { SpaceEvent } from 'src/database/entity/space-event.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, UpdateResult } from 'typeorm';
+import { Repository } from 'typeorm';
 import dayjs from 'dayjs';
 import { FindAllSpaceEventDto } from './dto/find-all-space-event.dto';
 import { PermissionRequest } from 'src/database/entity/permission-request.entity';
@@ -220,7 +220,7 @@ export class SpaceEventService {
   async update(
     id: string,
     updateSpaceEventDto: UpdateSpaceEventDto,
-  ): Promise<UpdateResult> {
+  ): Promise<{ data: { result: boolean } }> {
     const spaceEvent = await this.spaceEventRepository.findOneBy({ id });
 
     if (spaceEvent.status !== SpaceEventStatus.pending) {
@@ -242,14 +242,20 @@ export class SpaceEventService {
     const numberPart = parseInt(match[1], 10);
     const stringPart: dayjs.ManipulateType = match[2] as dayjs.ManipulateType;
 
-    return this.spaceEventRepository.update(id, {
+    const updateResult = await this.spaceEventRepository.update(id, {
       ...updateSpaceEventDto,
       endsAt: start.add(numberPart, stringPart).toDate(),
       updatedAt: new Date(),
     });
+
+    return {
+      data: {
+        result: updateResult.affected === 1,
+      },
+    };
   }
 
-  async updateToRunning(id: string): Promise<UpdateResult> {
+  async updateToRunning(id: string): Promise<{ data: { result: boolean } }> {
     const spaceEvent = await this.spaceEventRepository.findOneBy({ id });
 
     if (
@@ -267,13 +273,19 @@ export class SpaceEventService {
       );
     }
 
-    return this.spaceEventRepository.update(id, {
+    const updateResult = await this.spaceEventRepository.update(id, {
       status: SpaceEventStatus.running,
       updatedAt: new Date(),
     });
+
+    return {
+      data: {
+        result: updateResult.affected === 1,
+      },
+    };
   }
 
-  async updateToClosed(id: string): Promise<UpdateResult> {
+  async updateToClosed(id: string): Promise<{ data: { result: boolean } }> {
     const spaceEvent = await this.spaceEventRepository.findOneBy({ id });
 
     if ([SpaceEventStatus.running].includes(spaceEvent.status) === false) {
@@ -282,16 +294,22 @@ export class SpaceEventService {
       );
     }
 
-    return this.spaceEventRepository.update(id, {
+    const updateResult = await this.spaceEventRepository.update(id, {
       status: SpaceEventStatus.closed,
       updatedAt: new Date(),
     });
+
+    return {
+      data: {
+        result: updateResult.affected === 1,
+      },
+    };
   }
 
   async updateToComplete(
     id: string,
     completeSpaceEventDto: CompleteSpaceEventDto,
-  ): Promise<UpdateResult> {
+  ): Promise<{ data: { result: boolean } }> {
     const spaceEvent = await this.spaceEventRepository.findOneBy({ id });
     const dto: Partial<SpaceEvent> = {
       status: SpaceEventStatus.complete,
@@ -319,6 +337,12 @@ export class SpaceEventService {
       dto.details = completeSpaceEventDto.details;
     }
 
-    return this.spaceEventRepository.update(id, dto);
+    const updateResult = await this.spaceEventRepository.update(id, dto);
+
+    return {
+      data: {
+        result: updateResult.affected === 1,
+      },
+    };
   }
 }

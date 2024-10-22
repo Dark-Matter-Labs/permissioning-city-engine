@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CreatePermissionRequestDto, FindAllPermissionRequestDto } from './dto';
 import { PermissionRequest } from 'src/database/entity/permission-request.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, UpdateResult } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Space } from 'src/database/entity/space.entity';
 import { SpaceEvent } from 'src/database/entity/space-event.entity';
 import { v4 as uuidv4 } from 'uuid';
@@ -149,77 +149,142 @@ export class PermissionRequestService {
     return this.permissionRequestRepository.save(permissionRequest);
   }
 
-  updateToAssigned(id: string): Promise<UpdateResult> {
-    return this.permissionRequestRepository.update(id, {
+  async updateToAssigned(id: string): Promise<{ data: { result: boolean } }> {
+    const updateResult = await this.permissionRequestRepository.update(id, {
       status: PermissionRequestStatus.assigned,
-      updatedAt: new Date(),
-    });
-  }
-
-  updateToAssignFailed(id: string): Promise<UpdateResult> {
-    return this.permissionRequestRepository.update(id, {
-      status: PermissionRequestStatus.assignFailed,
-      updatedAt: new Date(),
-    });
-  }
-
-  updateToIssueRaised(id: string): Promise<UpdateResult> {
-    return this.permissionRequestRepository.update(id, {
-      status: PermissionRequestStatus.issueRaised,
-      updatedAt: new Date(),
-    });
-  }
-
-  updateToReviewApproved(id: string): Promise<UpdateResult> {
-    return this.permissionRequestRepository.update(id, {
-      status: PermissionRequestStatus.reviewApproved,
-      updatedAt: new Date(),
-    });
-  }
-
-  updateToReviewApprovedWithCondition(id: string): Promise<UpdateResult> {
-    return this.permissionRequestRepository.update(id, {
-      status: PermissionRequestStatus.reviewApprovedWithCondition,
-      updatedAt: new Date(),
-    });
-  }
-
-  updateToResolveCancelled(id: string): Promise<UpdateResult> {
-    return this.permissionRequestRepository.update(id, {
-      resolveStatus: PermissionRequestResolveStatus.resolveCancelled,
-      updatedAt: new Date(),
-    });
-  }
-
-  // only for review_approved* status
-  updateToResolveRejected(id: string): Promise<UpdateResult> {
-    return this.permissionRequestRepository.update(id, {
-      resolveStatus: PermissionRequestResolveStatus.resolveRejected,
-      updatedAt: new Date(),
-    });
-  }
-
-  async updateToResolveAccepted(
-    id: string,
-  ): Promise<{ data: { permissionCode: string } }> {
-    const permissionCode = Util.generateRandomCode();
-    await this.permissionRequestRepository.update(id, {
-      resolveStatus: PermissionRequestResolveStatus.resolveAccepted,
-      permissionCode,
       updatedAt: new Date(),
     });
 
     return {
       data: {
-        permissionCode,
+        result: updateResult.affected === 1,
       },
     };
   }
 
-  updateToResolveDropped(id: string): Promise<UpdateResult> {
-    return this.permissionRequestRepository.update(id, {
+  async updateToAssignFailed(
+    id: string,
+  ): Promise<{ data: { result: boolean } }> {
+    const updateResult = await this.permissionRequestRepository.update(id, {
+      status: PermissionRequestStatus.assignFailed,
+      updatedAt: new Date(),
+    });
+
+    return {
+      data: {
+        result: updateResult.affected === 1,
+      },
+    };
+  }
+
+  async updateToIssueRaised(
+    id: string,
+  ): Promise<{ data: { result: boolean } }> {
+    const updateResult = await this.permissionRequestRepository.update(id, {
+      status: PermissionRequestStatus.issueRaised,
+      updatedAt: new Date(),
+    });
+
+    return {
+      data: {
+        result: updateResult.affected === 1,
+      },
+    };
+  }
+
+  async updateToReviewApproved(
+    id: string,
+  ): Promise<{ data: { result: boolean } }> {
+    const updateResult = await this.permissionRequestRepository.update(id, {
+      status: PermissionRequestStatus.reviewApproved,
+      updatedAt: new Date(),
+    });
+
+    return {
+      data: {
+        result: updateResult.affected === 1,
+      },
+    };
+  }
+
+  async updateToReviewApprovedWithCondition(
+    id: string,
+  ): Promise<{ data: { result: boolean } }> {
+    const updateResult = await this.permissionRequestRepository.update(id, {
+      status: PermissionRequestStatus.reviewApprovedWithCondition,
+      updatedAt: new Date(),
+    });
+
+    return {
+      data: {
+        result: updateResult.affected === 1,
+      },
+    };
+  }
+
+  async updateToResolveCancelled(
+    id: string,
+  ): Promise<{ data: { result: boolean } }> {
+    const updateResult = await this.permissionRequestRepository.update(id, {
+      resolveStatus: PermissionRequestResolveStatus.resolveCancelled,
+      updatedAt: new Date(),
+    });
+
+    return {
+      data: {
+        result: updateResult.affected === 1,
+      },
+    };
+  }
+
+  // only for review_approved* status
+  async updateToResolveRejected(
+    id: string,
+  ): Promise<{ data: { result: boolean } }> {
+    const updateResult = await this.permissionRequestRepository.update(id, {
+      resolveStatus: PermissionRequestResolveStatus.resolveRejected,
+      updatedAt: new Date(),
+    });
+
+    return {
+      data: {
+        result: updateResult.affected === 1,
+      },
+    };
+  }
+
+  async updateToResolveAccepted(
+    id: string,
+  ): Promise<{ data: { result: boolean; permissionCode: string | null } }> {
+    const permissionCode = Util.generateRandomCode();
+    const updateResult = await this.permissionRequestRepository.update(id, {
+      resolveStatus: PermissionRequestResolveStatus.resolveAccepted,
+      permissionCode,
+      updatedAt: new Date(),
+    });
+
+    const result = updateResult.affected === 1;
+
+    return {
+      data: {
+        result,
+        permissionCode: result === true ? permissionCode : null,
+      },
+    };
+  }
+
+  async updateToResolveDropped(
+    id: string,
+  ): Promise<{ data: { result: boolean } }> {
+    const updateResult = await this.permissionRequestRepository.update(id, {
       resolveStatus: PermissionRequestResolveStatus.resolveDropped,
       updatedAt: new Date(),
     });
+
+    return {
+      data: {
+        result: updateResult.affected === 1,
+      },
+    };
   }
 }

@@ -18,7 +18,6 @@ import {
   FindAllSpacePermissionerByUserIdDto,
   InviteSpacePermissionerDto,
 } from './dto';
-import { UpdateResult } from 'typeorm';
 import { UserService } from '../user/user.service';
 import { PaginationDto } from 'src/lib/dto';
 import { SpaceService } from '../space/space.service';
@@ -151,10 +150,7 @@ export class SpacePermissionerController {
   @ApiOperation({
     summary: 'Leave or rejoin SpacePermissioner',
   })
-  async leave(
-    @Req() req,
-    @Param('spaceId') spaceId: string,
-  ): Promise<UpdateResult> {
+  async leave(@Req() req, @Param('spaceId') spaceId: string) {
     const user = await this.userService.findOneByEmail(req.user.email);
     const isOwner = await this.spaceService.isOwner(spaceId, user.id);
 

@@ -3,7 +3,6 @@ import { UserService } from './user.service';
 import { User } from '../../database/entity/user.entity';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-import { UpdateResult } from 'typeorm';
 import { UpdateUserDto } from './dto';
 
 @ApiTags('user')
@@ -21,10 +20,7 @@ export class UserController {
   // TODO. validate user location information
   @Put()
   @UseGuards(JwtAuthGuard)
-  updateSelf(
-    @Req() req,
-    @Body() updateUserDto: UpdateUserDto,
-  ): Promise<UpdateResult> {
+  updateSelf(@Req() req, @Body() updateUserDto: UpdateUserDto) {
     return this.userService.update(req.user.email, updateUserDto);
   }
 }

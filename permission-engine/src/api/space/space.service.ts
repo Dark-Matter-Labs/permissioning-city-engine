@@ -4,7 +4,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Not, Repository, UpdateResult } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { Space } from '../../database/entity/space.entity';
 import { CreateSpaceDto, UpdateSpaceDto } from './dto';
 import { User } from 'src/database/entity/user.entity';
@@ -61,7 +61,7 @@ export class SpaceService {
   async update(
     id: string,
     updateSpaceDto: UpdateSpaceDto,
-  ): Promise<UpdateResult> {
+  ): Promise<{ data: { result: boolean } }> {
     const { ruleId } = updateSpaceDto;
 
     if (ruleId != null) {
@@ -84,10 +84,16 @@ export class SpaceService {
       }
     }
 
-    return this.spaceRepository.update(id, {
+    const updateResult = await this.spaceRepository.update(id, {
       ...updateSpaceDto,
       updatedAt: new Date(),
     });
+
+    return {
+      data: {
+        result: updateResult.affected === 1,
+      },
+    };
   }
 
   async isOwner(spaceId: string, userId: string): Promise<boolean> {

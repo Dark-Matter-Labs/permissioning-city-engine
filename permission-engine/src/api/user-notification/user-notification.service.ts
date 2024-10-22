@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, In, Repository, UpdateResult } from 'typeorm';
+import { FindOptionsWhere, In, Repository } from 'typeorm';
 import { UserNotification } from '../../database/entity/user-notification.entity';
 import { UserNotificationStatus, UserNotificationType } from 'src/lib/type';
 import { FindAllUserNotificationDto } from './dto';
@@ -71,34 +71,63 @@ export class UserNotificationService {
     return this.userNotificationRepository.save(user);
   }
 
-  updateToQueued(id: string, email: EmailTemplate): Promise<UpdateResult> {
-    return this.userNotificationRepository.update(id, {
+  async updateToQueued(
+    id: string,
+    email: EmailTemplate,
+  ): Promise<{ data: { result: boolean } }> {
+    const updateResult = await this.userNotificationRepository.update(id, {
       status: UserNotificationStatus.queued,
       subjectPart: email.subject,
       textPart: email.text,
       htmlPart: email.html,
       updatedAt: new Date(),
     });
+
+    return {
+      data: {
+        result: updateResult.affected === 1,
+      },
+    };
   }
 
-  updateToNoticed(id: string): Promise<UpdateResult> {
-    return this.userNotificationRepository.update(id, {
+  async updateToNoticed(id: string): Promise<{ data: { result: boolean } }> {
+    const updateResult = await this.userNotificationRepository.update(id, {
       status: UserNotificationStatus.noticed,
       updatedAt: new Date(),
     });
+
+    return {
+      data: {
+        result: updateResult.affected === 1,
+      },
+    };
   }
 
-  updateToNoticeFailed(id: string): Promise<UpdateResult> {
-    return this.userNotificationRepository.update(id, {
+  async updateToNoticeFailed(
+    id: string,
+  ): Promise<{ data: { result: boolean } }> {
+    const updateResult = await this.userNotificationRepository.update(id, {
       status: UserNotificationStatus.noticeFailed,
       updatedAt: new Date(),
     });
+
+    return {
+      data: {
+        result: updateResult.affected === 1,
+      },
+    };
   }
 
-  complete(id: string): Promise<UpdateResult> {
-    return this.userNotificationRepository.update(id, {
+  async complete(id: string): Promise<{ data: { result: boolean } }> {
+    const updateResult = await this.userNotificationRepository.update(id, {
       status: UserNotificationStatus.complete,
       updatedAt: new Date(),
     });
+
+    return {
+      data: {
+        result: updateResult.affected === 1,
+      },
+    };
   }
 }

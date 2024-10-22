@@ -5,7 +5,7 @@ import {
   UpdateSpaceEquipmentDto,
 } from './dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, UpdateResult } from 'typeorm';
+import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { SpaceEquipment } from 'src/database/entity/space-equipment.entity';
 
@@ -117,10 +117,16 @@ export class SpaceEquipmentService {
   async update(
     id: string,
     updateSpaceEquipmentDto: UpdateSpaceEquipmentDto,
-  ): Promise<UpdateResult> {
-    return this.spaceEquipmentRepository.update(id, {
+  ): Promise<{ data: { result: boolean } }> {
+    const updateResult = await this.spaceEquipmentRepository.update(id, {
       ...updateSpaceEquipmentDto,
       updatedAt: new Date(),
     });
+
+    return {
+      data: {
+        result: updateResult.affected === 1,
+      },
+    };
   }
 }

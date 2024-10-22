@@ -7,7 +7,7 @@ import {
 } from './dto';
 import { PermissionResponse } from 'src/database/entity/permission-response.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, UpdateResult } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Space } from 'src/database/entity/space.entity';
 import { SpaceEvent } from 'src/database/entity/space-event.entity';
 import { v4 as uuidv4 } from 'uuid';
@@ -128,10 +128,10 @@ export class PermissionResponseService {
   }
 
   // TODO. add permission-handler logic
-  updateToApproved(
+  async updateToApproved(
     id: string,
     approvePermissionResponseDto: ApprovePermissionResponseDto,
-  ): Promise<UpdateResult> {
+  ): Promise<{ data: { result: boolean } }> {
     const { conditions } = approvePermissionResponseDto;
     let status = PermissionResponseStatus.approved;
 
@@ -139,22 +139,34 @@ export class PermissionResponseService {
       status = PermissionResponseStatus.approvedWithCondition;
     }
 
-    return this.permissionResponseRepository.update(id, {
+    const updateResult = await this.permissionResponseRepository.update(id, {
       ...approvePermissionResponseDto,
       status,
       updatedAt: new Date(),
     });
+
+    return {
+      data: {
+        result: updateResult.affected === 1,
+      },
+    };
   }
 
   // TODO. add permission-handler logic
-  updateToRejected(
+  async updateToRejected(
     id: string,
     rejectPermissionResponseDto: RejectPermissionResponseDto,
-  ): Promise<UpdateResult> {
-    return this.permissionResponseRepository.update(id, {
+  ): Promise<{ data: { result: boolean } }> {
+    const updateResult = await this.permissionResponseRepository.update(id, {
       ...rejectPermissionResponseDto,
       status: PermissionResponseStatus.rejected,
       updatedAt: new Date(),
     });
+
+    return {
+      data: {
+        result: updateResult.affected === 1,
+      },
+    };
   }
 }

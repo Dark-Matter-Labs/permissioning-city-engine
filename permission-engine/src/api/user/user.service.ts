@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, UpdateResult } from 'typeorm';
+import { Repository } from 'typeorm';
 import { User } from '../../database/entity/user.entity';
 import { CreateUserDto, UpdateUserDto } from './dto';
 import { v4 as uuidv4 } from 'uuid';
@@ -38,12 +38,18 @@ export class UserService {
   async update(
     email: string,
     updateUserDto: UpdateUserDto,
-  ): Promise<UpdateResult> {
+  ): Promise<{ data: { result: boolean } }> {
     const user = await this.findOneByEmail(email);
 
-    return this.userRepository.update(user.id, {
+    const updateResult = await this.userRepository.update(user.id, {
       ...updateUserDto,
       updatedAt: new Date(),
     });
+
+    return {
+      data: {
+        result: updateResult.affected === 1,
+      },
+    };
   }
 }

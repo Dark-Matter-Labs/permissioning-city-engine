@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, UpdateResult } from 'typeorm';
+import { Repository } from 'typeorm';
 import {
   CreateSpacePermissionerDto,
   FindAllSpacePermissionerByUserIdDto,
@@ -95,12 +95,18 @@ export class SpacePermissionerService {
 
   async update(
     updateSpacePermissionerDto: UpdateSpacePermissionerDto,
-  ): Promise<UpdateResult> {
+  ): Promise<{ data: { result: boolean } }> {
     const { id, isActive } = updateSpacePermissionerDto;
 
-    return this.spacePermissionerRepository.update(id, {
+    const updateResult = await this.spacePermissionerRepository.update(id, {
       isActive,
       updatedAt: new Date(),
     });
+
+    return {
+      data: {
+        result: updateResult.affected === 1,
+      },
+    };
   }
 }

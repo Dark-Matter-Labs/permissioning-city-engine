@@ -18,7 +18,6 @@ import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateSpaceDto } from './dto/create-space.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { UpdateSpaceDto } from './dto';
-import { UpdateResult } from 'typeorm';
 import { UserService } from '../user/user.service';
 import { SpacePermissioner } from 'src/database/entity/space-permissioner.entity';
 import { SpacePermissionerService } from '../space-permissioner/space-permissioner.service';
@@ -125,7 +124,7 @@ export class SpaceController {
     @Param('id') id: string,
     @UploadedFiles() uploadedFiles: { images: Express.MulterS3.File[] },
     @Body() updateSpaceDto: UpdateSpaceDto,
-  ): Promise<UpdateResult> {
+  ) {
     const { images } = uploadedFiles;
     const user = await this.userService.findOneByEmail(req.user.email);
     const space = await this.spaceService.findOneById(id);
