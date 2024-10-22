@@ -6,7 +6,10 @@ import { Repository, UpdateResult } from 'typeorm';
 import { Space } from 'src/database/entity/space.entity';
 import { SpaceEvent } from 'src/database/entity/space-event.entity';
 import { v4 as uuidv4 } from 'uuid';
-import { PermissionRequestStatus } from 'src/lib/type';
+import {
+  PermissionRequestResolveStatus,
+  PermissionRequestStatus,
+} from 'src/lib/type';
 import * as Util from 'src/lib/util/util';
 
 @Injectable()
@@ -50,14 +53,14 @@ export class PermissionRequestService {
 
     if (statuses != null) {
       paramIndex++;
-      where.push(`status IN $${paramIndex}`);
+      where.push(`status = ANY($${paramIndex})`);
       params.push(statuses);
     }
 
     const whereClause = where.length > 0 ? 'WHERE' : '';
     const query = `
       WITH filtered_data AS (
-        SELECT (
+        SELECT 
           id,
           space_id,
           space_event_id,
@@ -66,7 +69,7 @@ export class PermissionRequestService {
           status,
           created_at,
           updated_at
-        ) FROM permission_request
+        FROM permission_request
         ${whereClause} ${where.join(' AND ')}
       )
       SELECT COUNT(*) AS total, json_agg(filtered_data) AS data
@@ -84,14 +87,14 @@ export class PermissionRequestService {
     if (data != null) {
       result = data.map((item) => {
         return {
-          id: item.row.f1,
-          spaceId: item.row.f2,
-          spaceEventId: item.row.f3,
-          spaceRuleId: item.row.f4,
-          spaceEventRuleId: item.row.f5,
-          status: item.row.f6,
-          createdAt: item.row.f7,
-          updatedAt: item.row.f8,
+          id: item.id,
+          spaceId: item.space_id,
+          spaceEventId: item.space_event_id,
+          spaceRuleId: item.space_rule_id,
+          spaceEventRuleId: item.space_event_rule_id,
+          status: item.status,
+          createdAt: item.created_at,
+          updatedAt: item.updated_at,
         };
       });
     }
@@ -102,7 +105,16 @@ export class PermissionRequestService {
   }
 
   findOneById(id: string): Promise<PermissionRequest> {
-    return this.permissionRequestRepository.findOneBy({ id });
+    return this.permissionRequestRepository.findOne({
+      where: { id },
+      relations: [
+        'spaceEvent',
+        'spaceEventRule',
+        'space',
+        'spaceRule',
+        'permissionResponses',
+      ],
+    });
   }
 
   async remove(id: string): Promise<void> {
@@ -172,32 +184,41 @@ export class PermissionRequestService {
     });
   }
 
-  updateToResolveRejected(id: string): Promise<UpdateResult> {
+  updateToResolveCancelled(id: string): Promise<UpdateResult> {
     return this.permissionRequestRepository.update(id, {
-      status: PermissionRequestStatus.resolveRejected,
+      resolveStatus: PermissionRequestResolveStatus.resolveCancelled,
       updatedAt: new Date(),
     });
   }
 
   // only for review_approved* status
-  updateToResolveAccepted(id: string): Promise<UpdateResult> {
+  updateToResolveRejected(id: string): Promise<UpdateResult> {
     return this.permissionRequestRepository.update(id, {
-      status: PermissionRequestStatus.resolveAccepted,
-      permissionCode: Util.generateRandomCode(),
+      resolveStatus: PermissionRequestResolveStatus.resolveRejected,
       updatedAt: new Date(),
     });
+  }
+
+  async updateToResolveAccepted(
+    id: string,
+  ): Promise<{ data: { permissionCode: string } }> {
+    const permissionCode = Util.generateRandomCode();
+    await this.permissionRequestRepository.update(id, {
+      resolveStatus: PermissionRequestResolveStatus.resolveAccepted,
+      permissionCode,
+      updatedAt: new Date(),
+    });
+
+    return {
+      data: {
+        permissionCode,
+      },
+    };
   }
 
   updateToResolveDropped(id: string): Promise<UpdateResult> {
     return this.permissionRequestRepository.update(id, {
-      status: PermissionRequestStatus.resolveDropped,
-      updatedAt: new Date(),
-    });
-  }
-
-  updateToResolveCancelled(id: string): Promise<UpdateResult> {
-    return this.permissionRequestRepository.update(id, {
-      status: PermissionRequestStatus.resolveCancelled,
+      resolveStatus: PermissionRequestResolveStatus.resolveDropped,
       updatedAt: new Date(),
     });
   }

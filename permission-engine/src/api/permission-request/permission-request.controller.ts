@@ -19,6 +19,7 @@ import { SpaceEventService } from '../space-event/space-event.service';
 import { SpaceService } from '../space/space.service';
 import { UserService } from '../user/user.service';
 import { SpacePermissionerService } from '../space-permissioner/space-permissioner.service';
+import { PermissionRequestStatus } from 'src/lib/type';
 
 @ApiTags('permission')
 @Controller('api/v1/permission/request')
@@ -93,23 +94,75 @@ export class PermissionRequestController {
     return this.permissionRequestService.create(createPermissionRequestDto);
   }
 
-  // TODO. work on dedicated status updates
-  // @Put(':id')
-  // @ApiOperation({ summary: 'Update PermissionRequest' })
-  // @UseGuards(JwtAuthGuard)
-  // async update(
-  //   @Req() req,
-  //   @Param('id') id: string,
-  //   @Body() updatePermissionRequestDto: UpdatePermissionRequestDto,
-  // ) {
-  //   const user = await this.userService.findOneByEmail(req.user.email);
-  //   const permissionRequest =
-  //     await this.permissionRequestService.findOneById(id);
+  @Post(':id/cancel')
+  @ApiOperation({ summary: 'Cancel PermissionRequest' })
+  @UseGuards(JwtAuthGuard)
+  async cancel(@Req() req, @Param('id') id: string) {
+    const user = await this.userService.findOneByEmail(req.user.email);
+    const permissionRequest =
+      await this.permissionRequestService.findOneById(id);
 
-  //   if (permissionRequest.organizerId !== user.id) {
-  //     throw new ForbiddenException();
-  //   }
+    if (permissionRequest.spaceEvent.organizerId !== user.id) {
+      throw new ForbiddenException();
+    }
 
-  //   return this.permissionRequestService.update(id, updatePermissionRequestDto);
-  // }
+    return this.permissionRequestService.updateToResolveCancelled(id);
+  }
+
+  @Post(':id/accept')
+  @ApiOperation({ summary: 'Accept approved PermissionRequest review result' })
+  @UseGuards(JwtAuthGuard)
+  async accept(
+    @Req() req,
+    @Param('id') id: string,
+  ): Promise<{
+    data: {
+      permissionCode: string;
+    };
+  }> {
+    const user = await this.userService.findOneByEmail(req.user.email);
+    const permissionRequest =
+      await this.permissionRequestService.findOneById(id);
+
+    if (permissionRequest.spaceEvent.organizerId !== user.id) {
+      throw new ForbiddenException();
+    }
+
+    if (
+      [
+        PermissionRequestStatus.reviewApproved,
+        PermissionRequestStatus.reviewApprovedWithCondition,
+      ].includes(permissionRequest.status) === false
+    ) {
+      throw new ForbiddenException(
+        'Cannot accept unapproved permissionRequest.',
+      );
+    }
+
+    return this.permissionRequestService.updateToResolveAccepted(id);
+  }
+
+  @Post(':id/drop')
+  @ApiOperation({ summary: 'Drop approved PermissionRequest review result' })
+  @UseGuards(JwtAuthGuard)
+  async drop(@Req() req, @Param('id') id: string) {
+    const user = await this.userService.findOneByEmail(req.user.email);
+    const permissionRequest =
+      await this.permissionRequestService.findOneById(id);
+
+    if (permissionRequest.spaceEvent.organizerId !== user.id) {
+      throw new ForbiddenException();
+    }
+
+    if (
+      [
+        PermissionRequestStatus.reviewApproved,
+        PermissionRequestStatus.reviewApprovedWithCondition,
+      ].includes(permissionRequest.status) === false
+    ) {
+      throw new ForbiddenException('Cannot drop unapproved permissionRequest.');
+    }
+
+    return this.permissionRequestService.updateToResolveDropped(id);
+  }
 }
