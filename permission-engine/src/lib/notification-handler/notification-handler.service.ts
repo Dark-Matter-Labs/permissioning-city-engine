@@ -12,7 +12,7 @@ import { EmailTemplate, WelcomeEmail } from '../email-template';
 import { DataSource, QueryRunner } from 'typeorm';
 
 @Injectable()
-export class NotificationSenderService
+export class NotificationHandlerService
   implements OnModuleInit, OnModuleDestroy
 {
   private isActive: boolean;
@@ -20,7 +20,7 @@ export class NotificationSenderService
   private fetchCount: number = 10;
 
   constructor(
-    @InjectQueue('notification-sender') private readonly queue: Queue,
+    @InjectQueue('notification-handler') private readonly queue: Queue,
     private readonly configService: ConfigService,
     private readonly dataSource: DataSource,
     private readonly userNotificationService: UserNotificationService,
@@ -33,7 +33,7 @@ export class NotificationSenderService
     if (
       engineMode === 'daemon' &&
       daemons &&
-      daemons?.includes('notification-sender')
+      daemons?.includes('notification-handler')
     ) {
       this.isActive = true;
       this.start();

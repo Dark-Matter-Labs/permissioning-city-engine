@@ -5,8 +5,8 @@ import { Logger } from '../logger/logger.service';
 import { UserService } from 'src/api/user/user.service';
 import { UserNotificationService } from 'src/api/user-notification/user-notification.service';
 
-@Processor('notification-sender')
-export class NotificationSenderProcessor {
+@Processor('notification-handler')
+export class NotificationHandlerProcessor {
   constructor(
     private readonly sesService: SESService,
     private readonly userService: UserService,

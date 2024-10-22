@@ -87,7 +87,7 @@ services:
       - .env
     environment:
       - ENGINE_MODE=daemon
-      - DAEMONS=notification-sender,permission-handler
+      - DAEMONS=notification-handler,permission-handler
     volumes:
       - ./logs/permission-engine-daemon:/app/log
     logging:

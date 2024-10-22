@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bull';
-import { NotificationSenderProcessor } from './notification-sender.processor';
-import { NotificationSenderService } from './notification-sender.service';
+import { NotificationHandlerProcessor } from './notification-handler.processor';
+import { NotificationHandlerService } from './notification-handler.service';
 import { Logger } from '../logger/logger.service';
 import { SESService } from '../ses/ses.service';
 import { SESModule } from '../ses/ses.module';
@@ -20,18 +20,18 @@ import { UserNotificationService } from 'src/api/user-notification/user-notifica
     }),
     TypeOrmModule.forFeature([User, UserNotification]),
     BullModule.registerQueue({
-      name: 'notification-sender',
+      name: 'notification-handler',
     }),
     SESModule,
   ],
   providers: [
-    NotificationSenderProcessor,
-    NotificationSenderService,
+    NotificationHandlerProcessor,
+    NotificationHandlerService,
     SESService,
     Logger,
     UserService,
     UserNotificationService,
   ],
-  exports: [NotificationSenderService],
+  exports: [NotificationHandlerService],
 })
-export class NotificationSenderModule {}
+export class NotificationHandlerModule {}

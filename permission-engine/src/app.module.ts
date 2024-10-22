@@ -18,14 +18,14 @@ import { SpaceModule } from './api/space/space.module';
 import { SpaceEventModule } from './api/space-event/space-event.module';
 import { JwtModule } from '@nestjs/jwt';
 import { RedisModule } from '@liaoliaots/nestjs-redis';
-import { NotificationSenderModule } from './lib/notification-sender/notification-sender.module';
+import { NotificationHandlerModule } from './lib/notification-handler/notification-handler.module';
 import { PermissionRequestModule } from './api/permission-request/permission-request.module';
 import { RuleModule } from './api/rule/rule.module';
 import { SpacePermissionerModule } from './api/space-permissioner/space-permissioner.module';
 import { UserNotificationModule } from './api/user-notification/user-notification.module';
 import { RuleBlockModule } from './api/rule-block/rule-block.module';
 import { SpaceEquipmentModule } from './api/space-equipment/space-equipment.module';
-import { NotificationSenderService } from './lib/notification-sender/notification-sender.service';
+import { NotificationHandlerService } from './lib/notification-handler/notification-handler.service';
 import { PermissionResponseModule } from './api/permission-response/permission-response.module';
 
 @Module({
@@ -73,7 +73,7 @@ import { PermissionResponseModule } from './api/permission-response/permission-r
       },
     }),
     ValidatorModule,
-    NotificationSenderModule,
+    NotificationHandlerModule,
     AuthModule,
     UserNotificationModule,
     UserModule,
@@ -92,7 +92,7 @@ import { PermissionResponseModule } from './api/permission-response/permission-r
 export class AppModule implements OnModuleInit {
   constructor(
     private readonly databaseService: DatabaseService,
-    private readonly notificationSenderService: NotificationSenderService,
+    private readonly notificationHandlerService: NotificationHandlerService,
   ) {}
 
   async onModuleInit() {
