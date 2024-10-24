@@ -1,8 +1,20 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MaxLength,
+} from 'class-validator';
 import { RuleBlockType } from 'src/lib/type';
 
 export class CreateRuleBlockDto {
+  @IsOptional()
+  @IsUUID('4')
+  id?: string;
+
   @IsNotEmpty()
   @IsString()
   @MaxLength(100)
@@ -17,7 +29,25 @@ export class CreateRuleBlockDto {
   })
   type: RuleBlockType;
 
+  @IsOptional()
   @IsString()
-  @ApiProperty({ description: 'RuleBlock content', required: true })
-  content: string;
+  @ApiPropertyOptional({
+    description: 'RuleBlock content: Send empty if file exists',
+    nullable: true,
+  })
+  content?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(1)
+  @ApiPropertyOptional({
+    description: 'SpaceEvent files in jpeg|jpg|png|pdf',
+    type: 'array',
+    items: {
+      type: 'string',
+      format: 'binary',
+    },
+    maxItems: 1,
+  })
+  files?: Express.Multer.File[];
 }

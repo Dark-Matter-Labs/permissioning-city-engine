@@ -63,19 +63,15 @@ export class RuleBlockService {
     authorId: string,
     createRuleBlockDto: CreateRuleBlockDto,
   ): Promise<RuleBlock> {
-    const { type, content, name } = createRuleBlockDto;
+    const { type, content, name, files } = createRuleBlockDto;
     const trimmedContent = content.trim();
     const trimmedName = name.trim();
-    const hash = Util.hash([type, trimmedContent].join(':'));
+    const hash = Util.hash([type, trimmedName, trimmedContent].join(':'));
 
-    try {
-      const ruleBlock = await this.ruleBlockRepository.findOneBy({ hash });
+    const ruleBlock = await this.ruleBlockRepository.findOneBy({ hash });
 
-      if (ruleBlock) {
-        return ruleBlock;
-      }
-    } catch (error) {
-      this.logger.log('Create a new RuleBlock');
+    if (ruleBlock) {
+      return ruleBlock;
     }
 
     if (type === RuleBlockType.spaceConsentMethod) {
@@ -95,9 +91,15 @@ export class RuleBlockService {
       }
     }
 
+    if (type == RuleBlockType.spaceEventInsurance) {
+      if (files.length === 0) {
+        throw new BadRequestException('Should provide file for insurance');
+      }
+    }
+
     const newRuleBlock = this.ruleBlockRepository.create({
       ...createRuleBlockDto,
-      id: uuidv4(),
+      id: createRuleBlockDto.id ?? uuidv4(),
       authorId,
       content: trimmedContent,
       name: trimmedName,

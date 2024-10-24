@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Rule } from 'src/database/entity/rule.entity';
 import { User } from 'src/database/entity/user.entity';
@@ -21,6 +21,11 @@ import { PermissionResponse } from 'src/database/entity/permission-response.enti
 import { UserNotificationService } from '../user-notification/user-notification.service';
 import { PermissionHandlerService } from 'src/lib/permission-handler/permission-handler.service';
 import { PermissionHandlerModule } from 'src/lib/permission-handler/permission-handler.module';
+import { S3Client } from '@aws-sdk/client-s3';
+import { MulterModule } from '@nestjs/platform-express';
+import { S3Module } from 'src/lib/s3/s3.module';
+import multerS3 from 'multer-s3';
+import { v4 as uuidv4 } from 'uuid';
 
 @Module({
   imports: [
@@ -36,6 +41,26 @@ import { PermissionHandlerModule } from 'src/lib/permission-handler/permission-h
       SpaceEvent,
       SpacePermissioner,
     ]),
+    MulterModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        storage: multerS3({
+          s3: new S3Client({
+            credentials: {
+              accessKeyId: configService.get('AWS_ACCESS_KEY_ID'),
+              secretAccessKey: configService.get('AWS_SECRET_ACCESS_KEY'),
+            },
+            region: configService.get('AWS_REGION'),
+          }),
+          bucket: configService.get('AWS_S3_BUCKET_NAME'),
+          key: (req, file, cb) => {
+            cb(null, `${uuidv4()}_${file.originalname}`);
+          },
+        }),
+      }),
+    }),
+    S3Module,
     PermissionHandlerModule,
   ],
   controllers: [RuleBlockController],

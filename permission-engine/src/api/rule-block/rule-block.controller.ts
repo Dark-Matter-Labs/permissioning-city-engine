@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -6,15 +7,18 @@ import {
   Post,
   Query,
   Req,
+  UploadedFiles,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { RuleBlock } from '../../database/entity/rule-block.entity';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { CreateRuleBlockDto, FindAllRuleBlockDto } from './dto';
 import { RuleBlockService } from './rule-block.service';
 import { UserService } from '../user/user.service';
 import { Logger } from 'src/lib/logger/logger.service';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 
 @ApiTags('rule')
 @Controller('api/v1/rule/block')
@@ -49,14 +53,45 @@ export class RuleBlockController {
   }
 
   @Post()
-  @ApiOperation({ summary: 'Create a RuleBlock' })
   @UseGuards(JwtAuthGuard)
+  @ApiBody({ type: CreateRuleBlockDto })
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: 'files', maxCount: 1 }], {
+      fileFilter(req, file, cb) {
+        if (file.size > 10485760) {
+          cb(new BadRequestException('file size cannot exceed 10Mb'), false);
+        }
+
+        if (
+          ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'].includes(
+            file.mimetype,
+          ) === false
+        ) {
+          cb(new BadRequestException('file must be an image'), false);
+        } else {
+          cb(null, true);
+        }
+      },
+    }),
+  )
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Create a RuleBlock' })
   async create(
     @Req() req,
+    @UploadedFiles() uploadedFiles: { files: Express.MulterS3.File[] },
     @Body() createRuleBlockDto: CreateRuleBlockDto,
   ): Promise<RuleBlock> {
     const user = await this.userService.findOneByEmail(req.user.email);
-    this.logger.log('create a rule block with user', user);
+    const { files } = uploadedFiles;
+    // will take the first file only
+    const file = files[0];
+
+    if (file) {
+      createRuleBlockDto.id = file.key.split('_')[0];
+      createRuleBlockDto.content = file.location;
+      createRuleBlockDto.files = [file];
+    }
+
     return this.ruleBlockService.create(user.id, createRuleBlockDto);
   }
 }
