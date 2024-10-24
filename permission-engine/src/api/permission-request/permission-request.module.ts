@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { PermissionRequestService } from './permission-request.service';
 import { PermissionRequestController } from './permission-request.controller';
 import { PermissionRequest } from 'src/database/entity/permission-request.entity';
@@ -16,29 +16,46 @@ import { RuleBlockService } from '../rule-block/rule-block.service';
 import { SpacePermissioner } from 'src/database/entity/space-permissioner.entity';
 import { SpacePermissionerService } from '../space-permissioner/space-permissioner.service';
 import { Logger } from 'src/lib/logger/logger.service';
+import { UserNotification } from 'src/database/entity/user-notification.entity';
+import { PermissionResponseService } from '../permission-response/permission-response.service';
+import { PermissionResponse } from 'src/database/entity/permission-response.entity';
+import { UserNotificationService } from '../user-notification/user-notification.service';
+import { PermissionHandlerService } from 'src/lib/permission-handler/permission-handler.service';
+import { ConfigModule } from '@nestjs/config';
+import configuration from 'src/config/configuration';
+import { PermissionHandlerModule } from 'src/lib/permission-handler/permission-handler.module';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      load: [configuration],
+    }),
     TypeOrmModule.forFeature([
       PermissionRequest,
+      PermissionResponse,
       Space,
       SpaceEvent,
       User,
+      UserNotification,
       Rule,
       RuleBlock,
       SpacePermissioner,
     ]),
+    forwardRef(() => PermissionHandlerModule),
   ],
   controllers: [PermissionRequestController],
   providers: [
+    Logger,
     PermissionRequestService,
+    PermissionHandlerService,
+    PermissionResponseService,
     SpaceService,
     SpaceEventService,
     UserService,
+    UserNotificationService,
     RuleService,
     RuleBlockService,
     SpacePermissionerService,
-    Logger,
   ],
 })
 export class PermissionRequestModule {}

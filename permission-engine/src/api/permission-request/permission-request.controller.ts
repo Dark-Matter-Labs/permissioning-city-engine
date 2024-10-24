@@ -16,7 +16,6 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { FindAllPermissionRequestDto } from './dto';
 import { SpaceEventService } from '../space-event/space-event.service';
-import { SpaceService } from '../space/space.service';
 import { UserService } from '../user/user.service';
 import { SpacePermissionerService } from '../space-permissioner/space-permissioner.service';
 import { PermissionRequestStatus } from 'src/lib/type';
@@ -26,7 +25,6 @@ import { PermissionRequestStatus } from 'src/lib/type';
 export class PermissionRequestController {
   constructor(
     private readonly permissionRequestService: PermissionRequestService,
-    private readonly spaceService: SpaceService,
     private readonly userService: UserService,
     private readonly spaceEventService: SpaceEventService,
     private readonly spacePermissionerService: SpacePermissionerService,

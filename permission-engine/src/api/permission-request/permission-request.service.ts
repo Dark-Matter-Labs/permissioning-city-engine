@@ -1,16 +1,23 @@
-import { Injectable } from '@nestjs/common';
-import { CreatePermissionRequestDto, FindAllPermissionRequestDto } from './dto';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { v4 as uuidv4 } from 'uuid';
+import {
+  PermissionProcessType,
+  PermissionRequestResolveStatus,
+  PermissionRequestStatus,
+} from 'src/lib/type';
+import {
+  CreatePermissionRequestDto,
+  FindAllPermissionRequestByTimeoutDto,
+  FindAllPermissionRequestDto,
+} from './dto';
 import { PermissionRequest } from 'src/database/entity/permission-request.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Space } from 'src/database/entity/space.entity';
 import { SpaceEvent } from 'src/database/entity/space-event.entity';
-import { v4 as uuidv4 } from 'uuid';
-import {
-  PermissionRequestResolveStatus,
-  PermissionRequestStatus,
-} from 'src/lib/type';
 import * as Util from 'src/lib/util/util';
+import { Logger } from 'src/lib/logger/logger.service';
+import { PermissionHandlerService } from 'src/lib/permission-handler/permission-handler.service';
 
 @Injectable()
 export class PermissionRequestService {
@@ -21,6 +28,9 @@ export class PermissionRequestService {
     private spaceRepository: Repository<Space>,
     @InjectRepository(SpaceEvent)
     private spaceEventRepository: Repository<SpaceEvent>,
+    @Inject(forwardRef(() => PermissionHandlerService))
+    private readonly permissionHandlerService: PermissionHandlerService,
+    private readonly logger: Logger,
   ) {}
 
   async findAll(
@@ -104,6 +114,63 @@ export class PermissionRequestService {
     };
   }
 
+  async findAllByTimeout(
+    findAllPermissionRequestByTimeoutDto: FindAllPermissionRequestByTimeoutDto,
+  ) {
+    const { timeout, page, limit } = findAllPermissionRequestByTimeoutDto;
+    const params: any[] = [(page - 1) * limit, limit, timeout];
+    const query = `
+      WITH filtered_data AS (
+        SELECT 
+          preq.id,
+          preq.space_id,
+          preq.space_event_id,
+          preq.space_rule_id,
+          preq.space_event_rule_id,
+          preq.status,
+          preq.created_at,
+          preq.updated_at
+        FROM permission_request preq, permission_response pres
+        WHERE
+          preq.id = pres.permission_request_id
+        AND
+          preq.status = 'assigned'
+        AND
+          pres.timeout_at <= $3
+        GROUP BY preq.id
+      )
+      SELECT COUNT(*) AS total, json_agg(filtered_data) AS data
+      FROM filtered_data
+      LIMIT $2 OFFSET $1;
+    `;
+
+    const [{ data, total }] = await this.permissionRequestRepository.query(
+      query,
+      params,
+    );
+
+    let result = [];
+
+    if (data != null) {
+      result = data.map((item) => {
+        return {
+          id: item.id,
+          spaceId: item.space_id,
+          spaceEventId: item.space_event_id,
+          spaceRuleId: item.space_rule_id,
+          spaceEventRuleId: item.space_event_rule_id,
+          status: item.status,
+          createdAt: item.created_at,
+          updatedAt: item.updated_at,
+        };
+      });
+    }
+    return {
+      data: result,
+      total: parseInt(total),
+    };
+  }
+
   findOneById(id: string): Promise<PermissionRequest> {
     return this.permissionRequestRepository.findOne({
       where: { id },
@@ -123,14 +190,21 @@ export class PermissionRequestService {
 
   async create(
     createPermissionRequestDto: CreatePermissionRequestDto,
-  ): Promise<PermissionRequest> {
+  ): Promise<{
+    data: { result: boolean; permissionRequest: PermissionRequest | null };
+  }> {
     const { spaceId, spaceRuleId, spaceEventId } = createPermissionRequestDto;
     const dto: Partial<PermissionRequest> = createPermissionRequestDto;
+    let permissionProcessType =
+      PermissionProcessType.spaceEventPermissionRequestCreated;
 
     // set rule ids
     if (!spaceRuleId) {
       const space = await this.spaceRepository.findOneBy({ id: spaceId });
       createPermissionRequestDto.spaceRuleId = space.ruleId;
+    } else {
+      permissionProcessType =
+        PermissionProcessType.spaceRulePermissionRequestCreated;
     }
 
     if (spaceEventId) {
@@ -146,7 +220,28 @@ export class PermissionRequestService {
       id: uuidv4(),
     });
 
-    return this.permissionRequestRepository.save(permissionRequest);
+    let result = true;
+
+    try {
+      await this.permissionRequestRepository.save(permissionRequest);
+    } catch (error) {
+      this.logger.error('Failed to create permissionRequest', error);
+      result = false;
+    }
+
+    if (result === true) {
+      await this.permissionHandlerService.addJob({
+        permissionProcessType,
+        permissionRequestId: permissionRequest.id,
+      });
+    }
+
+    return {
+      data: {
+        result,
+        permissionRequest: result ? permissionRequest : null,
+      },
+    };
   }
 
   async updateToAssigned(id: string): Promise<{ data: { result: boolean } }> {
@@ -222,6 +317,21 @@ export class PermissionRequestService {
     };
   }
 
+  async updateToReviewRejected(
+    id: string,
+  ): Promise<{ data: { result: boolean } }> {
+    const updateResult = await this.permissionRequestRepository.update(id, {
+      status: PermissionRequestStatus.reviewRejected,
+      updatedAt: new Date(),
+    });
+
+    return {
+      data: {
+        result: updateResult.affected === 1,
+      },
+    };
+  }
+
   async updateToResolveCancelled(
     id: string,
   ): Promise<{ data: { result: boolean } }> {
@@ -237,14 +347,20 @@ export class PermissionRequestService {
     };
   }
 
-  // only for review_approved* status
   async updateToResolveRejected(
     id: string,
+    isForce: boolean = false,
   ): Promise<{ data: { result: boolean } }> {
-    const updateResult = await this.permissionRequestRepository.update(id, {
+    const dto: Partial<PermissionRequest> = {
       resolveStatus: PermissionRequestResolveStatus.resolveRejected,
       updatedAt: new Date(),
-    });
+    };
+
+    if (isForce === true) {
+      dto.status = PermissionRequestStatus.reviewApproved;
+    }
+
+    const updateResult = await this.permissionRequestRepository.update(id, dto);
 
     return {
       data: {
@@ -255,14 +371,20 @@ export class PermissionRequestService {
 
   async updateToResolveAccepted(
     id: string,
+    isForce: boolean = false,
   ): Promise<{ data: { result: boolean; permissionCode: string | null } }> {
     const permissionCode = Util.generateRandomCode();
-    const updateResult = await this.permissionRequestRepository.update(id, {
+    const dto: Partial<PermissionRequest> = {
       resolveStatus: PermissionRequestResolveStatus.resolveAccepted,
       permissionCode,
       updatedAt: new Date(),
-    });
+    };
 
+    if (isForce === true) {
+      dto.status = PermissionRequestStatus.reviewApproved;
+    }
+
+    const updateResult = await this.permissionRequestRepository.update(id, dto);
     const result = updateResult.affected === 1;
 
     return {
@@ -273,6 +395,7 @@ export class PermissionRequestService {
     };
   }
 
+  // only for review_approved* status
   async updateToResolveDropped(
     id: string,
   ): Promise<{ data: { result: boolean } }> {
