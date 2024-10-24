@@ -5,6 +5,7 @@ Table user {
   email varchar [unique, not null]
   type varchar [default: 'individual', note: 'individual, organization, government']
   is_active bool [not null, default: true]
+  is_subscribe bool [not null, default: true]
   birth_year integer [note: 'year of birth']
   country varchar
   region varchar
@@ -158,6 +159,7 @@ Ref: space_history.rule_id > rule.id
 
 Table permission_request {
   id uuid [primary key]
+  user_id uuid [not null]
   space_id uuid [not null]
   space_event_id uuid [note: 'when space_event_id is null, the permission_request is for the space rule revision']
   space_rule_id uuid [not null]
@@ -169,6 +171,7 @@ Table permission_request {
   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
   updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
 }
+Ref: permission_request.user_id > user.id
 Ref: permission_request.space_id > space.id
 Ref: permission_request.space_event_id > space_event.id
 Ref: permission_request.space_rule_id > rule.id
@@ -219,6 +222,9 @@ Table user_notification {
   subject_part text
   text_part text
   html_part text
+  params json
+  message_id varchar
+  error_message text
   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
   updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
 }

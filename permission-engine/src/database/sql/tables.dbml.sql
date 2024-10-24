@@ -4,6 +4,7 @@ CREATE TABLE "user" (
   "email" varchar UNIQUE NOT NULL,
   "type" varchar DEFAULT 'individual',
   "is_active" bool NOT NULL DEFAULT true,
+  "is_subscribe" bool NOT NULL DEFAULT true,
   "birth_year" integer,
   "country" varchar,
   "region" varchar,
@@ -138,11 +139,13 @@ CREATE TABLE "space_history" (
 
 CREATE TABLE "permission_request" (
   "id" uuid PRIMARY KEY,
+  "user_id" uuid NOT NULL,
   "space_id" uuid NOT NULL,
   "space_event_id" uuid,
   "space_rule_id" uuid NOT NULL,
   "space_event_rule_id" uuid,
   "status" varchar NOT NULL DEFAULT 'pending',
+  "resolve_status" varchar,
   "permission_code" varchar,
   "response_summary" text,
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
@@ -152,7 +155,7 @@ CREATE TABLE "permission_request" (
 CREATE TABLE "permission_response" (
   "id" uuid PRIMARY KEY,
   "permission_request_id" uuid NOT NULL,
-  "space_permissioner_id" uuid,
+  "space_permissioner_id" uuid NOT NULL,
   "status" varchar NOT NULL,
   "conditions" text[],
   "excitements" text[],
@@ -187,6 +190,9 @@ CREATE TABLE "user_notification" (
   "subject_part" text,
   "text_part" text,
   "html_part" text,
+  "params" json,
+  "message_id" varchar,
+  "error_message" text,
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
   "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
 );
@@ -225,13 +231,15 @@ COMMENT ON COLUMN "user"."birth_year" IS 'year of birth';
 
 COMMENT ON COLUMN "space_event"."status" IS 'pending, permission_requested, permission_approved, permission_approved_with_condition, permission_rejected, running, complete';
 
-COMMENT ON COLUMN "space_history"."type" IS 'create, update_details, activate, deactivate, permissioner_opt_in, permissioner_opt_out, permission_request, permission_response';
+COMMENT ON COLUMN "space_history"."type" IS 'create, update_details, activate, deactivate, permissioner_join, permissioner_leave, permission_request, permission_response';
 
 COMMENT ON COLUMN "permission_request"."space_event_id" IS 'when space_event_id is null, the permission_request is for the space rule revision';
 
 COMMENT ON COLUMN "permission_request"."space_event_rule_id" IS 'when space_event_rule_id is null, the permission_request is for the space rule revision';
 
-COMMENT ON COLUMN "permission_request"."status" IS 'pending, assigned, assign_failed, issue_raised, review_approved, review_approved_with_condition, resolve_rejected, resolve_accepted, resolve_dropped';
+COMMENT ON COLUMN "permission_request"."status" IS 'pending, assigned, assign_failed, issue_raised, review_approved, review_approved_with_condition';
+
+COMMENT ON COLUMN "permission_request"."resolve_status" IS 'resolve_rejected, resolve_accepted, resolve_dropped';
 
 COMMENT ON COLUMN "permission_request"."permission_code" IS 'assigned after permission granted';
 
@@ -276,6 +284,8 @@ ALTER TABLE "space_history" ADD FOREIGN KEY ("user_id") REFERENCES "user" ("id")
 ALTER TABLE "space_history" ADD FOREIGN KEY ("space_event_id") REFERENCES "space_event" ("id");
 
 ALTER TABLE "space_history" ADD FOREIGN KEY ("rule_id") REFERENCES "rule" ("id");
+
+ALTER TABLE "permission_request" ADD FOREIGN KEY ("user_id") REFERENCES "user" ("id");
 
 ALTER TABLE "permission_request" ADD FOREIGN KEY ("space_id") REFERENCES "space" ("id");
 
