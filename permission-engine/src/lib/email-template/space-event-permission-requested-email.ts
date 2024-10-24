@@ -1,14 +1,19 @@
-import { Language } from '../type';
+import { Space } from 'src/database/entity/space.entity';
 import { EmailTemplate } from './email-template.interface';
+import { Language } from '../type';
 
-export class WelcomeEmail implements EmailTemplate {
+// TODO. set template content
+// TODO. support translation
+export class SpaceEventPermissionRequestedEmail implements EmailTemplate {
   name: string;
+  space: Space;
   subject: string;
   html: string;
   text: string;
 
-  constructor(option: { name: string }) {
+  constructor(option: { name: string; space: Space }) {
     this.name = option.name;
+    this.space = option.space;
     this.subjectPart();
     this.htmlPart();
     this.textPart();
@@ -19,10 +24,10 @@ export class WelcomeEmail implements EmailTemplate {
   subjectPart(language: Language = Language.en) {
     switch (language) {
       case Language.en:
-        this.subject = `[Permissioning The City] Welcome, ${this.name}`;
+        this.subject = `[Permissioning The City] Permission requested for an event at ${this.space.name}`;
         break;
       case Language.ko:
-        this.subject = `[Permissioning The City] ${this.name}님 환영합니다`;
+        this.subject = `[Permissioning The City] ${this.space.name}에 대한 이벤트 허가 요청이 있습니다`;
         break;
       default:
         this.subjectPart(Language.en);
