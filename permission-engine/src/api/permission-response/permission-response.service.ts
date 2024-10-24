@@ -8,8 +8,6 @@ import {
 import { PermissionResponse } from 'src/database/entity/permission-response.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Space } from 'src/database/entity/space.entity';
-import { SpaceEvent } from 'src/database/entity/space-event.entity';
 import { v4 as uuidv4 } from 'uuid';
 import { PermissionResponseStatus } from 'src/lib/type';
 
@@ -18,10 +16,6 @@ export class PermissionResponseService {
   constructor(
     @InjectRepository(PermissionResponse)
     private permissionResponseRepository: Repository<PermissionResponse>,
-    @InjectRepository(Space)
-    private spaceRepository: Repository<Space>,
-    @InjectRepository(SpaceEvent)
-    private spaceEventRepository: Repository<SpaceEvent>,
   ) {}
 
   async findAll(

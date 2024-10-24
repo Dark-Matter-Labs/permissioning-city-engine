@@ -14,8 +14,6 @@ import { PermissionResponseService } from './permission-response.service';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { FindAllPermissionResponseDto } from './dto';
-import { SpaceEventService } from '../space-event/space-event.service';
-import { SpaceService } from '../space/space.service';
 import { UserService } from '../user/user.service';
 import { SpacePermissionerService } from '../space-permissioner/space-permissioner.service';
 import { ApprovePermissionResponseDto } from './dto/approve-permission-response.dto';
@@ -26,9 +24,7 @@ import { RejectPermissionResponseDto } from './dto/reject-permission-response.dt
 export class PermissionResponseController {
   constructor(
     private readonly permissionResponseService: PermissionResponseService,
-    private readonly spaceService: SpaceService,
     private readonly userService: UserService,
-    private readonly spaceEventService: SpaceEventService,
     private readonly spacePermissionerService: SpacePermissionerService,
   ) {}
 
@@ -39,11 +35,13 @@ export class PermissionResponseController {
     const user = await this.userService.findOneByEmail(req.user.email);
     const { page, limit, permissionRequestId, statuses } = query;
     const spacePermissioners =
-      await this.spacePermissionerService.findAllByUserId(user.id, {
-        isActive: true,
-        page: 1,
-        limit: 100,
-      });
+      await this.spacePermissionerService.findAllByUserId(
+        user.id,
+        {
+          isActive: true,
+        },
+        false,
+      );
 
     return this.permissionResponseService.findAll({
       page,
