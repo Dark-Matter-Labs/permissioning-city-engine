@@ -1,5 +1,13 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEmail, IsEnum, IsOptional, MaxLength, Min } from 'class-validator';
+import {
+  IsBoolean,
+  IsEmail,
+  IsEnum,
+  IsOptional,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
 import { UserType } from 'src/lib/type';
 
 export class UpdateUserDto {
@@ -21,9 +29,9 @@ export class UpdateUserDto {
   })
   type?: UserType;
 
-  // @Matches(/^\d{4}$/, { message: 'The number must be a 4-digit number.' })
   @IsOptional()
   @Min(1900)
+  @Max(2100)
   @ApiPropertyOptional({ description: 'Year of birth in 4 digits' })
   birthYear?: number;
 
@@ -46,4 +54,17 @@ export class UpdateUserDto {
   @MaxLength(100)
   @ApiPropertyOptional({ description: 'District' })
   district?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  @ApiPropertyOptional({ description: 'User isActive status', type: Boolean })
+  isActive?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  @ApiPropertyOptional({
+    description: 'User email subscribe status',
+    type: Boolean,
+  })
+  isSubscribe?: boolean;
 }
