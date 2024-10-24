@@ -14,13 +14,14 @@ import { Logger } from 'src/lib/logger/logger.service';
 import configuration from 'src/config/configuration';
 import { LoggerModule } from 'src/lib/logger/logger.module';
 import { RefreshTokenModule } from './token/refresh-token.module';
+import { UserNotification } from 'src/database/entity/user-notification.entity';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       load: [configuration],
     }),
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, UserNotification]),
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],

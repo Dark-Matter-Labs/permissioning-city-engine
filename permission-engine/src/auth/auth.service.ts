@@ -63,8 +63,9 @@ export class AuthService {
           );
         }
       }
-      user = await this.userService.create(createUserDto);
+      user = (await this.userService.create(createUserDto)).data.user;
     }
+
     return user;
   }
 
