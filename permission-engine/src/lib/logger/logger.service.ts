@@ -7,7 +7,7 @@ export class Logger implements LoggerService {
 
   constructor() {
     this.logger = winston.createLogger({
-      level: 'info',
+      level: process.env.NODE_ENV === 'dev' ? 'debug' : 'info',
       format: winston.format.combine(
         winston.format.timestamp(),
         winston.format.json(),
