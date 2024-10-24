@@ -3,7 +3,6 @@ import { Module, OnModuleInit } from '@nestjs/common';
 import { BullModule } from '@nestjs/bull';
 import { AppService } from './app.service';
 import { AppController } from './app.controller';
-import { ValidatorModule } from './lib/validator/validator.module';
 import { Logger } from './lib/logger/logger.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import configuration from './config/configuration';
@@ -27,6 +26,11 @@ import { RuleBlockModule } from './api/rule-block/rule-block.module';
 import { SpaceEquipmentModule } from './api/space-equipment/space-equipment.module';
 import { NotificationHandlerService } from './lib/notification-handler/notification-handler.service';
 import { PermissionResponseModule } from './api/permission-response/permission-response.module';
+import { PermissionHandlerService } from './lib/permission-handler/permission-handler.service';
+import { PermissionHandlerModule } from './lib/permission-handler/permission-handler.module';
+import { RedisService } from '@liaoliaots/nestjs-redis';
+import Redis from 'ioredis';
+import { EmailModule } from './api/email/email.module';
 
 @Module({
   imports: [
@@ -72,9 +76,10 @@ import { PermissionResponseModule } from './api/permission-response/permission-r
         port: Number(process.env.REDIS_PORT),
       },
     }),
-    ValidatorModule,
     NotificationHandlerModule,
+    PermissionHandlerModule,
     AuthModule,
+    EmailModule,
     UserNotificationModule,
     UserModule,
     SpaceEventModule,
@@ -90,10 +95,30 @@ import { PermissionResponseModule } from './api/permission-response/permission-r
   providers: [AppService, Logger],
 })
 export class AppModule implements OnModuleInit {
+  private readonly redis: Redis | null;
+
   constructor(
+    private readonly logger: Logger,
     private readonly databaseService: DatabaseService,
+    private readonly redisService: RedisService,
     private readonly notificationHandlerService: NotificationHandlerService,
-  ) {}
+    private readonly permissionHandlerService: PermissionHandlerService,
+  ) {
+    try {
+      this.redis = this.redisService.getOrThrow();
+    } catch (error) {
+      this.logger.error('Failed to load redis', error);
+    }
+    if (process.env.ENGINE_MODE === 'daemon') {
+      const daemons = process.env.DAEMONS;
+      if (daemons?.split(',')?.includes('permission-handler')) {
+        this.redis.del(this.permissionHandlerService.daemonKey);
+      }
+      if (daemons?.split(',')?.includes('notification-handler')) {
+        this.redis.del(this.notificationHandlerService.daemonKey);
+      }
+    }
+  }
 
   async onModuleInit() {
     // Ensure the schema is created at startup
