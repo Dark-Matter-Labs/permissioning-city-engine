@@ -272,21 +272,6 @@ export class PermissionRequestService {
     };
   }
 
-  async updateToIssueRaised(
-    id: string,
-  ): Promise<{ data: { result: boolean } }> {
-    const updateResult = await this.permissionRequestRepository.update(id, {
-      status: PermissionRequestStatus.issueRaised,
-      updatedAt: new Date(),
-    });
-
-    return {
-      data: {
-        result: updateResult.affected === 1,
-      },
-    };
-  }
-
   async updateToReviewApproved(
     id: string,
   ): Promise<{ data: { result: boolean } }> {

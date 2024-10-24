@@ -164,7 +164,7 @@ Table permission_request {
   space_event_id uuid [note: 'when space_event_id is null, the permission_request is for the space rule revision']
   space_rule_id uuid [not null]
   space_event_rule_id uuid [note: 'when space_event_rule_id is null, the permission_request is for the space rule revision']
-  status varchar [not null, default: 'pending', note: 'pending, assigned, assign_failed, issue_raised, review_approved, review_approved_with_condition']
+  status varchar [not null, default: 'pending', note: 'pending, assigned, assign_failed, review_approved, review_approved_with_condition']
   resolve_status varchar [note: 'resolve_rejected, resolve_accepted, resolve_dropped']
   permission_code varchar [note: 'assigned after permission granted']
   response_summary text

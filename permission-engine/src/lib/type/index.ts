@@ -74,7 +74,6 @@ export enum PermissionRequestStatus {
   assigned = 'assigned',
   assignFailed = 'assign_failed',
   // permissioner action results
-  issueRaised = 'issue_raised',
   reviewApproved = 'review_approved',
   reviewApprovedWithCondition = 'review_approved_with_condition',
   reviewRejected = 'review_rejected',
@@ -130,7 +129,6 @@ export enum UserNotificationTemplateName {
   spaceEventPermissionRequestCreated = 'space-event-permission-request-created',
   spaceEventPermissionRequested = 'space-event-permission-requested',
   spaceRulePermissionRequested = 'space-rule-permission-requested',
-  permissionRequestIssueRaised = 'permission-request-issue-raised',
   permissionRequestReviewed = 'permission-request-reviewed',
   permissionRequestResolved = 'permission-request-resolved', // PermissionRequestResolveStatus
   spaceUpdated = 'space-updated',
