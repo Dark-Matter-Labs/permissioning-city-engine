@@ -26,6 +26,11 @@ import multerS3 from 'multer-s3';
 import { v4 as uuidv4 } from 'uuid';
 import { SpaceImageService } from '../space-image/space-image.service';
 import { SpaceImage } from 'src/database/entity/space-image.entity';
+import { UserNotification } from 'src/database/entity/user-notification.entity';
+import { PermissionResponse } from 'src/database/entity/permission-response.entity';
+import { UserNotificationService } from '../user-notification/user-notification.service';
+import { PermissionHandlerService } from 'src/lib/permission-handler/permission-handler.service';
+import { PermissionHandlerModule } from 'src/lib/permission-handler/permission-handler.module';
 
 @Module({
   imports: [
@@ -35,9 +40,11 @@ import { SpaceImage } from 'src/database/entity/space-image.entity';
     TypeOrmModule.forFeature([
       Space,
       User,
+      UserNotification,
       Rule,
       RuleBlock,
       PermissionRequest,
+      PermissionResponse,
       SpaceEvent,
       SpacePermissioner,
       SpaceImage,
@@ -62,19 +69,22 @@ import { SpaceImage } from 'src/database/entity/space-image.entity';
       }),
     }),
     S3Module,
+    PermissionHandlerModule,
   ],
   controllers: [SpaceController],
   providers: [
+    Logger,
     SpaceService,
     UserService,
+    UserNotificationService,
     RuleService,
     RuleBlockService,
     PermissionRequestService,
     SpaceEventService,
     SpacePermissionerService,
-    Logger,
     S3Service,
     SpaceImageService,
+    PermissionHandlerService,
   ],
 })
 export class SpaceModule {}

@@ -18,22 +18,36 @@ import { SpaceEquipment } from 'src/database/entity/space-equipment.entity';
 import { SpaceEventService } from '../space-event/space-event.service';
 import { SpaceEquipmentService } from './space-equipment.service';
 import { SpaceEquipmentController } from './space-equipment.controller';
+import { UserNotification } from 'src/database/entity/user-notification.entity';
+import { PermissionResponse } from 'src/database/entity/permission-response.entity';
+import { UserNotificationService } from '../user-notification/user-notification.service';
+import { PermissionHandlerService } from 'src/lib/permission-handler/permission-handler.service';
+import { ConfigModule } from '@nestjs/config';
+import configuration from 'src/config/configuration';
+import { PermissionHandlerModule } from 'src/lib/permission-handler/permission-handler.module';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      load: [configuration],
+    }),
     TypeOrmModule.forFeature([
       SpaceEquipment,
       SpaceEvent,
       User,
+      UserNotification,
       PermissionRequest,
+      PermissionResponse,
       Space,
       Rule,
       SpacePermissioner,
       RuleBlock,
     ]),
+    PermissionHandlerModule,
   ],
   controllers: [SpaceEquipmentController],
   providers: [
+    Logger,
     SpaceEquipmentService,
     SpaceEventService,
     UserService,
@@ -42,8 +56,8 @@ import { SpaceEquipmentController } from './space-equipment.controller';
     RuleService,
     SpacePermissionerService,
     RuleBlockService,
-    SpaceService,
-    Logger,
+    UserNotificationService,
+    PermissionHandlerService,
   ],
 })
 export class SpaceEquipmentModule {}

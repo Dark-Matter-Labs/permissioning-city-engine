@@ -16,6 +16,11 @@ import { SpaceEvent } from 'src/database/entity/space-event.entity';
 import { SpaceEventService } from '../space-event/space-event.service';
 import { SpacePermissioner } from 'src/database/entity/space-permissioner.entity';
 import { SpacePermissionerService } from '../space-permissioner/space-permissioner.service';
+import { UserNotification } from 'src/database/entity/user-notification.entity';
+import { PermissionResponse } from 'src/database/entity/permission-response.entity';
+import { UserNotificationService } from '../user-notification/user-notification.service';
+import { PermissionHandlerService } from 'src/lib/permission-handler/permission-handler.service';
+import { PermissionHandlerModule } from 'src/lib/permission-handler/permission-handler.module';
 
 @Module({
   imports: [
@@ -23,22 +28,27 @@ import { SpacePermissionerService } from '../space-permissioner/space-permission
     TypeOrmModule.forFeature([
       Rule,
       User,
+      UserNotification,
       RuleBlock,
       Space,
       PermissionRequest,
+      PermissionResponse,
       SpaceEvent,
       SpacePermissioner,
     ]),
+    PermissionHandlerModule,
   ],
   controllers: [RuleBlockController],
   providers: [
+    Logger,
     UserService,
+    UserNotificationService,
     RuleBlockService,
     SpaceService,
     PermissionRequestService,
     SpaceEventService,
     SpacePermissionerService,
-    Logger,
+    PermissionHandlerService,
   ],
 })
 export class RuleBlockModule {}
