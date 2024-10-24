@@ -110,11 +110,12 @@ services:
     volumes:
       - ./ptc-dashboard:/app
       - /app/node_modules
+      - /app/dist
     logging:
       options:
         max-size: "10m"
         max-file: "5"
-    command: ["npm", "run", "start"]
+    command: ["serve", "-s", "dist"]
     depends_on:
       - permission-engine-api
     restart: always
