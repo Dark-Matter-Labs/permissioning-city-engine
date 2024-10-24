@@ -91,7 +91,7 @@ export class PermissionRequest {
 
   @OneToMany(
     () => PermissionResponse,
-    (permissionResponse) => permissionResponse.spacePermissioner,
+    (permissionResponse) => permissionResponse.permissionRequest,
   )
   permissionResponses: PermissionResponse[];
 }
