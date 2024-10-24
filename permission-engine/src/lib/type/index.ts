@@ -1,15 +1,15 @@
 import { EmailTemplate } from '../email-template/email-template.interface';
 
-export type ValidationJobData = {
-  pdfFile: Buffer;
-  userId: string;
-  targetId: string;
-};
-
-export type NotificationSendJobData = {
-  id: string;
+export type NotificationHandlerJobData = {
+  userNotificationId: string;
   to: string;
   email: EmailTemplate;
+};
+
+export type PermissionHandlerJobData = {
+  permissionProcessType: PermissionProcessType;
+  permissionRequestId?: string;
+  permissionResponseId?: string;
 };
 
 export enum RuleTarget {
@@ -20,7 +20,9 @@ export enum RuleTarget {
 export enum SpaceEventStatus {
   pending = 'pending',
   permissionRequested = 'permission_requested',
+  permissionRejected = 'permission_rejected',
   permissionGranted = 'permission_granted',
+  cancelled = 'cancelled',
   running = 'running', // set by event organizer or daemon after starts_at
   closed = 'closed', // closed by daemon after ends_at
   complete = 'complete', // completed by the event organizer
@@ -75,11 +77,12 @@ export enum PermissionRequestStatus {
   issueRaised = 'issue_raised',
   reviewApproved = 'review_approved',
   reviewApprovedWithCondition = 'review_approved_with_condition',
+  reviewRejected = 'review_rejected',
 }
 
 export enum PermissionRequestResolveStatus {
-  // resolved by event organizer
   resolveRejected = 'resolve_rejected',
+  // resolved by event organizer
   resolveAccepted = 'resolve_accepted',
   resolveDropped = 'resolve_dropped',
   resolveCancelled = 'resolve_cancelled',
@@ -113,7 +116,9 @@ export enum UserNotificationStatus {
   // notice queued
   queued = 'queued',
   // notice sent via email
-  noticed = 'noticed',
+  noticeSent = 'notice_sent',
+  // notice delivered via email
+  noticeComplete = 'notice_complete',
   // user marked as complete
   complete = 'complete',
   // send notice failed
@@ -122,9 +127,15 @@ export enum UserNotificationStatus {
 
 export enum UserNotificationTemplateName {
   welcome = 'welcome',
-  permissionRequested = 'permission-requested',
-  permissionGranted = 'permission-granted',
+  spaceEventPermissionRequestCreated = 'space-event-permission-request-created',
+  spaceEventPermissionRequested = 'space-event-permission-requested',
+  spaceRulePermissionRequested = 'space-rule-permission-requested',
+  permissionRequestIssueRaised = 'permission-request-issue-raised',
+  permissionRequestReviewed = 'permission-request-reviewed',
+  permissionRequestResolved = 'permission-request-resolved', // PermissionRequestResolveStatus
+  spaceUpdated = 'space-updated',
   spaceCreated = 'space-created',
+  spaceEventCreated = 'space-event-created',
 }
 
 export enum RuleType {
@@ -154,4 +165,120 @@ export type IpLocationInfo = {
   org: string;
   as: string;
   query: string;
+};
+
+export enum Language {
+  en = 'EN',
+  ko = 'KO',
+}
+
+export enum PermissionRequestTarget {
+  spaceEvent = 'space-event',
+  spaceRule = 'space-rule',
+}
+
+export enum PermissionProcessType {
+  spaceEventPermissionRequestCreated = 'space-event-permission-request-created',
+  spaceRulePermissionRequestCreated = 'space-rule-permission-request-created',
+  permissionResponseReviewed = 'permission-response-reviewed',
+  permissionResponseReviewCompleted = 'permission-response-review-completed',
+  permissionRequestResolved = 'permission-request-resolved',
+}
+
+export type SesMail = {
+  timestamp: string;
+  messageId: string;
+  source: string;
+  sourceArn: string;
+  sourceIp: string;
+  sendingAccountId: string;
+  callerIdentity: string;
+  destination: string[];
+  headersTruncated: boolean;
+  headers: SesMailHeader[];
+  commonHeaders: SesMailCommonHeaders;
+};
+
+export type SesMailHeader = {
+  name: string;
+  value: string;
+};
+
+export type SesMailCommonHeaders = {
+  from: string[];
+  date: string;
+  to: string[];
+  messageId: string;
+  subject: string;
+};
+
+export type SesBounce = {
+  bounceType: SesBounceType;
+  bounceSubType: SesBounceSubType;
+  bounceRecipients: SesBounceRecipient[];
+  timestamp: string;
+  feedbackId: string;
+  remoteMtaIp?: string;
+  reportingMTA?: string;
+};
+
+export enum SesBounceType {
+  Undetermined = 'Undetermined',
+  Permanent = 'Permanent',
+  Transient = 'Transient',
+}
+
+export enum SesBounceSubType {
+  // Undetermined
+  Undetermined = 'Undetermined',
+  // Permanent & Transient
+  General = 'General',
+  // Permanent
+  NoEmail = 'NoEmail',
+  Supressed = 'Supressed',
+  OnAccountSuppressionList = 'OnAccountSuppressionList',
+  // Transient
+  MailboxFull = 'MailboxFull',
+  MessageTooLarge = 'MessageTooLarge',
+  ContentRejected = 'ContentRejected',
+  AttachmentRejected = 'AttachmentRejected',
+}
+
+export type SesBounceRecipient = {
+  status?: string;
+  action?: string;
+  diagnosticCode?: string;
+  emailAddress: string;
+};
+
+export type SesComplaint = {
+  complainedRecipients: SesComplainedRecipients[];
+  timestamp: string;
+  feedbackId: string;
+  complaintSubType: string;
+  userAgent?: string;
+  complaintFeedbackType?: SesComplaintFeedbackType;
+  arrivalDate?: string;
+};
+
+export type SesComplainedRecipients = {
+  emailAddress: string;
+};
+
+export enum SesComplaintFeedbackType {
+  abuse = 'abuse',
+  authFailure = 'auth-failure',
+  fraud = 'fraud',
+  notSpam = 'not-spam',
+  other = 'other',
+  virus = 'virus',
+}
+
+export type SesDelivery = {
+  timestamp: string;
+  processingTimeMillis: number;
+  recipients: string[];
+  smtpResponse: string;
+  reportingMTA: string;
+  remoteMtaIp: string;
 };
