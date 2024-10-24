@@ -39,7 +39,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async _runSQLQueryByName(name: string): Promise<void> {
+  private async runSQLQueryByName(name: string): Promise<void> {
     let queryPath = path.join(__dirname, `sql/${name}.sql`);
 
     if (process.env.NODE_ENV === 'dev') {
@@ -58,7 +58,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async _runMigrations(): Promise<void> {
+  private async runMigrations(): Promise<void> {
     let migrationDir = path.join(__dirname, `sql/migrations`);
 
     if (process.env.NODE_ENV === 'dev') {
@@ -83,7 +83,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     })) {
       try {
         await this.client.query('BEGIN');
-        await this._runSQLQueryByName(
+        await this.runSQLQueryByName(
           `migrations/${migrationName.split('.')[0]}`,
         ).then(async () => {
           await this.client.query(
@@ -111,15 +111,15 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   async createSchema(): Promise<void> {
     try {
       // extensions
-      await this._runSQLQueryByName('extensions');
+      await this.runSQLQueryByName('extensions');
       // types
-      await this._runSQLQueryByName('types');
+      await this.runSQLQueryByName('types');
       // tables
-      await this._runSQLQueryByName('tables');
+      await this.runSQLQueryByName('tables');
       // indexes
-      await this._runSQLQueryByName('indexes');
+      await this.runSQLQueryByName('indexes');
       // migrations
-      await this._runMigrations();
+      await this.runMigrations();
       // mockup data for dev environment
       if (process.env.NODE_ENV === 'dev') {
         try {
@@ -129,7 +129,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           );
 
           if (testUser.rows.length > 0 && mockUpData.rows.length === 0) {
-            await this._runSQLQueryByName('/test/insert-mockup-data');
+            await this.runSQLQueryByName('/test/insert-mockup-data');
           }
         } catch (error) {
           this.logger.error('Failed to insert mock up data', error);
