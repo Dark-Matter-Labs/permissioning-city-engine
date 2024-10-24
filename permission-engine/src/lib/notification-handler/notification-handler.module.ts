@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Global, Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bull';
 import { NotificationHandlerProcessor } from './notification-handler.processor';
 import { NotificationHandlerService } from './notification-handler.service';
@@ -12,7 +12,9 @@ import { User } from 'src/database/entity/user.entity';
 import { UserService } from 'src/api/user/user.service';
 import { UserNotification } from 'src/database/entity/user-notification.entity';
 import { UserNotificationService } from 'src/api/user-notification/user-notification.service';
+import { UserNotificationModule } from 'src/api/user-notification/user-notification.module';
 
+@Global()
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -22,6 +24,7 @@ import { UserNotificationService } from 'src/api/user-notification/user-notifica
     BullModule.registerQueue({
       name: 'notification-handler',
     }),
+    forwardRef(() => UserNotificationModule),
     SESModule,
   ],
   providers: [
