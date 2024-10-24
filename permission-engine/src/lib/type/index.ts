@@ -26,6 +26,7 @@ export enum SpaceEventStatus {
   running = 'running', // set by event organizer or daemon after starts_at
   closed = 'closed', // closed by daemon after ends_at
   complete = 'complete', // completed by the event organizer
+  completeWithIssue = 'complete_with_issue', // completed by the event organizer with issue
 }
 
 export enum RuleBlockType {

@@ -437,6 +437,7 @@ export class SpaceEventService {
 
     if (completeSpaceEventDto.details != null) {
       dto.details = completeSpaceEventDto.details;
+      dto.status = SpaceEventStatus.completeWithIssue;
     }
 
     const updateResult = await this.spaceEventRepository.update(id, dto);
