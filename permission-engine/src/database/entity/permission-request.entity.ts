@@ -23,12 +23,20 @@ export class PermissionRequest {
   @ApiProperty({ description: 'uuid' })
   id: string;
 
+  @ManyToOne(() => Space, (user) => user.permissionRequests)
+  @JoinColumn()
+  user: Space;
+
+  @Column()
+  @ApiProperty({ description: 'PermissionRequest userId in uuid' })
+  userId: string;
+
   @ManyToOne(() => Space, (space) => space.permissionRequests)
   @JoinColumn()
   space: Space;
 
   @Column()
-  @ApiProperty({ description: 'Space owner userId in uuid' })
+  @ApiProperty({ description: 'PermissionRequest spaceId in uuid' })
   spaceId: string;
 
   @ManyToOne(() => SpaceEvent, (spaceEvent) => spaceEvent.permissionRequests)

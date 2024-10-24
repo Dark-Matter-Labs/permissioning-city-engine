@@ -11,6 +11,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   UserNotificationStatus,
   UserNotificationTarget,
+  UserNotificationTemplateName,
   UserNotificationType,
 } from 'src/lib/type';
 
@@ -43,7 +44,7 @@ export class UserNotification {
   link: string;
 
   @Column()
-  templateName: string;
+  templateName: UserNotificationTemplateName;
 
   @Column()
   subjectPart: string;
@@ -53,6 +54,15 @@ export class UserNotification {
 
   @Column()
   htmlPart: string;
+
+  @Column('json', { nullable: true })
+  params: Record<string, any>;
+
+  @Column()
+  messageId: string;
+
+  @Column()
+  errorMessage: string;
 
   @CreateDateColumn()
   createdAt: Date;

@@ -31,6 +31,10 @@ export class User {
   @ApiProperty({ description: 'Is user active' })
   isActive: boolean;
 
+  @Column({ default: true })
+  @ApiProperty({ description: 'Does user subscribe emails' })
+  isSubscribe: boolean;
+
   @Column({ default: 'individual' })
   @ApiProperty({
     description: 'User type: individual | organization | government',
