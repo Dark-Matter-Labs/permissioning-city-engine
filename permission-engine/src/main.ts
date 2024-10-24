@@ -73,6 +73,17 @@ async function bootstrap() {
     },
   });
 
+  // Graceful shutdown for SIGINT or SIGTERM
+  process.on('SIGINT', async () => {
+    console.log('SIGINT signal received: closing application...');
+    await app.close().then(() => process.exit(0));
+  });
+
+  process.on('SIGTERM', async () => {
+    console.log('SIGTERM signal received: closing application...');
+    await app.close().then(() => process.exit(0));
+  });
+
   await app.listen(process.env.PERMISSION_ENGINE_PORT);
 }
 bootstrap();
