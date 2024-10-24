@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { FindManyOptions, Repository } from 'typeorm';
 import {
   CreateSpacePermissionerDto,
+  FindAllSpacePermissionerBySpaceIdDto,
   FindAllSpacePermissionerByUserIdDto,
   UpdateSpacePermissionerDto,
 } from './dto';
 import { SpacePermissioner } from 'src/database/entity/space-permissioner.entity';
-import { PaginationDto } from 'src/lib/dto';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
@@ -32,17 +32,27 @@ export class SpacePermissionerService {
     return this.spacePermissionerRepository.findOneBy({ userId, spaceId });
   }
 
-  async findBySpaceId(
+  async findAllBySpaceId(
     spaceId: string,
-    paginationDto: PaginationDto,
+    findAllSpacePermissionerBySpaceIdDto: FindAllSpacePermissionerBySpaceIdDto,
+    isPagination: boolean = true,
   ): Promise<{ data: SpacePermissioner[]; total: number }> {
-    const { page, limit } = paginationDto;
+    const { page, limit, isActive } = findAllSpacePermissionerBySpaceIdDto;
 
-    const [data, total] = await this.spacePermissionerRepository.findAndCount({
-      where: { spaceId },
-      skip: (page - 1) * limit,
-      take: limit,
-    });
+    let queryOption: FindManyOptions<SpacePermissioner> = {
+      where: { spaceId, isActive },
+    };
+
+    if (isPagination === true) {
+      queryOption = {
+        ...queryOption,
+        skip: (page - 1) * limit,
+        take: limit,
+      };
+    }
+
+    const [data, total] =
+      await this.spacePermissionerRepository.findAndCount(queryOption);
 
     return {
       data: data ?? [],
@@ -53,14 +63,24 @@ export class SpacePermissionerService {
   async findAllByUserId(
     userId: string,
     findAllSpacePermissionerByUserIdDto: FindAllSpacePermissionerByUserIdDto,
+    isPagination: boolean = true,
   ): Promise<{ data: SpacePermissioner[]; total: number }> {
     const { page, limit, isActive } = findAllSpacePermissionerByUserIdDto;
 
-    const [data, total] = await this.spacePermissionerRepository.findAndCount({
+    let queryOption: FindManyOptions<SpacePermissioner> = {
       where: { userId, isActive },
-      skip: (page - 1) * limit,
-      take: limit,
-    });
+    };
+
+    if (isPagination === true) {
+      queryOption = {
+        ...queryOption,
+        skip: (page - 1) * limit,
+        take: limit,
+      };
+    }
+
+    const [data, total] =
+      await this.spacePermissionerRepository.findAndCount(queryOption);
 
     return {
       data: data ?? [],

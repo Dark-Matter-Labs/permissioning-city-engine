@@ -45,7 +45,7 @@ export class SpacePermissionerController {
   @Get(':spaceId')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get SpacePermissioners by spaceId' })
-  async findBySpaceId(
+  async findAllBySpaceId(
     @Req() req,
     @Param('spaceId') spaceId: string,
     @Query() query: PaginationDto,
@@ -58,7 +58,7 @@ export class SpacePermissionerController {
       throw new ForbiddenException();
     }
 
-    return this.spacePermissionerService.findBySpaceId(spaceId, query);
+    return this.spacePermissionerService.findAllBySpaceId(spaceId, query);
   }
 
   @Post(':spaceId/invite')
