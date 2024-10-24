@@ -15,6 +15,7 @@ import configuration from 'src/config/configuration';
 import { LoggerModule } from 'src/lib/logger/logger.module';
 import { RefreshTokenModule } from './token/refresh-token.module';
 import { UserNotification } from 'src/database/entity/user-notification.entity';
+import { UserNotificationService } from 'src/api/user-notification/user-notification.service';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { UserNotification } from 'src/database/entity/user-notification.entity';
   providers: [
     AuthService,
     UserService,
+    UserNotificationService,
     RefreshTokenService,
     GoogleStrategy,
     JwtStrategy,

@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, In, Repository } from 'typeorm';
 import { UserNotification } from '../../database/entity/user-notification.entity';
@@ -6,15 +6,12 @@ import { UserNotificationStatus, UserNotificationType } from 'src/lib/type';
 import { CreateUserNotificationDto, FindAllUserNotificationDto } from './dto';
 import { v4 as uuidv4 } from 'uuid';
 import { EmailTemplate } from 'src/lib/email-template';
-import { NotificationHandlerService } from 'src/lib/notification-handler/notification-handler.service';
 
 @Injectable()
 export class UserNotificationService {
   constructor(
     @InjectRepository(UserNotification)
     private userNotificationRepository: Repository<UserNotification>,
-    @Inject(forwardRef(() => NotificationHandlerService))
-    private readonly notificationHandlerService: NotificationHandlerService,
   ) {}
 
   async findAll(

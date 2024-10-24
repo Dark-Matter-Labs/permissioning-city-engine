@@ -5,15 +5,12 @@ import { User } from '../../database/entity/user.entity';
 import { CreateUserDto, UpdateUserDto } from './dto';
 import { v4 as uuidv4 } from 'uuid';
 import { Logger } from 'src/lib/logger/logger.service';
-import { UserNotification } from 'src/database/entity/user-notification.entity';
 import {
-  UserNotificationStatus,
   UserNotificationTarget,
   UserNotificationTemplateName,
   UserNotificationType,
 } from 'src/lib/type';
 import { UserNotificationService } from '../user-notification/user-notification.service';
-import { error } from 'console';
 
 @Injectable()
 export class UserService {

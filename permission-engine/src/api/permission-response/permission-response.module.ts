@@ -18,6 +18,7 @@ import { SpacePermissionerService } from '../space-permissioner/space-permission
 import { Logger } from 'src/lib/logger/logger.service';
 import { PermissionRequest } from 'src/database/entity/permission-request.entity';
 import { UserNotification } from 'src/database/entity/user-notification.entity';
+import { UserNotificationService } from '../user-notification/user-notification.service';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { UserNotification } from 'src/database/entity/user-notification.entity';
     SpaceService,
     SpaceEventService,
     UserService,
+    UserNotificationService,
     RuleService,
     RuleBlockService,
     SpacePermissionerService,

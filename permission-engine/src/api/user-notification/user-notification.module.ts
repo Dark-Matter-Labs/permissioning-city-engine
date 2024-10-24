@@ -1,4 +1,4 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { UserNotificationController } from './/user-notification.controller';
 import { UserNotificationService } from './/user-notification.service';
@@ -7,14 +7,9 @@ import { User } from 'src/database/entity/user.entity';
 import { UserNotification } from 'src/database/entity/user-notification.entity';
 import { Logger } from 'src/lib/logger/logger.service';
 import { UserService } from '../user/user.service';
-import { NotificationHandlerModule } from 'src/lib/notification-handler/notification-handler.module';
 
 @Module({
-  imports: [
-    ConfigModule,
-    TypeOrmModule.forFeature([UserNotification, User]),
-    forwardRef(() => NotificationHandlerModule),
-  ],
+  imports: [ConfigModule, TypeOrmModule.forFeature([UserNotification, User])],
   controllers: [UserNotificationController],
   providers: [UserNotificationService, UserService, Logger],
 })
