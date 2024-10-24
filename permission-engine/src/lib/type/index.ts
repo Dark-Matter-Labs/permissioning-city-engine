@@ -126,15 +126,91 @@ export enum UserNotificationStatus {
 }
 
 export enum UserNotificationTemplateName {
+  /**
+   * <Welcome>
+   * Greet a new user
+   * Tell them who we are and what the Permissioning Engine is
+   * Lead them to how-to guides
+   */
   welcome = 'welcome',
+  /**
+   * <Permission request for event created>
+   * Inform the event organizer when permission request is created for the event
+   * Provide a link to event dashboard
+   */
   spaceEventPermissionRequestCreated = 'space-event-permission-request-created',
+  /**
+   * <Permission for an event requested>
+   * Inform the space permissioners when event permission request is created for the space
+   * Provide a link to space permissioner dashboard that would show the form UI for making permission response
+   */
   spaceEventPermissionRequested = 'space-event-permission-requested',
+  /**
+   * <Permission for a space rule change requested>
+   * Inform the space permissioners when rule change permission request is created for the space
+   * Provide a link to space permissioner dashboard that would show the form UI for making permission response
+   */
   spaceRulePermissionRequested = 'space-rule-permission-requested',
+  /**
+   * <Permission request review is complete>
+   * Inform the permission requester(event organizer) and space permissioners when permission request review result is made
+   * Show permission response result summary
+   * Tell the event organizer what to do
+   * Provide a link to event dashboard for the event organizer to resolve the permission request
+   */
   permissionRequestReviewed = 'permission-request-reviewed',
-  permissionRequestResolved = 'permission-request-resolved', // PermissionRequestResolveStatus
-  spaceUpdated = 'space-updated',
+  /**
+   * <Permission request is resolved>
+   * Inform the permission requester(rule change proposer or event organizer) and space permissioners when permission request is resolved by the event organizer
+   * Show resolve result summary
+   * Provide the permission code for the event organizer <-> no permissio ncode for rule change proposer
+   * Provide a link to external booking service that the event organizer can paste the permission code and proceed with booking
+   */
+  permissionRequestResolved = 'permission-request-resolved',
+  /**
+   * <Space is created>
+   * Inform the space owner when space is created
+   * Tell them what to do next: invite space permissioners
+   * Provide a link to space dashboard that the space owner can invite other space permissioners
+   */
   spaceCreated = 'space-created',
+  /**
+   * <Space is updated>
+   * Inform the space permissioners when space data is updated
+   * Show resolve result summary
+   * Provide a link to external booking service that the event organizer can paste the permission code and proceed with booking
+   */
+  spaceUpdated = 'space-updated',
+  /**
+   * <Event is created>
+   * Inform the event organizer when event is created
+   * Tell them what to do next: request for permission
+   * Provide a link to event dashboard to proceed
+   */
   spaceEventCreated = 'space-event-created',
+  /**
+   * <Event is started>
+   * Inform the event organizer and space permissioners when the event is started
+   * Tell them what to do next: event complete process
+   * Provide a link to space/event dashboard to proceed
+   */
+  spaceEventStarted = 'space-event-started',
+  /**
+   * <Event is completed>
+   * Inform the event organizer and space permissioners when the event is completed
+   * Show event completion result
+   * Provide a link to space/event dashboard
+   */
+  spaceEventCompleted = 'space-event-completed',
+  /**
+   * <Event is completed>
+   * Inform the event organizer and space permissioners when the event is completed with issue
+   * Show event completion result
+   * Tell them what to do next: resolve the issue
+   * Provide a link to space/event dashboard to proceed
+   */
+  spaceEventCompletedWithIssue = 'space-event-completed-with-issue',
+  // TODO. rule related templates
 }
 
 export enum RuleType {
