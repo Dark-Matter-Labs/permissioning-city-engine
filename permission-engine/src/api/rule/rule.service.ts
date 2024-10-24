@@ -10,11 +10,11 @@ import {
 } from './dto';
 import { RuleBlockType, RuleTarget } from 'src/lib/type';
 import { RuleBlock } from 'src/database/entity/rule-block.entity';
-import { User } from 'src/database/entity/user.entity';
 import { PermissionRequest } from 'src/database/entity/permission-request.entity';
 import { Space } from 'src/database/entity/space.entity';
 import * as Util from 'src/lib/util/util';
 import { v4 as uuidv4 } from 'uuid';
+import { Logger } from 'src/lib/logger/logger.service';
 
 @Injectable()
 export class RuleService {
@@ -23,12 +23,11 @@ export class RuleService {
     private ruleRepository: Repository<Rule>,
     @InjectRepository(RuleBlock)
     private ruleBlockRepository: Repository<RuleBlock>,
-    @InjectRepository(User)
-    private userRepository: Repository<User>,
     @InjectRepository(Space)
     private spaceRepository: Repository<Space>,
     @InjectRepository(PermissionRequest)
     private permissionRequestRepository: Repository<PermissionRequest>,
+    private readonly logger: Logger,
   ) {}
 
   async findAll(
@@ -291,7 +290,13 @@ export class RuleService {
   async archiveAndUpdate(
     id: string,
     updateRuleDto: UpdateRuleDto,
-  ): Promise<{ archivedRule: Rule; updatedRule: Rule }> {
+  ): Promise<{
+    data: {
+      result: boolean;
+      archivedRule: Rule | null;
+      updatedRule: Rule | null;
+    };
+  }> {
     const { name, ruleBlockIds } = updateRuleDto;
     const rule = await this.ruleRepository.findOne({
       where: { id },
@@ -370,18 +375,35 @@ export class RuleService {
       ruleBlocks: rule.ruleBlocks,
     });
 
+    let result = true;
+
     // save archive
-    const archivedRule = await this.ruleRepository.save(archive);
-    const updatedRule = await this.ruleRepository.save({
-      ...rule,
-      name: name ?? rule.name,
-      hash,
-      ruleBlocks,
-    });
+    const archivedRule = await this.ruleRepository
+      .save(archive)
+      .catch((error) => {
+        this.logger.error('Failed to save archivedRule', error);
+        result = false;
+        return null;
+      });
+    const updatedRule = await this.ruleRepository
+      .save({
+        ...rule,
+        name: name ?? rule.name,
+        hash,
+        ruleBlocks,
+      })
+      .catch((error) => {
+        this.logger.error('Failed to save atch', error);
+        result = false;
+        return null;
+      });
 
     return {
-      archivedRule,
-      updatedRule,
+      data: {
+        result,
+        archivedRule,
+        updatedRule,
+      },
     };
   }
 }

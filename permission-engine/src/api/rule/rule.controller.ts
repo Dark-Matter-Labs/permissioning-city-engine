@@ -108,7 +108,7 @@ export class RuleController {
     @Req() req,
     @Param('id') id: string,
     @Body() updateRuleDto: UpdateRuleDto,
-  ): Promise<{ archivedRule: Rule; updatedRule: Rule }> {
+  ) {
     const user = await this.userService.findOneByEmail(req.user.email);
     const rule = await this.ruleService.findOneById(id);
 
