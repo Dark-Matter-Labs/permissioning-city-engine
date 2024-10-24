@@ -66,6 +66,6 @@ export class UserNotificationController {
 
     const completeResult = await this.userNotificationService.complete(id);
 
-    return completeResult?.affected === 1;
+    return completeResult?.data?.result === true;
   }
 }
