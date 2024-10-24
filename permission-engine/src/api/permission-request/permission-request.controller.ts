@@ -46,6 +46,15 @@ export class PermissionRequestController {
     });
   }
 
+  @Get('code/:permissionCode')
+  @ApiOperation({ summary: 'Get PermissionRequest by permissionCode' })
+  @UseGuards(JwtAuthGuard)
+  findOneByPermissionCode(@Param('permissionCode') permissionCode: string) {
+    return this.permissionRequestService.findOneByPermissionCode(
+      permissionCode,
+    );
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get PermissionRequest by id' })
   @UseGuards(JwtAuthGuard)

@@ -184,6 +184,19 @@ export class PermissionRequestService {
     });
   }
 
+  findOneByPermissionCode(permissionCode: string): Promise<PermissionRequest> {
+    return this.permissionRequestRepository.findOne({
+      where: { permissionCode },
+      relations: [
+        'spaceEvent',
+        'spaceEventRule',
+        'space',
+        'spaceRule',
+        'permissionResponses',
+      ],
+    });
+  }
+
   async remove(id: string): Promise<void> {
     await this.permissionRequestRepository.delete(id);
   }
