@@ -83,6 +83,9 @@ export class SpaceEvent {
   link: string;
 
   @Column()
+  callbackLink: string;
+
+  @Column()
   @ApiProperty({
     description: 'SpaceEvent duration in {number}{d|w|M|y|h|m|s} format',
   })

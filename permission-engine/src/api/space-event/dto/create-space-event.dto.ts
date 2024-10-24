@@ -62,6 +62,14 @@ export class CreateSpaceEventDto {
   })
   link?: string;
 
+  @IsNotEmpty()
+  @IsString()
+  @ApiProperty({
+    description: 'SpaceEvent callbackLink for permission code submission',
+    required: true,
+  })
+  callbackLink: string;
+
   @IsString()
   @Matches(/^\d+[dwMyhms]$/, {
     message: 'SpaceEvent duration must in format: {number}{d|w|M|y|h|m|s}',

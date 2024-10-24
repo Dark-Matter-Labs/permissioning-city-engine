@@ -86,6 +86,7 @@ CREATE TABLE IF NOT EXISTS "space_event" (
   "details" text,
   "is_active" bool NOT NULL DEFAULT true,
   "link" text,
+  "callback_link" text,
   "duration" varchar NOT NULL,
   "starts_at" timestamptz NOT NULL,
   "ends_at" timestamptz NOT NULL,
@@ -267,7 +268,7 @@ COMMENT ON COLUMN "space_event"."status" IS 'pending, permission_requested, perm
 COMMENT ON COLUMN "space_history"."type" IS 'create, update_details, activate, deactivate, permissioner_join, permissioner_leave, permission_request, permission_response';
 COMMENT ON COLUMN "permission_request"."space_event_id" IS 'when space_event_id is null, the permission_request is for the space rule revision';
 COMMENT ON COLUMN "permission_request"."space_event_rule_id" IS 'when space_event_rule_id is null, the permission_request is for the space rule revision';
-COMMENT ON COLUMN "permission_request"."status" IS 'pending, assigned, assign_failed, issue_raised, review_approved, review_approved_with_condition';
+COMMENT ON COLUMN "permission_request"."status" IS 'pending, assigned, assign_failed, review_approved, review_approved_with_condition';
 COMMENT ON COLUMN "permission_request"."resolve_status" IS 'resolve_rejected, resolve_accepted, resolve_dropped';
 COMMENT ON COLUMN "permission_request"."permission_code" IS 'assigned after permission granted';
 COMMENT ON COLUMN "permission_response"."status" IS 'pending, approved, approved_with_condition, rejected';

@@ -86,6 +86,7 @@ CREATE TABLE "space_event" (
   "details" text,
   "is_active" bool NOT NULL DEFAULT true,
   "link" text,
+  "callback_link" text,
   "duration" varchar NOT NULL,
   "starts_at" timestamptz NOT NULL,
   "ends_at" timestamptz NOT NULL,
@@ -237,7 +238,7 @@ COMMENT ON COLUMN "permission_request"."space_event_id" IS 'when space_event_id 
 
 COMMENT ON COLUMN "permission_request"."space_event_rule_id" IS 'when space_event_rule_id is null, the permission_request is for the space rule revision';
 
-COMMENT ON COLUMN "permission_request"."status" IS 'pending, assigned, assign_failed, issue_raised, review_approved, review_approved_with_condition';
+COMMENT ON COLUMN "permission_request"."status" IS 'pending, assigned, assign_failed, review_approved, review_approved_with_condition';
 
 COMMENT ON COLUMN "permission_request"."resolve_status" IS 'resolve_rejected, resolve_accepted, resolve_dropped';
 

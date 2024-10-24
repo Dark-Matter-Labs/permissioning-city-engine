@@ -93,6 +93,7 @@ Table space_event {
   details text
   is_active bool [not null, default: true]
   link text 
+  callback_link text 
   duration varchar [not null]
   starts_at timestamptz [not null]
   ends_at timestamptz [not null]
