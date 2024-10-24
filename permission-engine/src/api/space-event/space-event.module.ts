@@ -26,6 +26,11 @@ import { MulterModule } from '@nestjs/platform-express';
 import multerS3 from 'multer-s3';
 import { S3Client } from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
+import { UserNotification } from 'src/database/entity/user-notification.entity';
+import { PermissionResponse } from 'src/database/entity/permission-response.entity';
+import { UserNotificationService } from '../user-notification/user-notification.service';
+import { PermissionHandlerService } from 'src/lib/permission-handler/permission-handler.service';
+import { PermissionHandlerModule } from 'src/lib/permission-handler/permission-handler.module';
 
 @Module({
   imports: [
@@ -36,7 +41,9 @@ import { v4 as uuidv4 } from 'uuid';
       SpaceEvent,
       SpaceEventImage,
       User,
+      UserNotification,
       PermissionRequest,
+      PermissionResponse,
       Space,
       Rule,
       SpacePermissioner,
@@ -62,20 +69,23 @@ import { v4 as uuidv4 } from 'uuid';
       }),
     }),
     S3Module,
+    PermissionHandlerModule,
   ],
   controllers: [SpaceEventController],
   providers: [
+    Logger,
     SpaceEventService,
     SpaceEventImageService,
     UserService,
+    UserNotificationService,
     PermissionRequestService,
     SpaceService,
     RuleService,
     SpacePermissionerService,
     RuleBlockService,
     SpaceService,
-    Logger,
     S3Service,
+    PermissionHandlerService,
   ],
 })
 export class SpaceEventModule {}

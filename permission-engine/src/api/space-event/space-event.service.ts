@@ -81,7 +81,7 @@ export class SpaceEventService {
     if (topicIds != null) {
       paramIndex++;
       where.push(
-        `space_event.id IN (SELECT id FROM space_event_topic WHERE topic_id = ANY($${paramIndex}))`,
+        `space_event.id IN (SELECT space_event_id FROM space_event_topic WHERE topic_id = ANY($${paramIndex}))`,
       );
       params.push(topicIds);
     }
@@ -245,6 +245,108 @@ export class SpaceEventService {
     const updateResult = await this.spaceEventRepository.update(id, {
       ...updateSpaceEventDto,
       endsAt: start.add(numberPart, stringPart).toDate(),
+      updatedAt: new Date(),
+    });
+
+    return {
+      data: {
+        result: updateResult.affected === 1,
+      },
+    };
+  }
+
+  async updateToPermissionRequested(
+    id: string,
+  ): Promise<{ data: { result: boolean } }> {
+    const spaceEvent = await this.spaceEventRepository.findOneBy({ id });
+
+    if ([SpaceEventStatus.pending].includes(spaceEvent.status) === false) {
+      throw new ForbiddenException(
+        `Cannot request permission for ${spaceEvent.status} SpaceEvent.`,
+      );
+    }
+
+    const updateResult = await this.spaceEventRepository.update(id, {
+      status: SpaceEventStatus.permissionRequested,
+      updatedAt: new Date(),
+    });
+
+    return {
+      data: {
+        result: updateResult.affected === 1,
+      },
+    };
+  }
+
+  async updateToPermissionGranted(
+    id: string,
+  ): Promise<{ data: { result: boolean } }> {
+    const spaceEvent = await this.spaceEventRepository.findOneBy({ id });
+
+    if (
+      [SpaceEventStatus.permissionRequested].includes(spaceEvent.status) ===
+      false
+    ) {
+      throw new ForbiddenException(
+        `Cannot grant permission for ${spaceEvent.status} SpaceEvent.`,
+      );
+    }
+
+    const updateResult = await this.spaceEventRepository.update(id, {
+      status: SpaceEventStatus.permissionGranted,
+      updatedAt: new Date(),
+    });
+
+    return {
+      data: {
+        result: updateResult.affected === 1,
+      },
+    };
+  }
+
+  async updateToPermissionRejected(
+    id: string,
+  ): Promise<{ data: { result: boolean } }> {
+    const spaceEvent = await this.spaceEventRepository.findOneBy({ id });
+
+    if (
+      [SpaceEventStatus.permissionRequested].includes(spaceEvent.status) ===
+      false
+    ) {
+      throw new ForbiddenException(
+        `Cannot reject permission for ${spaceEvent.status} SpaceEvent.`,
+      );
+    }
+
+    const updateResult = await this.spaceEventRepository.update(id, {
+      status: SpaceEventStatus.permissionRejected,
+      updatedAt: new Date(),
+    });
+
+    return {
+      data: {
+        result: updateResult.affected === 1,
+      },
+    };
+  }
+
+  async updateToCancelled(id: string): Promise<{ data: { result: boolean } }> {
+    const spaceEvent = await this.spaceEventRepository.findOneBy({ id });
+
+    if (
+      [
+        SpaceEventStatus.pending,
+        SpaceEventStatus.permissionRequested,
+        SpaceEventStatus.permissionGranted,
+      ].includes(spaceEvent.status) === false
+    ) {
+      throw new ForbiddenException(
+        `Cannot cancel ${spaceEvent.status} SpaceEvent.`,
+      );
+    }
+
+    const updateResult = await this.spaceEventRepository.update(id, {
+      status: SpaceEventStatus.cancelled,
       updatedAt: new Date(),
     });
 
