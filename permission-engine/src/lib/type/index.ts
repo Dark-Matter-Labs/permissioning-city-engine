@@ -210,7 +210,42 @@ export enum UserNotificationTemplateName {
    * Provide a link to space/event dashboard to proceed
    */
   spaceEventCompletedWithIssue = 'space-event-completed-with-issue',
-  // TODO. rule related templates
+  /**
+   * <Event issue is resolved>
+   * Inform the event organizer and space permissioners when the issue raised by the event is resolved
+   * Show issue resolve result
+   * Provide a link to space/event dashboard to proceed
+   */
+  spaceEventIssueResolved = 'space-event-issue-resolved',
+  /**
+   * <Space issue is raised>
+   * Inform the space permissioners when the issue raised on the space
+   * Tell them what to do next: resolve the issue
+   * Show issue details
+   * Provide a link to space dashboard to proceed
+   */
+  spaceIssueRaised = 'space-issue-raised',
+  /**
+   * <Space issue is resolved>
+   * Inform the space permissioners when the issue raised on the space is resolved
+   * Show resolve details
+   * Provide a link to space dashboard
+   */
+  spaceIssueResolved = 'space-issue-resolved',
+  /**
+   * <Rule is created>
+   * Inform the rule author when the rule is created
+   * Show rule details
+   * Provide a link to rule dashboard
+   */
+  ruleCreated = 'rule-created',
+  /**
+   * <Rule is created>
+   * Inform the rule author when the rule is assigned to space or event
+   * Show space/event details
+   * Provide a link to rule dashboard
+   */
+  ruleAssigned = 'rule-assigned',
 }
 
 export enum RuleType {
