@@ -109,15 +109,6 @@ export class AppModule implements OnModuleInit {
     } catch (error) {
       this.logger.error('Failed to load redis', error);
     }
-    if (process.env.ENGINE_MODE === 'daemon') {
-      const daemons = process.env.DAEMONS;
-      if (daemons?.split(',')?.includes('permission-handler')) {
-        this.redis.del(this.permissionHandlerService.daemonKey);
-      }
-      if (daemons?.split(',')?.includes('notification-handler')) {
-        this.redis.del(this.notificationHandlerService.daemonKey);
-      }
-    }
   }
 
   async onModuleInit() {

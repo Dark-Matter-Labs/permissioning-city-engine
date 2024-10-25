@@ -2,6 +2,7 @@ import {
   forwardRef,
   Inject,
   Injectable,
+  BeforeApplicationShutdown,
   OnModuleDestroy,
   OnModuleInit,
 } from '@nestjs/common';
@@ -14,15 +15,21 @@ import { DataSource, QueryRunner } from 'typeorm';
 import { PermissionRequestService } from 'src/api/permission-request/permission-request.service';
 import { RedisService } from '@liaoliaots/nestjs-redis';
 import Redis from 'ioredis';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
-export class PermissionHandlerService implements OnModuleInit, OnModuleDestroy {
+export class PermissionHandlerService
+  implements OnModuleInit, OnModuleDestroy, BeforeApplicationShutdown
+{
   private readonly redis: Redis | null;
   private isDaemonMode: boolean;
   private isActive: boolean;
   private interval: number = 1000 * 10;
   private fetchCount: number = 10;
-  public daemonKey: string = 'daemon:permission-handler';
+  public daemonName: string = 'permission-handler';
+  public daemonKey: string = `daemon:${this.daemonName}`;
+  public daemonId: string = uuidv4();
+  private isInit: boolean = false;
 
   constructor(
     @InjectQueue('permission-handler') private readonly queue: Queue,
@@ -33,35 +40,33 @@ export class PermissionHandlerService implements OnModuleInit, OnModuleDestroy {
     private readonly redisService: RedisService,
     private readonly logger: Logger,
   ) {
+    const engineMode = this.configService.get('ENGINE_MODE');
+    const daemons = this.configService.get('DAEMONS');
+
+    if (
+      engineMode === 'daemon' &&
+      daemons &&
+      daemons?.split(',')?.includes(this.daemonName)
+    ) {
+      this.isDaemonMode = true;
+    } else {
+      this.isDaemonMode = false;
+    }
+
     try {
       this.redis = this.redisService.getOrThrow();
     } catch (error) {
       this.logger.error('Failed to load redis', error);
-    }
-    const engineMode = this.configService.get('ENGINE_MODE');
-    const daemons = this.configService.get('DAEMONS');
-    if (
-      engineMode === 'daemon' &&
-      daemons &&
-      daemons?.split(',')?.includes('permission-handler')
-    ) {
-      this.isDaemonMode = true;
-    } else {
       this.isDaemonMode = false;
     }
   }
 
   async onModuleInit() {
     if (this.isDaemonMode === true) {
-      const daemonRegistered = await this.redis.get(this.daemonKey);
+      await this.redis.set(this.daemonKey, this.daemonId);
 
-      if (!daemonRegistered) {
-        await this.redis.set(this.daemonKey, 'running');
-
-        this.logger.log('Daemon started: permission-handler');
-        this.isActive = true;
-        this.start();
-      }
+      this.isActive = true;
+      this.start();
     }
   }
 
@@ -70,6 +75,12 @@ export class PermissionHandlerService implements OnModuleInit, OnModuleDestroy {
       await this.redis.del(this.daemonKey);
     }
     this.isActive = false;
+  }
+
+  async beforeApplicationShutdown() {
+    if (this.isDaemonMode === true) {
+      await this.redis.del(this.daemonKey);
+    }
   }
 
   async addJob(data: PermissionHandlerJobData) {
@@ -81,7 +92,24 @@ export class PermissionHandlerService implements OnModuleInit, OnModuleDestroy {
 
   private async start() {
     while (this.isActive === true) {
-      await this.run();
+      const daemonId = await this.redis.get(this.daemonKey);
+
+      if (daemonId !== this.daemonId) {
+        this.isActive = false;
+        this.logger.debug(
+          `Daemon deactivated: ${this.daemonName}(${this.daemonId})`,
+        );
+        break;
+      } else if (this.isInit === true) {
+        this.logger.log(`Daemon running: ${this.daemonName}(${this.daemonId})`);
+        await this.run();
+      } else {
+        this.logger.debug(
+          `Daemon initiated: ${this.daemonName}(${this.daemonId})`,
+        );
+        this.isInit = true;
+      }
+
       await this.sleep(this.interval);
     }
   }
