@@ -17,7 +17,7 @@ export class Logger implements LoggerService {
         new winston.transports.Console(),
         new winston.transports.File({ filename: 'log/app.log' }),
         new DailyRotateFile({
-          filename: 'app-%DATE%.log',
+          filename: 'log/app-%DATE%.log',
           datePattern: 'YYYY-MM-DD',
           zippedArchive: true,
           maxSize: '20m',
