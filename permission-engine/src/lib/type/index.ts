@@ -44,6 +44,8 @@ export enum RuleBlockType {
   spaceEventRisk = 'space_event:risk',
   spaceEventSelfRiskAssesment = 'space_event:self_risk_assesment',
   spaceEventInsurance = 'space_event:insurance', // content: file download path: s3
+  spaceEventNoiseLevel = 'space_event:noise_level', // high, midium, low
+  spaceEventFood = 'space_event:food', // boolean
 }
 
 export enum SpaceEventAccessType {
