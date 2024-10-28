@@ -37,7 +37,10 @@ export class UserService {
     await this.userRepository.delete({ email });
   }
 
-  async create(createUserDto: CreateUserDto): Promise<{
+  async create(
+    createUserDto: CreateUserDto,
+    isNotification: boolean = true,
+  ): Promise<{
     data: {
       result: boolean;
       user: User;
@@ -61,7 +64,9 @@ export class UserService {
       .create({
         userId: user.id,
         target: UserNotificationTarget.general,
-        type: UserNotificationType.external,
+        type: isNotification
+          ? UserNotificationType.external
+          : UserNotificationType.internal,
         templateName: UserNotificationTemplateName.welcome,
       })
       .catch((error) => {
