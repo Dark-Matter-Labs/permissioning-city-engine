@@ -12,34 +12,34 @@ export class NotificationHandlerProcessor {
     private readonly logger: Logger,
   ) {}
 
-  @Process({ concurrency: 10 })
-  async handleNotificationProcess(job: Job<any>) {
+  @Process({ concurrency: 1 })
+  async handleNotificationProcess(job: Job<any>): Promise<string> {
+    this.logger.log('Handling notification:', job.data);
     if (process.env.ENGINE_MODE !== 'daemon') {
       return;
     }
-    this.logger.log('Handling notification:', job.data);
     // Job processing logic
-    await new Promise<void>(async (resolve, reject) => {
+    return await new Promise<string>(async (resolve, reject) => {
       try {
         // 1. parse job.data into AWS SES send email object type
         // 2. Send email by calling SESService.send() method
         const { to, email } = job.data;
         const sendResult = await this.sesService.send(to, email);
 
-        await this.userNotificationService.updateToNoticeSent(
-          job.data.userNotificationId,
-          sendResult.MessageId,
-        );
-        resolve();
+        await this.userNotificationService
+          .updateToNoticeSent(job.data.userNotificationId, sendResult.MessageId)
+          .then(() => {
+            resolve(sendResult.MessageId);
+          });
       } catch (error) {
         await this.userNotificationService.updateToNoticeFailed(
           job.data.id,
           error.message,
         );
         reject(error);
+      } finally {
+        this.logger.log('notification-handler: Job completed');
       }
     });
-
-    this.logger.log('Job completed');
   }
 }

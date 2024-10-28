@@ -30,8 +30,8 @@ export class NotificationHandlerService
   private readonly redis: Redis | null;
   private isDaemonMode: boolean;
   private isActive: boolean;
-  private interval: number = 1000 * 30;
-  private fetchCount: number = 100;
+  private interval: number = 1000 * 5;
+  private fetchCount: number = 20;
 
   public daemonName: string = 'notification-handler';
   public daemonKey: string = `daemon:${this.daemonName}`;
@@ -165,8 +165,19 @@ export class NotificationHandlerService
         userNotificationId: userNotification.id,
         to: userNotification.user.email,
         email,
-      });
-      await this.updateUserNotificationToQueued(userNotification.id, email);
+      })
+        .then(async (res) => {
+          if (typeof res === 'string') {
+            await this.updateUserNotificationToQueued(
+              userNotification.id,
+              email,
+            );
+          }
+        })
+        .catch((error) => {
+          this.logger.error(error.message, error);
+          throw error;
+        });
     } catch (error) {
       await this.updateUserNotificationToNoticeFailed(
         userNotification.id,
@@ -184,9 +195,9 @@ export class NotificationHandlerService
       const userNotifications =
         await this.findPendingExternalUserNotifications();
 
-      userNotifications.map(async (userNotification) => {
+      for (const userNotification of userNotifications) {
         await this.enqueue(userNotification);
-      });
+      }
       await queryRunner.commitTransaction();
     } catch (error) {
       await queryRunner.rollbackTransaction();
