@@ -256,12 +256,6 @@ CREATE TABLE IF NOT EXISTS "rule_rule_block" (
   PRIMARY KEY ("rule_id", "rule_block_id")
 );
 
-CREATE TABLE IF NOT EXISTS "permission_request_space_permissioner" (
-  "permission_request_id" uuid,
-  "space_permissioner_id" uuid,
-  PRIMARY KEY ("permission_request_id", "space_permissioner_id")
-);
-
 COMMENT ON COLUMN "user"."type" IS 'individual, organization, government';
 COMMENT ON COLUMN "user"."birth_year" IS 'year of birth';
 COMMENT ON COLUMN "space_event"."status" IS 'pending, permission_requested, permission_approved, permission_approved_with_condition, permission_rejected, running, complete';
@@ -917,34 +911,6 @@ BEGIN
         ALTER TABLE rule_rule_block
         ADD CONSTRAINT rule_rule_block_fkey_rule_block_id
         FOREIGN KEY ("rule_block_id") REFERENCES "rule_block" ("id");
-    END IF;
-END $$;
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1
-        FROM information_schema.table_constraints
-        WHERE constraint_type = 'FOREIGN KEY'
-        AND table_name = 'permission_request_space_permissioner'
-        AND constraint_name = 'permission_request_space_permissioner_fkey_permission_request_id'
-    ) THEN
-        ALTER TABLE permission_request_space_permissioner
-        ADD CONSTRAINT permission_request_space_permissioner_fkey_permission_request_id
-        FOREIGN KEY ("permission_request_id") REFERENCES "permission_request" ("id");
-    END IF;
-END $$;
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1
-        FROM information_schema.table_constraints
-        WHERE constraint_type = 'FOREIGN KEY'
-        AND table_name = 'permission_request_space_permissioner'
-        AND constraint_name = 'permission_request_space_permissioner_fkey_space_permissioner_id'
-    ) THEN
-        ALTER TABLE permission_request_space_permissioner
-        ADD CONSTRAINT permission_request_space_permissioner_fkey_space_permissioner_id
-        FOREIGN KEY ("space_permissioner_id") REFERENCES "space_permissioner" ("id");
     END IF;
 END $$;
 

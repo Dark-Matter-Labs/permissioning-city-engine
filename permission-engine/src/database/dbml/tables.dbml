@@ -309,5 +309,3 @@ Ref space_event_topic: space_event.id <> topic.id
 Ref rule_topic: rule.id <> topic.id
 
 Ref rule_rule_block: rule.id <> rule_block.id
-
-Ref permission_request_space_permissioner: permission_request.id <> space_permissioner.id

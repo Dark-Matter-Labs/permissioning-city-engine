@@ -379,14 +379,3 @@ ALTER TABLE "rule_rule_block" ADD FOREIGN KEY ("rule_id") REFERENCES "rule" ("id
 ALTER TABLE "rule_rule_block" ADD FOREIGN KEY ("rule_block_id") REFERENCES "rule_block" ("id");
 
 
-CREATE TABLE "permission_request_space_permissioner" (
-  "permission_request_id" uuid,
-  "space_permissioner_id" uuid,
-  PRIMARY KEY ("permission_request_id", "space_permissioner_id")
-);
-
-ALTER TABLE "permission_request_space_permissioner" ADD FOREIGN KEY ("permission_request_id") REFERENCES "permission_request" ("id");
-
-ALTER TABLE "permission_request_space_permissioner" ADD FOREIGN KEY ("space_permissioner_id") REFERENCES "space_permissioner" ("id");
-
-
