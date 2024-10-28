@@ -47,6 +47,7 @@ export class EmailService {
       bounceType === SesBounceType.Transient &&
       bounceSubType === SesBounceSubType.MailboxFull
     ) {
+      this.logger.log(`Retry due to user notification email bounce`, message);
       this.userNotificationService.updateToPending(userNotification.id);
     } else if (
       [SesBounceType.Transient, SesBounceType.Undetermined].includes(bounceType)
