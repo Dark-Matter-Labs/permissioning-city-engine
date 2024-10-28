@@ -70,7 +70,9 @@ export class PermissionHandlerProcessor {
       }
     });
 
-    this.logger.log('Job completed');
+    this.logger.log(
+      `permission-handler: ${PermissionProcessType.spaceEventPermissionRequestCreated} Job completed`,
+    );
   }
 
   /**
