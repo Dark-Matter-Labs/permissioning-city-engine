@@ -5,7 +5,7 @@ import { Logger } from '../lib/logger/logger.service';
 import { readdir, readFile } from 'node:fs/promises';
 import * as path from 'path';
 
-interface DatabaseConfig {
+export interface DatabaseConfig {
   host: string;
   port: number;
   user: string;
@@ -120,21 +120,6 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       await this.runSQLQueryByName('indexes');
       // migrations
       await this.runMigrations();
-      // mockup data for dev environment
-      if (process.env.NODE_ENV === 'dev') {
-        try {
-          const testUser = await this.client.query(`SELECT * FROM "user";`);
-          const mockUpData = await this.client.query(
-            `SELECT * FROM "space_event" WHERE name = 'test-space-event-1';`,
-          );
-
-          if (testUser.rows.length > 0 && mockUpData.rows.length === 0) {
-            await this.runSQLQueryByName('/test/insert-mockup-data');
-          }
-        } catch (error) {
-          this.logger.error('Failed to insert mock up data', error);
-        }
-      }
     } catch (error) {
       this.logger.error('Failed to create schema', error);
     }
