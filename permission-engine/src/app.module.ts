@@ -31,6 +31,8 @@ import { PermissionHandlerModule } from './lib/permission-handler/permission-han
 import { RedisService } from '@liaoliaots/nestjs-redis';
 import Redis from 'ioredis';
 import { EmailModule } from './api/email/email.module';
+import { MockupService } from 'test/mockup/mockup.service';
+import { MockupModule } from 'test/mockup/mockup.module';
 
 @Module({
   imports: [
@@ -90,6 +92,7 @@ import { EmailModule } from './api/email/email.module';
     RuleModule,
     PermissionRequestModule,
     PermissionResponseModule,
+    MockupModule,
   ],
   controllers: [AppController],
   providers: [AppService, Logger],
@@ -103,6 +106,7 @@ export class AppModule implements OnModuleInit {
     private readonly redisService: RedisService,
     private readonly notificationHandlerService: NotificationHandlerService,
     private readonly permissionHandlerService: PermissionHandlerService,
+    private readonly mockupService: MockupService,
   ) {
     try {
       this.redis = this.redisService.getOrThrow();
@@ -113,6 +117,8 @@ export class AppModule implements OnModuleInit {
 
   async onModuleInit() {
     // Ensure the schema is created at startup
-    await this.databaseService.createSchema();
+    if (process.env.ENGINE_MODE === 'api') {
+      await this.databaseService.createSchema();
+    }
   }
 }
