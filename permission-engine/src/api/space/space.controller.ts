@@ -19,8 +19,6 @@ import { CreateSpaceDto } from './dto/create-space.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { UpdateSpaceDto } from './dto';
 import { UserService } from '../user/user.service';
-import { SpacePermissioner } from 'src/database/entity/space-permissioner.entity';
-import { SpacePermissionerService } from '../space-permissioner/space-permissioner.service';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { SpaceImageService } from '../space-image/space-image.service';
 import { Logger } from 'src/lib/logger/logger.service';
@@ -31,7 +29,6 @@ export class SpaceController {
   constructor(
     private readonly spaceService: SpaceService,
     private readonly userService: UserService,
-    private readonly spacePermissionerService: SpacePermissionerService,
     private readonly spaceImageService: SpaceImageService,
     private readonly logger: Logger,
   ) {}
@@ -72,17 +69,10 @@ export class SpaceController {
     @Req() req,
     @UploadedFiles() uploadedFiles: { images: Express.MulterS3.File[] },
     @Body() createSpaceDto: CreateSpaceDto,
-  ): Promise<{ space: Space; spacePermissioner: SpacePermissioner }> {
+  ): Promise<Space> {
     const { images } = uploadedFiles;
     const user = await this.userService.findOneByEmail(req.user.email);
     const space = await this.spaceService.create(user.id, createSpaceDto);
-    const spacePermissioner = await this.spacePermissionerService.create(
-      {
-        spaceId: space.id,
-        userId: user.id,
-      },
-      true,
-    );
 
     images?.map(async (s3File) => {
       try {
@@ -96,7 +86,7 @@ export class SpaceController {
       }
     });
 
-    return { space, spacePermissioner };
+    return space;
   }
 
   @Put(':id')

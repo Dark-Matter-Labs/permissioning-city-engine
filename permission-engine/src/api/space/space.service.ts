@@ -13,6 +13,7 @@ import { SpacePermissioner } from 'src/database/entity/space-permissioner.entity
 import { v4 as uuidv4 } from 'uuid';
 import { RuleBlockType } from 'src/lib/type';
 import { RuleBlock } from 'src/database/entity/rule-block.entity';
+import { SpacePermissionerService } from '../space-permissioner/space-permissioner.service';
 
 @Injectable()
 export class SpaceService {
@@ -25,6 +26,7 @@ export class SpaceService {
     private ruleRepository: Repository<Rule>,
     @InjectRepository(SpacePermissioner)
     private spacePermissionerRepository: Repository<SpacePermissioner>,
+    private readonly spacePermissionerService: SpacePermissionerService,
   ) {}
 
   // TODO. implement dynamic search in the future
@@ -33,7 +35,10 @@ export class SpaceService {
   }
 
   findOneById(id: string): Promise<Space> {
-    return this.spaceRepository.findOneBy({ id });
+    return this.spaceRepository.findOne({
+      where: { id },
+      relations: ['spaceImages'],
+    });
   }
 
   findOneByName(name: string): Promise<Space> {
@@ -48,14 +53,26 @@ export class SpaceService {
     await this.spaceRepository.delete(id);
   }
 
-  create(ownerId: string, createSpaceDto: CreateSpaceDto): Promise<Space> {
+  async create(
+    ownerId: string,
+    createSpaceDto: CreateSpaceDto,
+  ): Promise<Space> {
     const space = this.spaceRepository.create({
       ...createSpaceDto,
       id: uuidv4(),
       ownerId,
     });
 
-    return this.spaceRepository.save(space);
+    await this.spaceRepository.save(space);
+    await this.spacePermissionerService.create(
+      {
+        spaceId: space.id,
+        userId: ownerId,
+      },
+      true,
+    );
+
+    return space;
   }
 
   async update(
