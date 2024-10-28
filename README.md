@@ -42,10 +42,10 @@
    TEST_EMAILS="test1@example.com,test2@example.com,test3@example.com,test4@example.com"
    ```
 
-2. Request the repo admin to register the test emails to AWS SES
-
-3. Run services with `docker compose`
+1. Run services with `docker compose`
 
    ```bash
    docker compose up -d --build
    ```
+
+1. Request the repo admin to register the test emails to AWS SES

@@ -116,9 +116,9 @@ export class AppModule implements OnModuleInit {
   }
 
   async onModuleInit() {
-    // Ensure the schema is created at startup
-    if (process.env.ENGINE_MODE === 'api') {
-      await this.databaseService.createSchema();
-    }
+    // // Ensure the schema is created at startup
+    // if (process.env.ENGINE_MODE === 'api') {
+    //   await this.databaseService.createSchema();
+    // }
   }
 }

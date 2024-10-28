@@ -33,7 +33,7 @@ export enum RuleBlockType {
   // space
   spaceGeneral = 'space:general',
   spaceConsentMethod = 'space:consent_method',
-  spaceAvailability = 'space:availability', // content: {mon|tue|wed|thu|fri|sat|sun}-{00:00}-{24:00};{mon|tue|wed|thu|fri|sat|sun}:{00:00}-{24:00}; ...
+  spaceAvailability = 'space:availability', // content: {mon|tue|wed|thu|fri|sat|sun}-{00:00}-{24:00};{mon|tue|wed|thu|fri|sat|sun}-{00:00}-{24:00}; ...
   spacePostEventCheck = 'space:post_event_check',
   // spaceEvent
   spaceEventGeneral = 'space_event:general',

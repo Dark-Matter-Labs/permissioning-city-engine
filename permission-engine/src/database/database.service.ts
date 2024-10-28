@@ -30,7 +30,9 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       this.client = await this.pool.connect();
     }
 
-    await this.createSchema();
+    if (process.env.ENGINE_MODE === 'api') {
+      await this.createSchema();
+    }
   }
 
   onModuleDestroy() {
