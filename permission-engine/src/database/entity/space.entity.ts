@@ -15,6 +15,7 @@ import { User } from './user.entity';
 import { Rule } from './rule.entity';
 import { PermissionRequest } from './permission-request.entity';
 import { SpacePermissioner } from './space-permissioner.entity';
+import { SpaceImage } from './space-image.entity';
 
 @Entity()
 export class Space {
@@ -90,7 +91,10 @@ export class Space {
   @ApiProperty({ description: 'Updated timestamp' })
   updatedAt: Date;
 
-  @OneToMany(() => SpaceEvent, (spaceEvent) => spaceEvent.organizer)
+  @OneToMany(() => SpaceImage, (spaceImage) => spaceImage.space)
+  spaceImages: SpaceImage[];
+
+  @OneToMany(() => SpaceEvent, (spaceEvent) => spaceEvent.space)
   spaceEvents: SpaceEvent[];
 
   @OneToMany(
