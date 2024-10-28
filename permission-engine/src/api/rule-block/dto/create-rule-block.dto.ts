@@ -24,7 +24,7 @@ export class CreateRuleBlockDto {
   @IsString()
   @ApiProperty({
     description:
-      'RuleBlock type: {space|space_event}:{general|consent_method|post_event_check|access}',
+      'RuleBlock type: {space|space_event}:{general|availability|consent_method|post_event_check|access|require_equipment|expected_attendee_count|exception|benefit|risk|self_risk_assesment|insurance|noise_level|food}',
     required: true,
   })
   type: RuleBlockType;

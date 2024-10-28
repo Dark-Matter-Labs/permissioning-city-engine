@@ -33,6 +33,7 @@ export enum RuleBlockType {
   // space
   spaceGeneral = 'space:general',
   spaceConsentMethod = 'space:consent_method',
+  spaceAvailability = 'space:availability', // content: {mon|tue|wed|thu|fri|sat|sun}-{00:00}-{24:00};{mon|tue|wed|thu|fri|sat|sun}:{00:00}-{24:00}; ...
   spacePostEventCheck = 'space:post_event_check',
   // spaceEvent
   spaceEventGeneral = 'space_event:general',
@@ -44,7 +45,7 @@ export enum RuleBlockType {
   spaceEventRisk = 'space_event:risk',
   spaceEventSelfRiskAssesment = 'space_event:self_risk_assesment',
   spaceEventInsurance = 'space_event:insurance', // content: file download path: s3
-  spaceEventNoiseLevel = 'space_event:noise_level', // high, midium, low
+  spaceEventNoiseLevel = 'space_event:noise_level', // high | midium | low
   spaceEventFood = 'space_event:food', // boolean
 }
 

@@ -26,6 +26,8 @@ import { MulterModule } from '@nestjs/platform-express';
 import { S3Module } from 'src/lib/s3/s3.module';
 import multerS3 from 'multer-s3';
 import { v4 as uuidv4 } from 'uuid';
+import { SpaceEquipmentService } from '../space-equipment/space-equipment.service';
+import { SpaceEquipment } from 'src/database/entity/space-equipment.entity';
 
 @Module({
   imports: [
@@ -39,6 +41,7 @@ import { v4 as uuidv4 } from 'uuid';
       PermissionRequest,
       PermissionResponse,
       SpaceEvent,
+      SpaceEquipment,
       SpacePermissioner,
     ]),
     MulterModule.registerAsync({
@@ -72,6 +75,7 @@ import { v4 as uuidv4 } from 'uuid';
     SpaceService,
     PermissionRequestService,
     SpaceEventService,
+    SpaceEquipmentService,
     SpacePermissionerService,
     PermissionHandlerService,
   ],

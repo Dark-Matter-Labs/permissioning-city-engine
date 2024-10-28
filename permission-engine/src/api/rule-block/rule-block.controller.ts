@@ -19,6 +19,8 @@ import { RuleBlockService } from './rule-block.service';
 import { UserService } from '../user/user.service';
 import { Logger } from 'src/lib/logger/logger.service';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { RuleBlockType } from 'src/lib/type';
+import { SpaceEquipmentService } from '../space-equipment/space-equipment.service';
 
 @ApiTags('rule')
 @Controller('api/v1/rule/block')
@@ -26,6 +28,7 @@ export class RuleBlockController {
   constructor(
     private readonly ruleBlockService: RuleBlockService,
     private readonly userService: UserService,
+    private readonly spaceEquipmentService: SpaceEquipmentService,
     private readonly logger: Logger,
   ) {}
 
@@ -81,6 +84,7 @@ export class RuleBlockController {
     @UploadedFiles() uploadedFiles: { files: Express.MulterS3.File[] },
     @Body() createRuleBlockDto: CreateRuleBlockDto,
   ): Promise<RuleBlock> {
+    const { type, content } = createRuleBlockDto;
     const user = await this.userService.findOneByEmail(req.user.email);
     const { files } = uploadedFiles;
     // will take the first file only
@@ -90,6 +94,19 @@ export class RuleBlockController {
       createRuleBlockDto.id = file.key.split('_')[0];
       createRuleBlockDto.content = file.location;
       createRuleBlockDto.files = [file];
+    }
+
+    if (type === RuleBlockType.spaceEventRequireEquipment) {
+      const [spaceEquipmentId, quantity] = content;
+
+      const spaceEquipment =
+        await this.spaceEquipmentService.findOneById(spaceEquipmentId);
+
+      if (parseInt(quantity) > spaceEquipment.quantity) {
+        throw new BadRequestException(
+          `Cannot exceed space equipment quantity: ${spaceEquipment.quantity}`,
+        );
+      }
     }
 
     return this.ruleBlockService.create(user.id, createRuleBlockDto);
