@@ -18,13 +18,6 @@ export class CreateSpaceEventDto {
   @ApiProperty({ description: 'SpaceEvent name', required: true })
   name: string;
 
-  @IsUUID('4')
-  @ApiProperty({
-    description: 'SpaceEvent organizerId in uuid',
-    required: true,
-  })
-  organizerId: string;
-
   @IsOptional()
   @IsUUID('4')
   @ApiPropertyOptional({
@@ -62,13 +55,13 @@ export class CreateSpaceEventDto {
   })
   link?: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'SpaceEvent callbackLink for permission code submission',
-    required: true,
+    nullable: true,
   })
-  callbackLink: string;
+  callbackLink?: string;
 
   @IsString()
   @Matches(/^\d+[dwMyhms]$/, {

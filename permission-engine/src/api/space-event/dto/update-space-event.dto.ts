@@ -54,6 +54,13 @@ export class UpdateSpaceEventDto {
 
   @IsOptional()
   @IsString()
+  @ApiPropertyOptional({
+    description: 'SpaceEvent callbackLink for permission code submission',
+  })
+  callbackLink?: string;
+
+  @IsOptional()
+  @IsString()
   @Matches(/^\d+[dwMyhms]$/, {
     message: 'SpaceEvent duration must in format: {number}{d|w|M|y|h|m|s}',
   })

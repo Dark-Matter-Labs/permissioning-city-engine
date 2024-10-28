@@ -112,6 +112,7 @@ export class SpaceEventService {
           space_event.details,
           space_event.is_active,
           space_event.link,
+          space_event.callback_link,
           space_event.duration,
           space_event.starts_at,
           space_event.ends_at,
@@ -138,6 +139,7 @@ export class SpaceEventService {
 
     if (data != null) {
       result = data.map((item) => {
+        const spaceEventImages = item.row.f18;
         return {
           id: item.row.f1,
           name: item.row.f2,
@@ -150,12 +152,14 @@ export class SpaceEventService {
           details: item.row.f9,
           isActive: item.row.f10,
           link: item.row.f11,
-          duration: item.row.f12,
-          startsAt: item.row.f13,
-          endsAt: item.row.f14,
-          createdAt: item.row.f15,
-          updatedAt: item.row.f16,
-          spaceEventImages: item.row.f17,
+          callbackLink: item.row.f12,
+          duration: item.row.f13,
+          startsAt: item.row.f14,
+          endsAt: item.row.f15,
+          createdAt: item.row.f16,
+          updatedAt: item.row.f17,
+          spaceEventImages:
+            spaceEventImages[0] === null ? [] : spaceEventImages,
         };
       });
     }
