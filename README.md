@@ -33,17 +33,19 @@
    ./scripts/clear-database.sh
    ```
 
-1. Run services with `docker compose`
+1. Add 4 emails to `.env` file for creating test users
+
+   ```bash
+   # first email: space rule author
+   # second one: space event rule author
+   # third one: event organizer
+   TEST_EMAILS="test1@example.com,test2@example.com,test3@example.com,test4@example.com"
+   ```
+
+2. Request the repo admin to register the test emails to AWS SES
+
+3. Run services with `docker compose`
 
    ```bash
    docker compose up -d --build
    ```
-
-1. Go to http://localhost and login to create a user
-1. Restart `permission-engine` container
-
-   ```bash
-   docker restart permission-engine
-   ```
-
-1. Go to http://localhost/api#/space/SpaceController_findAll to check mockup data exists
