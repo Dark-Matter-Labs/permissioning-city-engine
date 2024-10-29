@@ -98,63 +98,98 @@ export class RuleBlockService {
     }
 
     if (type === RuleBlockType.spaceAvailability) {
-      const availableDays = trimmedContent.toLowerCase().split(';');
+      const availableDays = trimmedContent
+        .toLowerCase()
+        .split(';')
+        .filter((item) => item != null && item !== '');
       const testRegex =
-        /^(mon|tue|wed|thu|fri|sat|sun)-\d{2}:\d{2}-\d{2}:\d{2}/;
+        /^(mon|tue|wed|thu|fri|sat|sun)-\d{2}:(00|30)-\d{2}:(00|30)/;
       // validity check
-      // No duplicate date
+      // No duplicate datetime range
       // start < end
-      const openingDates = [];
-      availableDays.forEach((availability) => {
-        if (availability === '') {
-          return;
-        }
+      const openingDates = {
+        mon: [],
+        tue: [],
+        wed: [],
+        thu: [],
+        fri: [],
+        sat: [],
+        sun: [],
+      };
 
-        const [date, startTime, endTime] = availability.split('-');
+      availableDays.forEach((availability) => {
+        const [day, startTime, endTime] = availability.split('-');
         const [startHour, startMinute] = startTime.split(':');
         const [endHour, endMinute] = endTime.split(':');
-        let isValid = true;
 
         if (testRegex.test(availability) === false) {
-          console.log(
-            'testRegex.test(availability) === false',
-            testRegex.test(availability) === false,
+          throw new BadRequestException(
+            `Availability does not match format: /^(mon|tue|wed|thu|fri|sat|sun)-\d{2}:\d{2}-\d{2}:\d{2}/`,
           );
-          isValid = false;
         }
         if (
+          // check if starts after endtime
           new BigNumber(`${startHour}${startMinute}`).gte(
             `${endHour}${endMinute}`,
           )
         ) {
-          console.log(
-            'hi',
-            new BigNumber(`${startHour}${startMinute}`).gte(
-              `${endHour}${endMinute}`,
-            ),
-          );
-          isValid = false;
+          throw new BadRequestException(`Cannot start after end time`);
         }
 
-        if (openingDates.includes(date)) {
-          console.log(
-            'openingDates.includes(date)',
-            openingDates.includes(date),
+        const invalidOpeningDateTime = openingDates[day].find((item) => {
+          return (
+            // check if ends after other time starts
+            new BigNumber(item[0]).lte(`${endHour}${endMinute}`) ||
+            // check if starts before other time ends
+            new BigNumber(item[1]).gte(`${startHour}${startMinute}`)
           );
-          isValid = false;
-        }
+        });
 
-        if (isValid === false) {
-          throw new BadRequestException('No duplicate dates allowed');
+        if (invalidOpeningDateTime) {
+          throw new BadRequestException(
+            `Invalid availability value: ${JSON.stringify(invalidOpeningDateTime)}`,
+          );
         } else {
-          openingDates.push(date);
+          openingDates[day].push([
+            `${startHour}${startMinute}`,
+            `${endHour}${endMinute}`,
+          ]);
         }
       });
+    }
+
+    if (type === RuleBlockType.spaceAvailabilityUnit) {
+      if (['30m', '1h', '1d'].includes(trimmedContent) === false) {
+        throw new BadRequestException(
+          'Space availability unit must be one of: 30m, 1h, 1d',
+        );
+      }
     }
 
     if (type === RuleBlockType.spaceEventInsurance) {
       if (files.length === 0) {
         throw new BadRequestException('Should provide file for insurance');
+      }
+    }
+
+    if (type === RuleBlockType.spaceEventPrePermissionCheckAnswer) {
+      const [spaceRuleBlockId, answer] = trimmedContent.split(':');
+      const spaceRuleBlock = await this.findOneById(spaceRuleBlockId);
+
+      if (!spaceRuleBlock) {
+        throw new BadRequestException(
+          `There is no space ruleBlock with id: ${spaceRuleBlockId}`,
+        );
+      }
+
+      if (spaceRuleBlock.type !== RuleBlockType.spacePrePermissionCheck) {
+        throw new BadRequestException(
+          `The space ruleBlock is not ${RuleBlockType.spacePrePermissionCheck} type`,
+        );
+      }
+
+      if (['true', 'false'].includes(answer) === false) {
+        throw new BadRequestException('Answer must be boolean');
       }
     }
 
