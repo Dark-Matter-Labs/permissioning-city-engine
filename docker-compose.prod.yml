@@ -72,7 +72,7 @@ services:
       options:
         max-size: "10m"
         max-file: "5"
-    command: ["npm", "run", "start:prod"]
+    command: ["yarn", "start:prod"]
     depends_on:
       - postgres
     restart: always
@@ -94,7 +94,7 @@ services:
       options:
         max-size: "10m"
         max-file: "5"
-    command: ["npm", "run", "start:prod"]
+    command: ["yarn", "start:prod"]
     depends_on:
       - postgres
       - permission-engine-api

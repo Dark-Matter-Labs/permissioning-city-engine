@@ -8,6 +8,6 @@ FROM node:22.2.0-bullseye
 
   COPY . $WORKDIR
 
-  RUN npm i
-  RUN npm run build
+  RUN yarn
+  RUN yarn build
   
