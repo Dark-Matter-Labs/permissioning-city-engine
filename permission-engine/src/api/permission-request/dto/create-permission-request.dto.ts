@@ -24,4 +24,13 @@ export class CreatePermissionRequestDto {
     nullable: true,
   })
   spaceRuleId?: string;
+
+  @IsOptional()
+  @IsUUID('4')
+  @ApiPropertyOptional({
+    description:
+      'Desired spaceEventRuleId to pre approve (Only allowed to SpacePermissioners)',
+    nullable: true,
+  })
+  spaceEventRuleId?: string;
 }

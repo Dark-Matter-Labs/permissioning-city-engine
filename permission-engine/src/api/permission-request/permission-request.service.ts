@@ -202,11 +202,12 @@ export class PermissionRequestService {
   }
 
   async create(
-    createPermissionRequestDto: CreatePermissionRequestDto,
+    createPermissionRequestDto: Partial<CreatePermissionRequestDto>,
   ): Promise<{
     data: { result: boolean; permissionRequest: PermissionRequest | null };
   }> {
-    const { spaceId, spaceRuleId, spaceEventId } = createPermissionRequestDto;
+    const { spaceId, spaceRuleId, spaceEventId, spaceEventRuleId } =
+      createPermissionRequestDto;
     const dto: Partial<PermissionRequest> = createPermissionRequestDto;
     let permissionProcessType =
       PermissionProcessType.spaceEventPermissionRequestCreated;
@@ -217,7 +218,7 @@ export class PermissionRequestService {
       createPermissionRequestDto.spaceRuleId = space.ruleId;
     } else {
       permissionProcessType =
-        PermissionProcessType.spaceRulePermissionRequestCreated;
+        PermissionProcessType.spaceRuleChangePermissionRequestCreated;
     }
 
     if (spaceEventId) {
@@ -226,6 +227,9 @@ export class PermissionRequestService {
       });
 
       dto.spaceEventRuleId = spaceEvent.ruleId;
+    } else if (spaceEventRuleId) {
+      permissionProcessType =
+        PermissionProcessType.spaceEventRulePreApprovePermissionRequestCreated;
     }
 
     const permissionRequest = this.permissionRequestRepository.create({

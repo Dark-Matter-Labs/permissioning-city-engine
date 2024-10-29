@@ -166,7 +166,13 @@ export enum UserNotificationTemplateName {
    * Inform the space permissioners when rule change permission request is created for the space
    * Provide a link to space permissioner dashboard that would show the form UI for making permission response
    */
-  spaceRulePermissionRequested = 'space-rule-permission-requested',
+  spaceRuleChangePermissionRequested = 'space-rule-change-permission-requested',
+  /**
+   * <Permission for a space rule change requested>
+   * Inform the space permissioners when rule change permission request is created for the space
+   * Provide a link to space permissioner dashboard that would show the form UI for making permission response
+   */
+  spaceEventRulePreApprovePermissionRequested = 'space-event-rule-pre-approve-permission-requested',
   /**
    * <Permission request review is complete>
    * Inform the permission requester(event organizer) and space permissioners when permission request review result is made
@@ -305,7 +311,8 @@ export enum PermissionRequestTarget {
 
 export enum PermissionProcessType {
   spaceEventPermissionRequestCreated = 'space-event-permission-request-created',
-  spaceRulePermissionRequestCreated = 'space-rule-permission-request-created',
+  spaceRuleChangePermissionRequestCreated = 'space-rule-change-permission-request-created',
+  spaceEventRulePreApprovePermissionRequestCreated = 'space-event-rule-pre-approve-permission-request-created',
   permissionResponseReviewed = 'permission-response-reviewed',
   permissionResponseReviewCompleted = 'permission-response-review-completed',
   permissionRequestResolved = 'permission-request-resolved',
