@@ -13,7 +13,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import dayjs from 'dayjs';
 import { FindAllSpaceEventDto } from './dto/find-all-space-event.dto';
-import { PermissionRequest } from 'src/database/entity/permission-request.entity';
 import { SpaceEventStatus } from 'src/lib/type';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -22,12 +21,11 @@ export class SpaceEventService {
   constructor(
     @InjectRepository(SpaceEvent)
     private spaceEventRepository: Repository<SpaceEvent>,
-    @InjectRepository(PermissionRequest)
-    private permissionRequestRepository: Repository<PermissionRequest>,
   ) {}
 
   async findAll(
     findAllSpaceEventDto: FindAllSpaceEventDto,
+    isPagination: boolean = true,
   ): Promise<{ data: SpaceEvent[]; total: number }> {
     const {
       page,
@@ -39,11 +37,13 @@ export class SpaceEventService {
       statuses,
       topicIds,
       startsAfter,
+      endsBefore,
       name,
     } = findAllSpaceEventDto;
 
     const where = [];
-    const params: any[] = [(page - 1) * limit, limit];
+    const params: any[] =
+      isPagination === true ? [(page - 1) * limit, limit] : [];
     let paramIndex: number = params.length;
 
     where.push(`is_active = true`);
@@ -92,6 +92,12 @@ export class SpaceEventService {
       params.push(startsAfter);
     }
 
+    if (endsBefore != null) {
+      paramIndex++;
+      where.push(`ends_at <= $${paramIndex}`);
+      params.push(endsBefore);
+    }
+
     if (name != null) {
       paramIndex++;
       where.push(`name LIKE $${paramIndex}`);
@@ -127,7 +133,7 @@ export class SpaceEventService {
       )
       SELECT COUNT(*) AS total, json_agg(filtered_data) AS data
       FROM filtered_data
-      LIMIT $2 OFFSET $1;
+      ${isPagination === true ? 'LIMIT $2 OFFSET $1' : ''};
     `;
 
     const [{ data, total }] = await this.spaceEventRepository.query(
