@@ -15,7 +15,7 @@ export class SpaceImage {
   @ApiProperty({ description: 'uuid' })
   id: string;
 
-  @ManyToOne(() => Space, (space) => space.spaceEvents)
+  @ManyToOne(() => Space, (space) => space.spaceImages)
   @JoinColumn()
   space: Space;
 
