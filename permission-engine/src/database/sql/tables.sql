@@ -42,6 +42,16 @@ CREATE TABLE IF NOT EXISTS "space_image" (
   "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
 );
 
+CREATE TABLE IF NOT EXISTS "space_approved_rule" (
+  "space_id" uuid NOT NULL,
+  "rule_id" uuid NOT NULL,
+  "permission_request_id" uuid,
+  "is_active" bool NOT NULL DEFAULT true,
+  "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
+  "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
+  PRIMARY KEY ("space_id", "rule_id")
+);
+
 CREATE TABLE IF NOT EXISTS "external_service" (
   "id" uuid PRIMARY KEY,
   "owner_id" uuid,
@@ -309,6 +319,48 @@ BEGIN
         ALTER TABLE space_image
         ADD CONSTRAINT space_image_fkey_space_id
         FOREIGN KEY ("space_id") REFERENCES "space" ("id");
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.table_constraints
+        WHERE constraint_type = 'FOREIGN KEY'
+        AND table_name = 'space_approved_rule'
+        AND constraint_name = 'space_approved_rule_fkey_space_id'
+    ) THEN
+        ALTER TABLE space_approved_rule
+        ADD CONSTRAINT space_approved_rule_fkey_space_id
+        FOREIGN KEY ("space_id") REFERENCES "space" ("id");
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.table_constraints
+        WHERE constraint_type = 'FOREIGN KEY'
+        AND table_name = 'space_approved_rule'
+        AND constraint_name = 'space_approved_rule_fkey_rule_id'
+    ) THEN
+        ALTER TABLE space_approved_rule
+        ADD CONSTRAINT space_approved_rule_fkey_rule_id
+        FOREIGN KEY ("rule_id") REFERENCES "rule" ("id");
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.table_constraints
+        WHERE constraint_type = 'FOREIGN KEY'
+        AND table_name = 'space_approved_rule'
+        AND constraint_name = 'space_approved_rule_fkey_permission_request_id'
+    ) THEN
+        ALTER TABLE space_approved_rule
+        ADD CONSTRAINT space_approved_rule_fkey_permission_request_id
+        FOREIGN KEY ("permission_request_id") REFERENCES "permission_request" ("id");
     END IF;
 END $$;
 DO $$

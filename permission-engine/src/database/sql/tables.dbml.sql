@@ -42,6 +42,16 @@ CREATE TABLE "space_image" (
   "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
 );
 
+CREATE TABLE "space_approved_rule" (
+  "space_id" uuid NOT NULL,
+  "rule_id" uuid NOT NULL,
+  "permission_request_id" uuid,
+  "is_active" bool NOT NULL DEFAULT true,
+  "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
+  "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
+  PRIMARY KEY ("space_id", "rule_id")
+);
+
 CREATE TABLE "external_service" (
   "id" uuid PRIMARY KEY,
   "owner_id" uuid,
@@ -257,6 +267,12 @@ ALTER TABLE "space" ADD FOREIGN KEY ("owner_id") REFERENCES "user" ("id");
 ALTER TABLE "space" ADD FOREIGN KEY ("rule_id") REFERENCES "rule" ("id");
 
 ALTER TABLE "space_image" ADD FOREIGN KEY ("space_id") REFERENCES "space" ("id");
+
+ALTER TABLE "space_approved_rule" ADD FOREIGN KEY ("space_id") REFERENCES "space" ("id");
+
+ALTER TABLE "space_approved_rule" ADD FOREIGN KEY ("rule_id") REFERENCES "rule" ("id");
+
+ALTER TABLE "space_approved_rule" ADD FOREIGN KEY ("permission_request_id") REFERENCES "permission_request" ("id");
 
 ALTER TABLE "external_service" ADD FOREIGN KEY ("owner_id") REFERENCES "user" ("id");
 

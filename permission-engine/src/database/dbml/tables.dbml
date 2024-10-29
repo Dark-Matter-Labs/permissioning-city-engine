@@ -46,6 +46,22 @@ Table space_image {
 }
 Ref: space_image.space_id > space.id
 
+Table space_approved_rule {
+  space_id uuid [not null]
+  rule_id uuid [not null]
+  permission_request_id uuid
+  is_active bool [not null, default: true]
+  created_at timestamptz [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (space_id, rule_id) [pk]
+  }
+}
+Ref: space_approved_rule.space_id > space.id
+Ref: space_approved_rule.rule_id > rule.id
+Ref: space_approved_rule.permission_request_id > permission_request.id
+
 Table external_service {
   id uuid [primary key]
   owner_id uuid

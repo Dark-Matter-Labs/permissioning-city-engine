@@ -17,6 +17,7 @@ import { Space } from './space.entity';
 import { RuleBlock } from './rule-block.entity';
 import { PermissionRequest } from './permission-request.entity';
 import { Topic } from './topic.entity';
+import { SpaceApprovedRule } from './space-approved-rule.entity';
 
 @Entity()
 export class Rule {
@@ -71,6 +72,12 @@ export class Rule {
 
   @OneToMany(() => SpaceEvent, (spaceEvent) => spaceEvent.rule)
   spaceEvents: SpaceEvent[];
+
+  @OneToMany(
+    () => SpaceApprovedRule,
+    (spaceApprovedRule) => spaceApprovedRule.rule,
+  )
+  spaceApprovedRules: SpaceApprovedRule[];
 
   @ManyToMany(() => RuleBlock, (ruleBlock) => ruleBlock.rules)
   @JoinTable({ name: 'rule_rule_block' })

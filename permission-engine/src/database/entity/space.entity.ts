@@ -16,6 +16,7 @@ import { Rule } from './rule.entity';
 import { PermissionRequest } from './permission-request.entity';
 import { SpacePermissioner } from './space-permissioner.entity';
 import { SpaceImage } from './space-image.entity';
+import { SpaceApprovedRule } from './space-approved-rule.entity';
 
 @Entity()
 export class Space {
@@ -93,6 +94,12 @@ export class Space {
 
   @OneToMany(() => SpaceImage, (spaceImage) => spaceImage.space)
   spaceImages: SpaceImage[];
+
+  @OneToMany(
+    () => SpaceApprovedRule,
+    (spaceApprovedRule) => spaceApprovedRule.space,
+  )
+  spaceApprovedRules: SpaceApprovedRule[];
 
   @OneToMany(() => SpaceEvent, (spaceEvent) => spaceEvent.space)
   spaceEvents: SpaceEvent[];
