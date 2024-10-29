@@ -11,17 +11,26 @@ import {
   BadRequestException,
   UseInterceptors,
   UploadedFiles,
+  Query,
 } from '@nestjs/common';
 import { SpaceService } from './space.service';
 import { Space } from '../../database/entity/space.entity';
 import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateSpaceDto } from './dto/create-space.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-import { UpdateSpaceDto } from './dto';
+import { FindSpaceAvailabilityDto, UpdateSpaceDto } from './dto';
 import { UserService } from '../user/user.service';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { SpaceImageService } from '../space-image/space-image.service';
 import { Logger } from 'src/lib/logger/logger.service';
+import {
+  RuleBlockType,
+  SpaceAvailability,
+  SpaceAvailabilityUnit,
+} from 'src/lib/type';
+import { RuleService } from '../rule/rule.service';
+import { SpaceEventService } from '../space-event/space-event.service';
+import { getTimeIntervals } from '../../lib/util/util';
 
 @ApiTags('space')
 @Controller('api/v1/space')
@@ -29,6 +38,8 @@ export class SpaceController {
   constructor(
     private readonly spaceService: SpaceService,
     private readonly userService: UserService,
+    private readonly ruleService: RuleService,
+    private readonly spaceEventService: SpaceEventService,
     private readonly spaceImageService: SpaceImageService,
     private readonly logger: Logger,
   ) {}
@@ -42,7 +53,59 @@ export class SpaceController {
   @Get(':id')
   @ApiOperation({ summary: 'Get space by id' })
   findOneById(@Param('id') id: string): Promise<Space> {
-    return this.spaceService.findOneById(id);
+    return this.spaceService.findOneById(id, ['spaceImages']);
+  }
+
+  @Get(':id/availability')
+  @ApiOperation({ summary: 'Get space availability by id' })
+  async findAvailabilityById(
+    @Param('id') id: string,
+    @Query() query: FindSpaceAvailabilityDto,
+  ): Promise<{ data: SpaceAvailability[] }> {
+    const { startDate, endDate } = query;
+    const space = await this.spaceService.findOneById(id);
+    if (!space) {
+      throw new BadRequestException(`There is no space with id: ${id}`);
+    }
+    const spaceRule = await this.ruleService.findOneById(space.ruleId);
+    const spaceEvents = await this.spaceEventService.findAll(
+      {
+        spaceId: id,
+        startsAfter: new Date(startDate),
+        endsBefore: new Date(endDate),
+      },
+      false,
+    );
+    const reservedTimeRanges =
+      spaceEvents?.data?.map((spaceEvent) => {
+        return {
+          startTime: spaceEvent.startsAt,
+          endTime: spaceEvent.endsAt,
+        };
+      }) ?? [];
+    const spaceAvailabilityBlock = spaceRule.ruleBlocks.find(
+      (item) => item.type === RuleBlockType.spaceAvailability,
+    );
+    const spaceAvailabilityUnitBlock = spaceRule.ruleBlocks.find(
+      (item) => item.type === RuleBlockType.spaceAvailabilityUnit,
+    );
+    const spaceAvailabilities = spaceAvailabilityBlock.content
+      .trim()
+      .toLowerCase()
+      .split(';')
+      .filter((item) => item != null && item !== '');
+    const spaceAvailabilityUnit =
+      spaceAvailabilityUnitBlock.content as SpaceAvailabilityUnit;
+
+    return {
+      data: getTimeIntervals(
+        new Date(startDate),
+        new Date(endDate),
+        spaceAvailabilityUnit,
+        spaceAvailabilities,
+        reservedTimeRanges,
+      ),
+    };
   }
 
   @Post()
