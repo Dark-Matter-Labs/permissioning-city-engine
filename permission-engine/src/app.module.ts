@@ -33,6 +33,7 @@ import Redis from 'ioredis';
 import { EmailModule } from './api/email/email.module';
 import { MockupService } from 'test/mockup/mockup.service';
 import { MockupModule } from 'test/mockup/mockup.module';
+import { SpaceApprovedRuleModule } from './api/space-approved-rule/space-approved-rule.module';
 
 @Module({
   imports: [
@@ -87,6 +88,7 @@ import { MockupModule } from 'test/mockup/mockup.module';
     SpaceEventModule,
     SpacePermissionerModule,
     SpaceEquipmentModule,
+    SpaceApprovedRuleModule,
     SpaceModule,
     RuleBlockModule,
     RuleModule,
