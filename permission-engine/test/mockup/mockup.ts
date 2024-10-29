@@ -100,6 +100,18 @@ const createSpaceRuleBlockDtos: Partial<CreateRuleBlockDto>[] = [
   },
   {
     id: uuidv4(),
+    name: 'test Space Availability Unit 1h [space1,space3]',
+    type: RuleBlockType.spaceAvailabilityUnit,
+    content: '1h',
+  },
+  {
+    id: uuidv4(),
+    name: 'test Space Availability Unit 30m [space2,space4]',
+    type: RuleBlockType.spaceAvailabilityUnit,
+    content: '30m',
+  },
+  {
+    id: uuidv4(),
     name: 'test Consent Collection Method over_50_yes [space1]',
     type: RuleBlockType.spaceConsentMethod,
     content: 'over_50_yes',
@@ -121,6 +133,18 @@ const createSpaceRuleBlockDtos: Partial<CreateRuleBlockDto>[] = [
     name: 'test Consent Collection Method is_100_yes [space4]',
     type: RuleBlockType.spaceConsentMethod,
     content: 'is_100_yes',
+  },
+  {
+    id: uuidv4(),
+    name: 'test space pre-permission check food [space1,space2,space3,space4]',
+    type: RuleBlockType.spacePrePermissionCheck,
+    content: 'Will food or drinks be served at the event?',
+  },
+  {
+    id: uuidv4(),
+    name: 'test space pre-permission check alcholic drink [space1,space2,space3,space4]',
+    type: RuleBlockType.spacePrePermissionCheck,
+    content: 'Will alcholic drinks be served at the event?',
   },
 ];
 
@@ -272,15 +296,27 @@ const createSpaceEventRuleBlockDtos: Partial<CreateRuleBlockDto>[] = [
   },
   {
     id: uuidv4(),
-    name: 'test Food Service Availability [event1, event3]',
-    type: RuleBlockType.spaceEventFood,
-    content: 'true',
+    name: 'test Food Service [event1, event3]',
+    type: RuleBlockType.spaceEventPrePermissionCheckAnswer,
+    content: `${createSpaceRuleBlockDtos.find((item) => item.name.includes('food')).id}:true`,
   },
   {
     id: uuidv4(),
-    name: 'test Food Service Availability [event2, event4]',
-    type: RuleBlockType.spaceEventFood,
-    content: 'true',
+    name: 'test Food Service [event2, event4]',
+    type: RuleBlockType.spaceEventPrePermissionCheckAnswer,
+    content: `${createSpaceRuleBlockDtos.find((item) => item.name.includes('food')).id}:true`,
+  },
+  {
+    id: uuidv4(),
+    name: 'test Alcholic drink Service [event1, event3]',
+    type: RuleBlockType.spaceEventPrePermissionCheckAnswer,
+    content: `${createSpaceRuleBlockDtos.find((item) => item.name.includes('alcholic')).id}:true`,
+  },
+  {
+    id: uuidv4(),
+    name: 'test Alcholic drink Service [event2, event4]',
+    type: RuleBlockType.spaceEventPrePermissionCheckAnswer,
+    content: `${createSpaceRuleBlockDtos.find((item) => item.name.includes('alcholic')).id}:false`,
   },
   {
     id: uuidv4(),

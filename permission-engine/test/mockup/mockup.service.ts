@@ -31,6 +31,7 @@ import { UserNotification } from 'src/database/entity/user-notification.entity';
 import { User } from 'src/database/entity/user.entity';
 import { mockup } from './mockup';
 import { RuleBlockType } from 'src/lib/type';
+import { SpaceApprovedRuleService } from 'src/api/space-approved-rule/space-approved-rule.service';
 
 @Injectable()
 export class MockupService implements OnModuleInit, OnModuleDestroy {
@@ -67,6 +68,7 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
     private readonly userService: UserService,
     private readonly userNotificationService: UserNotificationService,
     private readonly spaceService: SpaceService,
+    private readonly spaceApprovedRuleService: SpaceApprovedRuleService,
     private readonly spaceImageService: SpaceImageService,
     private readonly spaceEventService: SpaceEventService,
     private readonly spaceEventImageService: SpaceEventImageService,
@@ -180,6 +182,10 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
       );
       // mock down many-to-many relations
       await this.client.query(
+        `DELETE FROM "space_approved_rule" WHERE rule_id = ANY($1)`,
+        [rules.map((item) => item.id)],
+      );
+      await this.client.query(
         `DELETE FROM "rule_rule_block" WHERE rule_id = ANY($1) OR rule_block_id = ANY($2)`,
         [rules.map((item) => item.id), ruleBlocks.map((item) => item.id)],
       );
@@ -227,211 +233,226 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
       ]);
 
       await this.client.query('COMMIT');
-      this.logger.log(`Database previous mockup removed successfully.`);
+      this.logger.log(`mockup: Successfully removed previous mockup.`);
     } catch (error) {
       await this.client.query('ROLLBACK');
-      this.logger.log(`Error removing previous mockup`, error);
+      this.logger.log(`mockup: Error removing previous mockup`, error);
     }
   }
 
   async up() {
-    const {
-      createUserDtos,
-      createSpaceRuleBlockDtos,
-      createSpaceRuleDtos,
-      createSpaceDtos,
-      createSpaceEventRuleBlockDtos,
-      createSpaceEventRuleDtos,
-      createSpaceEquipmentDtos,
-      createSpaceEventDtos,
-      createSpaceImageDtos,
-      createSpaceEventImageDtos,
-    } = mockup;
+    try {
+      const {
+        createUserDtos,
+        createSpaceRuleBlockDtos,
+        createSpaceRuleDtos,
+        createSpaceDtos,
+        createSpaceEventRuleBlockDtos,
+        createSpaceEventRuleDtos,
+        createSpaceEquipmentDtos,
+        createSpaceEventDtos,
+        createSpaceImageDtos,
+        createSpaceEventImageDtos,
+      } = mockup;
 
-    const users = [];
-    const spaceRuleBlocks = [];
-    const spaceRules = [];
-    const spaceEventRuleBlocks = [];
-    const spaceEventRules = [];
-    const spaces = [];
-    const spaceEquipments = [];
-    const spacePermissioners = [];
-    const spaceEvents = [];
+      const users = [];
+      const spaceRuleBlocks = [];
+      const spaceRules = [];
+      const spaceEventRuleBlocks = [];
+      const spaceEventRules = [];
+      const spaces = [];
+      const spaceEquipments = [];
+      const spacePermissioners = [];
+      const spaceEvents = [];
 
-    for (const createUserDto of createUserDtos) {
-      const user = (await this.userService.create(createUserDto, false)).data
-        .user;
-      users.push(user);
-    }
+      for (const createUserDto of createUserDtos) {
+        const user = (await this.userService.create(createUserDto, false)).data
+          .user;
+        users.push(user);
+      }
 
-    const spaceRuleBlockAuthor = users[0];
-    const spaceEventRuleBlockAuthor = users[1];
-    const eventOrganizer = users[2];
+      const spaceRuleBlockAuthor = users[0];
+      const spaceEventRuleBlockAuthor = users[1];
+      const eventOrganizer = users[2];
 
-    for (const createRuleBlockDto of createSpaceRuleBlockDtos.map((item) => {
-      return {
-        id: item.id,
-        name: item.name,
-        type: item.type,
-        content: item.content,
-      };
-    })) {
-      spaceRuleBlocks.push(
-        await this.ruleBlockService.create(
-          spaceRuleBlockAuthor.id,
-          createRuleBlockDto,
-        ),
-      );
-    }
-
-    for (const createRuleDto of createSpaceRuleDtos) {
-      spaceRules.push(
-        await this.ruleService.create(spaceRuleBlockAuthor.id, {
-          ...createRuleDto,
-        }),
-      );
-    }
-
-    for (const [i, createSpaceDto] of createSpaceDtos
-      .map((item) => {
-        return {
-          name: item.name,
-          country: item.country,
-          region: item.region,
-          city: item.city,
-          district: item.district,
-          address: item.address,
-          zipcode: item.zipcode,
-          latitude: item.latitude,
-          longitude: item.longitude,
-          details: item.details,
-        };
-      })
-      .entries()) {
-      spaces.push(
-        await this.spaceService.create(users[i].id, {
-          ...createSpaceDto,
-          ruleId: spaceRules[i].id,
-        }),
-      );
-    }
-
-    for (const space of spaces) {
-      createSpaceImageDtos.splice(0, 1).forEach(async (createSpaceImageDto) => {
-        await this.spaceImageService.create({
-          id: createSpaceImageDto.id,
-          link: createSpaceImageDto.link,
-          spaceId: space.id,
-        });
-      });
-    }
-
-    for (const [i, createSpaceEquipmentDto] of createSpaceEquipmentDtos
-      .map((item) => {
-        return {
-          name: item.name,
-          type: item.type,
-          quantity: item.quantity,
-          details: item.details,
-        };
-      })
-      .entries()) {
-      spaceEquipments.push(
-        await this.spaceEquipmentService.create({
-          ...createSpaceEquipmentDto,
-          spaceId: spaces[i].id,
-        }),
-      );
-    }
-
-    for (const [i, space] of spaces.entries()) {
-      spacePermissioners.push(
-        await this.spacePermissionerService.create(
-          {
-            spaceId: space.id,
-            userId: i + 1 < users.length ? users[i + 1].id : users[0].id,
-          },
-          true,
-        ),
-      );
-    }
-
-    for (const createRuleBlockDto of createSpaceEventRuleBlockDtos.map(
-      (item) => {
+      for (const createRuleBlockDto of createSpaceRuleBlockDtos.map((item) => {
         return {
           id: item.id,
           name: item.name,
           type: item.type,
           content: item.content,
-          files: item.files,
         };
-      },
-    )) {
-      let { content } = createRuleBlockDto;
-      const { name, type } = createRuleBlockDto;
-      if (type === RuleBlockType.spaceEventRequireEquipment) {
-        if (name.includes('event1')) {
-          const spaceEquipment = spaceEquipments[0];
-          content = `${spaceEquipment.id}:${spaceEquipment.quantity}`;
-        }
-        if (name.includes('event2')) {
-          const spaceEquipment = spaceEquipments[1];
-          content = `${spaceEquipment.id}:${spaceEquipment.quantity}`;
-        }
-        if (name.includes('event3')) {
-          const spaceEquipment = spaceEquipments[2];
-          content = `${spaceEquipment.id}:${spaceEquipment.quantity}`;
-        }
-        if (name.includes('event4')) {
-          const spaceEquipment = spaceEquipments[3];
-          content = `${spaceEquipment.id}:${spaceEquipment.quantity}`;
-        }
+      })) {
+        spaceRuleBlocks.push(
+          await this.ruleBlockService.create(
+            spaceRuleBlockAuthor.id,
+            createRuleBlockDto,
+          ),
+        );
       }
-      spaceEventRuleBlocks.push(
-        await this.ruleBlockService.create(spaceEventRuleBlockAuthor.id, {
-          ...createRuleBlockDto,
-          content,
-        }),
-      );
-    }
 
-    for (const createRuleDto of createSpaceEventRuleDtos) {
-      spaceEventRules.push(
-        await this.ruleService.create(spaceEventRuleBlockAuthor.id, {
-          ...createRuleDto,
-        }),
-      );
-    }
+      for (const createRuleDto of createSpaceRuleDtos) {
+        spaceRules.push(
+          await this.ruleService.create(spaceRuleBlockAuthor.id, {
+            ...createRuleDto,
+          }),
+        );
+      }
 
-    for (const [i, createSpaceEventDto] of createSpaceEventDtos
-      .map((item) => {
-        return {
-          name: item.name,
-          details: item.details,
-          duration: item.duration,
-          startsAt: item.startsAt,
-        };
-      })
-      .entries()) {
-      spaceEvents.push(
-        await this.spaceEventService.create(eventOrganizer.id, {
-          ...createSpaceEventDto,
-          spaceId: spaces[i].id,
-          ruleId: spaceEventRules[i].id,
-        }),
-      );
-    }
+      for (const [i, createSpaceDto] of createSpaceDtos
+        .map((item) => {
+          return {
+            name: item.name,
+            country: item.country,
+            region: item.region,
+            city: item.city,
+            district: item.district,
+            address: item.address,
+            zipcode: item.zipcode,
+            latitude: item.latitude,
+            longitude: item.longitude,
+            details: item.details,
+          };
+        })
+        .entries()) {
+        spaces.push(
+          await this.spaceService.create(users[i].id, {
+            ...createSpaceDto,
+            ruleId: spaceRules[i].id,
+          }),
+        );
+      }
 
-    for (const spaceEvent of spaceEvents) {
-      createSpaceEventImageDtos
-        .splice(0, 2)
-        .forEach(async (createSpaceEventImageDto) => {
-          await this.spaceEventImageService.create({
-            id: createSpaceEventImageDto.id,
-            link: createSpaceEventImageDto.link,
-            spaceEventId: spaceEvent.id,
+      for (const space of spaces) {
+        createSpaceImageDtos
+          .splice(0, 1)
+          .forEach(async (createSpaceImageDto) => {
+            await this.spaceImageService.create({
+              id: createSpaceImageDto.id,
+              link: createSpaceImageDto.link,
+              spaceId: space.id,
+            });
           });
+      }
+
+      for (const [i, createSpaceEquipmentDto] of createSpaceEquipmentDtos
+        .map((item) => {
+          return {
+            name: item.name,
+            type: item.type,
+            quantity: item.quantity,
+            details: item.details,
+          };
+        })
+        .entries()) {
+        spaceEquipments.push(
+          await this.spaceEquipmentService.create({
+            ...createSpaceEquipmentDto,
+            spaceId: spaces[i].id,
+          }),
+        );
+      }
+
+      for (const [i, space] of spaces.entries()) {
+        spacePermissioners.push(
+          await this.spacePermissionerService.create(
+            {
+              spaceId: space.id,
+              userId: i + 1 < users.length ? users[i + 1].id : users[0].id,
+            },
+            true,
+          ),
+        );
+      }
+
+      for (const createRuleBlockDto of createSpaceEventRuleBlockDtos.map(
+        (item) => {
+          return {
+            id: item.id,
+            name: item.name,
+            type: item.type,
+            content: item.content,
+            files: item.files,
+          };
+        },
+      )) {
+        let { content } = createRuleBlockDto;
+        const { name, type } = createRuleBlockDto;
+        if (type === RuleBlockType.spaceEventRequireEquipment) {
+          if (name.includes('event1')) {
+            const spaceEquipment = spaceEquipments[0];
+            content = `${spaceEquipment.id}:${spaceEquipment.quantity}`;
+          }
+          if (name.includes('event2')) {
+            const spaceEquipment = spaceEquipments[1];
+            content = `${spaceEquipment.id}:${spaceEquipment.quantity}`;
+          }
+          if (name.includes('event3')) {
+            const spaceEquipment = spaceEquipments[2];
+            content = `${spaceEquipment.id}:${spaceEquipment.quantity}`;
+          }
+          if (name.includes('event4')) {
+            const spaceEquipment = spaceEquipments[3];
+            content = `${spaceEquipment.id}:${spaceEquipment.quantity}`;
+          }
+        }
+        spaceEventRuleBlocks.push(
+          await this.ruleBlockService.create(spaceEventRuleBlockAuthor.id, {
+            ...createRuleBlockDto,
+            content,
+          }),
+        );
+      }
+
+      for (const createRuleDto of createSpaceEventRuleDtos) {
+        spaceEventRules.push(
+          await this.ruleService.create(spaceEventRuleBlockAuthor.id, {
+            ...createRuleDto,
+          }),
+        );
+      }
+
+      for (const spaceEventRule of spaceEventRules) {
+        await this.spaceApprovedRuleService.create({
+          spaceId: spaces[0].id,
+          ruleId: spaceEventRule.id,
         });
+      }
+
+      for (const [i, createSpaceEventDto] of createSpaceEventDtos
+        .map((item) => {
+          return {
+            name: item.name,
+            details: item.details,
+            duration: item.duration,
+            startsAt: item.startsAt,
+          };
+        })
+        .entries()) {
+        spaceEvents.push(
+          await this.spaceEventService.create(eventOrganizer.id, {
+            ...createSpaceEventDto,
+            spaceId: spaces[i].id,
+            ruleId: spaceEventRules[i].id,
+          }),
+        );
+      }
+
+      for (const spaceEvent of spaceEvents) {
+        createSpaceEventImageDtos
+          .splice(0, 2)
+          .forEach(async (createSpaceEventImageDto) => {
+            await this.spaceEventImageService.create({
+              id: createSpaceEventImageDto.id,
+              link: createSpaceEventImageDto.link,
+              spaceEventId: spaceEvent.id,
+            });
+          });
+      }
+
+      this.logger.log(`mockup: Successfully mocked up test data`);
+    } catch (error) {
+      this.logger.error(`mockup: Failed to mock up test data`, error);
     }
   }
 }
