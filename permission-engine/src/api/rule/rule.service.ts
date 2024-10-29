@@ -77,6 +77,7 @@ export class RuleService {
       spaceEventExpectedAttendeeCount,
       spaceEventRequireEquipments,
       spaceEventExceptions,
+      spacePrePremissionCheckAnswers,
     } = findAllMatchedRuleDto;
 
     const where = [];
@@ -119,6 +120,18 @@ export class RuleService {
         );
         params.push(`${spaceEventException.split(':')[0]}%`);
       });
+    }
+
+    if (spacePrePremissionCheckAnswers != null) {
+      spacePrePremissionCheckAnswers.forEach(
+        (spacePrePremissionCheckAnswer) => {
+          paramIndex++;
+          where.push(
+            `(rb.type = 'space_event:pre_permission_check_answer' AND rb.content = $${paramIndex})`,
+          );
+          params.push(spacePrePremissionCheckAnswer);
+        },
+      );
     }
 
     function buildWhereClause(conditions = []) {
@@ -239,6 +252,26 @@ export class RuleService {
       if (spaceConsentMethodBlocks.length !== 1) {
         throw new BadRequestException(
           'There should be one RuleBlock with space:consent_method type.',
+        );
+      }
+
+      const spaceAvailabilityBlocks = ruleBlocks.filter(
+        (item) => item.type === RuleBlockType.spaceAvailability,
+      );
+
+      if (spaceAvailabilityBlocks.length !== 1) {
+        throw new BadRequestException(
+          'There should be one RuleBlock with space:availability type.',
+        );
+      }
+
+      const spaceAvailabilityUnitBlocks = ruleBlocks.filter(
+        (item) => item.type === RuleBlockType.spaceAvailabilityUnit,
+      );
+
+      if (spaceAvailabilityUnitBlocks.length !== 1) {
+        throw new BadRequestException(
+          'There should be one RuleBlock with space:availability_unit type.',
         );
       }
     } else if (target === RuleTarget.spaceEvent) {

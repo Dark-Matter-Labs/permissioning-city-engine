@@ -53,4 +53,21 @@ export class FindAllMatchedRuleDto extends PaginationDto {
       'RuleBlock content(spaceRuleBlockId[]) with spaceEventException type',
   })
   spaceEventExceptions?: string[];
+
+  @IsOptional()
+  @Transform(({ value }) => (Array.isArray(value) ? value : value.split(',')))
+  @IsArray()
+  @IsString({ each: true })
+  @Matches(
+    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}:(true|false)$/,
+    {
+      each: true,
+      message: 'Each item must match {ruleBlockId}:{boolean} format',
+    },
+  )
+  @ApiPropertyOptional({
+    description:
+      'RuleBlock content({spaceRuleBlockId with spacePrePermissionCheck type}:{boolean}[])',
+  })
+  spacePrePremissionCheckAnswers?: string[];
 }
