@@ -53,10 +53,10 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       await this.client.query('BEGIN');
       await this.client.query(querySQL);
       await this.client.query('COMMIT');
-      this.logger.log(`Database schema.${name} applied successfully.`);
+      this.logger.log(`database: schema.${name} applied successfully.`);
     } catch (error) {
       await this.client.query('ROLLBACK');
-      this.logger.error(`Error applying schema.${name}:`, error);
+      this.logger.error(`database: Error applying schema.${name}:`, error);
     }
   }
 
@@ -123,7 +123,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       // migrations
       await this.runMigrations();
     } catch (error) {
-      this.logger.error('Failed to create schema', error);
+      this.logger.error('database: Failed to create schema', error);
     }
   }
 }
