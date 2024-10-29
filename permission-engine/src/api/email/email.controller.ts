@@ -8,7 +8,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { EmailService } from './email.service';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { Logger } from 'src/lib/logger/logger.service';
 import * as crypto from 'crypto';
@@ -25,6 +25,7 @@ export class EmailController {
   ) {}
 
   @Post('bounce')
+  @ApiExcludeEndpoint()
   async bounce(
     @Req() req,
     @Body() body: any,
@@ -59,6 +60,7 @@ export class EmailController {
   }
 
   @Post('complaint')
+  @ApiExcludeEndpoint()
   async complaint(
     @Req() req,
     @Body() body: any,
@@ -93,6 +95,7 @@ export class EmailController {
   }
 
   @Post('delivery')
+  @ApiExcludeEndpoint()
   async delivery(
     @Req() req,
     @Body() body: any,
