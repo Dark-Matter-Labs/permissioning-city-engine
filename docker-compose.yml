@@ -108,6 +108,7 @@ services:
     command: ["npm", "run", "start:dev"]
     depends_on:
       - postgres
+      - permission-engine-api
     restart: always
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]

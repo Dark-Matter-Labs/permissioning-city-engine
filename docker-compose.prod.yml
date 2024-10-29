@@ -97,6 +97,7 @@ services:
     command: ["npm", "run", "start:prod"]
     depends_on:
       - postgres
+      - permission-engine-api
     restart: always
     networks:
       - permission_engine_network
