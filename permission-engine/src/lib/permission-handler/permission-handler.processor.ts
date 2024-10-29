@@ -48,8 +48,13 @@ export class PermissionHandlerProcessor {
           case PermissionProcessType.spaceEventPermissionRequestCreated:
             await this.spaceEventPermissionRequestCreated(job.data);
             break;
-          case PermissionProcessType.spaceRulePermissionRequestCreated:
-            await this.spaceRulePermissionRequestCreated(job.data);
+          case PermissionProcessType.spaceRuleChangePermissionRequestCreated:
+            await this.spaceRuleChangePermissionRequestCreated(job.data);
+            break;
+          case PermissionProcessType.spaceEventRulePreApprovePermissionRequestCreated:
+            await this.spaceEventRulePreApprovePermissionRequestCreated(
+              job.data,
+            );
             break;
           case PermissionProcessType.permissionResponseReviewed:
             await this.permissionResponseReviewed(job.data);
@@ -171,7 +176,7 @@ export class PermissionHandlerProcessor {
    * assign responses to SpacePermissioners
    * send notifications to SpacePermissioners
    */
-  async spaceRulePermissionRequestCreated(option: {
+  async spaceRuleChangePermissionRequestCreated(option: {
     permissionRequestId: string;
   }) {
     const { permissionRequestId } = option;
@@ -238,7 +243,7 @@ export class PermissionHandlerProcessor {
             target: UserNotificationTarget.general,
             type: UserNotificationType.external,
             templateName:
-              UserNotificationTemplateName.spaceEventPermissionRequested,
+              UserNotificationTemplateName.spaceRuleChangePermissionRequested,
             params: {
               permissionRequestId,
               oldSpaceRuleId: oldSpaceRule.id,
@@ -247,6 +252,92 @@ export class PermissionHandlerProcessor {
               newSpaceRuleId: newSpaceRule.id,
               newSpaceRuleName: newSpaceRule.name,
               newSpaceRuleRuleBlocks: newSpaceRule.ruleBlocks,
+              permissionResponseId: permissionResponse.id,
+              permissionResponseTimeoutAt: permissionResponse.timeoutAt,
+            },
+          })
+          .catch((error) => {
+            throw new Error(
+              `Failed to create userNotification: ${error.message}`,
+            );
+          });
+      } catch (error) {
+        this.logger.error(error.message, error);
+      }
+    });
+  }
+
+  /**
+   * assign responses to SpacePermissioners
+   * send notifications to SpacePermissioners
+   */
+  async spaceEventRulePreApprovePermissionRequestCreated(option: {
+    permissionRequestId: string;
+  }) {
+    const { permissionRequestId } = option;
+    const permissionRequest =
+      await this.permissionRequestService.findOneById(permissionRequestId);
+    const spaceEventRule = await this.ruleService.findOneById(
+      permissionRequest.spaceEventRuleId,
+    );
+    const spacePermissioners =
+      await this.spacePermissionerService.findAllBySpaceId(
+        permissionRequest.spaceId,
+        { isActive: true },
+        false,
+      );
+
+    // TODO. apply dynamic timeout value
+    const timeoutAt = dayjs(permissionRequest.createdAt).add(1, 'day').toDate();
+
+    await this.userNotificationService
+      .create({
+        userId: permissionRequest.userId,
+        target: UserNotificationTarget.general,
+        type: UserNotificationType.external,
+        templateName:
+          UserNotificationTemplateName.spaceEventRulePreApprovePermissionRequested,
+        params: {
+          permissionRequestId,
+          spaceEventRuleId: spaceEventRule.id,
+          spaceEventRuleName: spaceEventRule.name,
+          spaceEventRuleBlocks: spaceEventRule.ruleBlocks,
+        },
+      })
+      .catch((error) => {
+        throw new Error(`Failed to create userNotification: ${error.message}`);
+      });
+
+    const notificationTargetSpacePermissioners =
+      spacePermissioners?.data?.filter((spacePermissioner) => {
+        return spacePermissioner.userId !== permissionRequest.userId;
+      }) ?? [];
+    notificationTargetSpacePermissioners.map(async (spacePermissioner) => {
+      try {
+        const permissionResponse = await this.permissionResponseService
+          .create({
+            permissionRequestId: permissionRequest.id,
+            spacePermissionerId: spacePermissioner.id,
+            timeoutAt,
+          })
+          .catch((error) => {
+            throw new Error(
+              `Failed to create permissionResponse: ${error.message}`,
+            );
+          });
+
+        await this.userNotificationService
+          .create({
+            userId: spacePermissioner.userId,
+            target: UserNotificationTarget.general,
+            type: UserNotificationType.external,
+            templateName:
+              UserNotificationTemplateName.spaceEventRulePreApprovePermissionRequested,
+            params: {
+              permissionRequestId,
+              spaceEventRuleId: spaceEventRule.id,
+              spaceEventRuleName: spaceEventRule.name,
+              spaceEventRuleBlocks: spaceEventRule.ruleBlocks,
               permissionResponseId: permissionResponse.id,
               permissionResponseTimeoutAt: permissionResponse.timeoutAt,
             },
