@@ -72,10 +72,17 @@ services:
       options:
         max-size: "10m"
         max-file: "5"
-    command: ["yarn", "start:prod"]
+    command: ["npm", "run", "start:prod"]
     depends_on:
       - postgres
     restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+      start_interval: 5s
     networks:
       - permission_engine_network
 
@@ -94,11 +101,18 @@ services:
       options:
         max-size: "10m"
         max-file: "5"
-    command: ["yarn", "start:prod"]
+    command: ["npm", "run", "start:prod"]
     depends_on:
       - postgres
       - permission-engine-api
     restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+      start_interval: 5s
     networks:
       - permission_engine_network
 
