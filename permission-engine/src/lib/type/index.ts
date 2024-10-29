@@ -34,6 +34,8 @@ export enum RuleBlockType {
   spaceGeneral = 'space:general',
   spaceConsentMethod = 'space:consent_method',
   spaceAvailability = 'space:availability', // content: {mon|tue|wed|thu|fri|sat|sun}-{00:00}-{24:00};{mon|tue|wed|thu|fri|sat|sun}-{00:00}-{24:00}; ...
+  spaceAvailabilityUnit = 'space:availability_unit', // content: 30m | 1h | 1d
+  spacePrePermissionCheck = 'space:pre_permission_check', // content: ask boolean questions for event organizers before permission request
   spacePostEventCheck = 'space:post_event_check',
   // spaceEvent
   spaceEventGeneral = 'space_event:general',
@@ -46,7 +48,7 @@ export enum RuleBlockType {
   spaceEventSelfRiskAssesment = 'space_event:self_risk_assesment',
   spaceEventInsurance = 'space_event:insurance', // content: file download path: s3
   spaceEventNoiseLevel = 'space_event:noise_level', // high | midium | low
-  spaceEventFood = 'space_event:food', // boolean
+  spaceEventPrePermissionCheckAnswer = 'space_event:pre_permission_check_answer', // {spaceRuleBlockId}:{boolean}
 }
 
 export enum SpaceEventAccessType {
@@ -69,6 +71,17 @@ export enum SpaceEquipmentType {
   safty = 'safty',
   computer = 'computer',
   facility = 'facility',
+}
+
+export type SpaceAvailability = {
+  startTime: Date;
+  endTime: Date;
+};
+
+export enum SpaceAvailabilityUnit {
+  halfHour = '30m',
+  oneHour = '1h',
+  oneDay = '1d',
 }
 
 export enum PermissionRequestStatus {
