@@ -25,6 +25,8 @@ import { Space } from 'src/database/entity/space.entity';
 import { RuleBlock } from 'src/database/entity/rule-block.entity';
 import { RuleBlockService } from 'src/api/rule-block/rule-block.service';
 import { PermissionRequestModule } from 'src/api/permission-request/permission-request.module';
+import { SpaceEquipment } from 'src/database/entity/space-equipment.entity';
+import { SpaceEquipmentService } from 'src/api/space-equipment/space-equipment.service';
 
 @Global()
 @Module({
@@ -39,6 +41,7 @@ import { PermissionRequestModule } from 'src/api/permission-request/permission-r
       PermissionResponse,
       Space,
       SpaceEvent,
+      SpaceEquipment,
       SpacePermissioner,
       Rule,
       RuleBlock,
@@ -58,6 +61,7 @@ import { PermissionRequestModule } from 'src/api/permission-request/permission-r
     PermissionResponseService,
     SpaceService,
     SpaceEventService,
+    SpaceEquipmentService,
     SpacePermissionerService,
     RuleService,
     RuleBlockService,

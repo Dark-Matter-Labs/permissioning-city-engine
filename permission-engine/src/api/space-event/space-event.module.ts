@@ -31,6 +31,8 @@ import { PermissionResponse } from 'src/database/entity/permission-response.enti
 import { UserNotificationService } from '../user-notification/user-notification.service';
 import { PermissionHandlerService } from 'src/lib/permission-handler/permission-handler.service';
 import { PermissionHandlerModule } from 'src/lib/permission-handler/permission-handler.module';
+import { SpaceEquipment } from 'src/database/entity/space-equipment.entity';
+import { SpaceEquipmentService } from '../space-equipment/space-equipment.service';
 
 @Module({
   imports: [
@@ -40,6 +42,7 @@ import { PermissionHandlerModule } from 'src/lib/permission-handler/permission-h
     TypeOrmModule.forFeature([
       SpaceEvent,
       SpaceEventImage,
+      SpaceEquipment,
       User,
       UserNotification,
       PermissionRequest,
@@ -76,6 +79,7 @@ import { PermissionHandlerModule } from 'src/lib/permission-handler/permission-h
     Logger,
     SpaceEventService,
     SpaceEventImageService,
+    SpaceEquipmentService,
     UserService,
     UserNotificationService,
     PermissionRequestService,

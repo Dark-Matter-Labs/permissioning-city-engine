@@ -25,6 +25,8 @@ import { PermissionHandlerModule } from 'src/lib/permission-handler/permission-h
 import { SpaceApprovedRule } from 'src/database/entity/space-approved-rule.entity';
 import { SpaceApprovedRuleService } from './space-approved-rule.service';
 import { SpaceApprovedRuleController } from './space-approved-rule.controller';
+import { SpaceEquipment } from 'src/database/entity/space-equipment.entity';
+import { SpaceEquipmentService } from '../space-equipment/space-equipment.service';
 
 @Module({
   imports: [
@@ -34,6 +36,7 @@ import { SpaceApprovedRuleController } from './space-approved-rule.controller';
     TypeOrmModule.forFeature([
       SpaceApprovedRule,
       SpaceEvent,
+      SpaceEquipment,
       User,
       UserNotification,
       PermissionRequest,
@@ -50,6 +53,7 @@ import { SpaceApprovedRuleController } from './space-approved-rule.controller';
     Logger,
     SpaceApprovedRuleService,
     SpaceEventService,
+    SpaceEquipmentService,
     UserService,
     PermissionRequestService,
     SpaceService,

@@ -24,6 +24,8 @@ import { PermissionHandlerService } from 'src/lib/permission-handler/permission-
 import { ConfigModule } from '@nestjs/config';
 import configuration from 'src/config/configuration';
 import { PermissionHandlerModule } from 'src/lib/permission-handler/permission-handler.module';
+import { SpaceEquipment } from 'src/database/entity/space-equipment.entity';
+import { SpaceEquipmentService } from '../space-equipment/space-equipment.service';
 
 @Module({
   imports: [
@@ -35,6 +37,7 @@ import { PermissionHandlerModule } from 'src/lib/permission-handler/permission-h
       PermissionResponse,
       Space,
       SpaceEvent,
+      SpaceEquipment,
       User,
       UserNotification,
       Rule,
@@ -51,6 +54,7 @@ import { PermissionHandlerModule } from 'src/lib/permission-handler/permission-h
     PermissionResponseService,
     SpaceService,
     SpaceEventService,
+    SpaceEquipmentService,
     UserService,
     UserNotificationService,
     RuleService,
