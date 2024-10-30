@@ -6,11 +6,16 @@ import {
   Get,
   Param,
   Post,
+  Put,
   Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { CreatePermissionRequestDto } from './dto';
+import {
+  CreateSpaceEventPermissionRequestDto,
+  CreateSpaceEventRulePreApprovePermissionRequestDto,
+  CreateSpaceRuleChangePermissionRequestDto,
+} from './dto';
 import { PermissionRequestService } from './permission-request.service';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
@@ -62,37 +67,76 @@ export class PermissionRequestController {
     return this.permissionRequestService.findOneById(id);
   }
 
-  @Post()
-  @ApiOperation({ summary: 'Create PermissionRequest' })
+  @Post('pre-approve')
+  @ApiOperation({
+    summary: 'Create space event rule pre approve PermissionRequest',
+  })
   @UseGuards(JwtAuthGuard)
-  async create(
+  async spaceEventRulePreApprovePermissionRequest(
     @Req() req,
-    @Body() createPermissionRequestDto: CreatePermissionRequestDto,
+    @Body()
+    createSpaceEventRulePreApprovePermissionRequestDto: CreateSpaceEventRulePreApprovePermissionRequestDto,
   ) {
     const user = await this.userService.findOneByEmail(req.user.email);
-    const { spaceEventId, spaceRuleId, spaceId } = createPermissionRequestDto;
+    const { spaceId } = createSpaceEventRulePreApprovePermissionRequestDto;
 
-    if (spaceEventId != null && spaceRuleId != null) {
-      throw new BadRequestException(
-        'cannot create permission request with multiple purposes',
-      );
-    } else if (spaceEventId != null) {
+    const isSpacePermissioner =
+      await this.spacePermissionerService.isSpacePermissioner(spaceId, user.id);
+
+    if (isSpacePermissioner === false) {
+      throw new ForbiddenException('user must be a space permissioner');
+    }
+
+    return this.permissionRequestService.create(
+      createSpaceEventRulePreApprovePermissionRequestDto,
+    );
+  }
+
+  @Post('rule-change')
+  @ApiOperation({ summary: 'Create space rule change PermissionRequest' })
+  @UseGuards(JwtAuthGuard)
+  async spaceRuleChangePermissionRequest(
+    @Req() req,
+    @Body()
+    createSpaceRuleChangePermissionRequestDto: CreateSpaceRuleChangePermissionRequestDto,
+  ) {
+    const user = await this.userService.findOneByEmail(req.user.email);
+    const { spaceId } = createSpaceRuleChangePermissionRequestDto;
+
+    // space rule change permission request
+
+    const isSpacePermissioner =
+      await this.spacePermissionerService.isSpacePermissioner(spaceId, user.id);
+
+    if (isSpacePermissioner === false) {
+      throw new ForbiddenException('user must be a space permissioner');
+    }
+
+    return this.permissionRequestService.create(
+      createSpaceRuleChangePermissionRequestDto,
+    );
+  }
+
+  @Post('event')
+  @ApiOperation({ summary: 'Create space event PermissionRequest' })
+  @UseGuards(JwtAuthGuard)
+  async spaceEventPermissionRequest(
+    @Req() req,
+    @Body() createPermissionRequestDto: CreateSpaceEventPermissionRequestDto,
+  ) {
+    const user = await this.userService.findOneByEmail(req.user.email);
+    const { spaceEventId } = createPermissionRequestDto;
+
+    if (spaceEventId != null) {
       // space event permission request
       const spaceEvent = await this.spaceEventService.findOneById(spaceEventId);
 
+      if (spaceEvent.spaceId == null) {
+        throw new BadRequestException('spaceId not assigned to spaceEvent');
+      }
+
       if (spaceEvent.organizerId !== user.id) {
         throw new ForbiddenException('user must be an event organizer');
-      }
-    } else if (spaceRuleId != null) {
-      // space rule change permission request
-      const isSpacePermissioner =
-        await this.spacePermissionerService.isSpacePermissioner(
-          spaceId,
-          user.id,
-        );
-
-      if (isSpacePermissioner === false) {
-        throw new ForbiddenException('user must be a space permissioner');
       }
     } else {
       throw new BadRequestException();
@@ -101,7 +145,7 @@ export class PermissionRequestController {
     return this.permissionRequestService.create(createPermissionRequestDto);
   }
 
-  @Post(':id/cancel')
+  @Put(':id/cancel')
   @ApiOperation({ summary: 'Cancel PermissionRequest' })
   @UseGuards(JwtAuthGuard)
   async cancel(@Req() req, @Param('id') id: string) {
@@ -116,7 +160,7 @@ export class PermissionRequestController {
     return this.permissionRequestService.updateToResolveCancelled(id);
   }
 
-  @Post(':id/accept')
+  @Put(':id/accept')
   @ApiOperation({ summary: 'Accept approved PermissionRequest review result' })
   @UseGuards(JwtAuthGuard)
   async accept(
@@ -149,7 +193,7 @@ export class PermissionRequestController {
     return this.permissionRequestService.updateToResolveAccepted(id);
   }
 
-  @Post(':id/drop')
+  @Put(':id/drop')
   @ApiOperation({ summary: 'Drop approved PermissionRequest review result' })
   @UseGuards(JwtAuthGuard)
   async drop(@Req() req, @Param('id') id: string) {

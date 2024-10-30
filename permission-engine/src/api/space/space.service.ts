@@ -4,7 +4,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Not, Repository } from 'typeorm';
+import { FindOneOptions, Not, Repository } from 'typeorm';
 import { Space } from '../../database/entity/space.entity';
 import { CreateSpaceDto, UpdateSpaceDto } from './dto';
 import { User } from 'src/database/entity/user.entity';
@@ -34,11 +34,26 @@ export class SpaceService {
     return this.spaceRepository.find();
   }
 
-  findOneById(id: string): Promise<Space> {
-    return this.spaceRepository.findOne({
+  findOneById(id: string, relations?: string[]): Promise<Space> {
+    const option: FindOneOptions = {
       where: { id },
-      relations: ['spaceImages'],
+    };
+
+    if (Array.isArray(relations)) {
+      option.relations = relations;
+    }
+
+    return this.spaceRepository.findOne(option);
+  }
+
+  async findRuleById(id: string): Promise<Rule> {
+    const space = await this.spaceRepository.findOneBy({ id });
+    const rule = await this.ruleRepository.findOne({
+      where: { id: space.ruleId },
+      relations: ['ruleBlocks'],
     });
+
+    return rule;
   }
 
   findOneByName(name: string): Promise<Space> {
@@ -121,11 +136,7 @@ export class SpaceService {
   }
 
   async findPostEventCheckRuleBlocks(id: string): Promise<RuleBlock[]> {
-    const space = await this.spaceRepository.findOneBy({ id });
-    const rule = await this.ruleRepository.findOne({
-      where: { id: space.ruleId },
-      relations: ['ruleBlocks'],
-    });
+    const rule = await this.findRuleById(id);
 
     return rule.ruleBlocks.filter(
       (item) => item.type === RuleBlockType.spacePostEventCheck,

@@ -29,24 +29,48 @@ export enum SpaceEventStatus {
   completeWithIssue = 'complete_with_issue', // completed by the event organizer with issue
 }
 
+/**
+ * <RuleBlock.content divider rules>
+ * Array divider: ';'
+ * Type divider: '^'
+ * Time unit divider: '-'
+ */
 export enum RuleBlockType {
   // space
   spaceGeneral = 'space:general',
   spaceConsentMethod = 'space:consent_method',
+  spaceAccess = 'space:access', // content: array of {SpaceEventAccessType};{SpaceEventAccessType}; ...
+  spaceMaxAttendee = 'space:max_attendee', // content: number
+  spaceMaxNoiseLevel = 'space:max_noise_level', // content: {NoiseLevel}
   spaceAvailability = 'space:availability', // content: {mon|tue|wed|thu|fri|sat|sun}-{00:00}-{24:00};{mon|tue|wed|thu|fri|sat|sun}-{00:00}-{24:00}; ...
-  spacePostEventCheck = 'space:post_event_check',
+  spaceAvailabilityUnit = 'space:availability_unit', // content: {number}{dhm}
+  spaceAvailabilityBuffer = 'space:availability_buffer', // content: {number}{d|h|m}
+  spacePrePermissionCheck = 'space:pre_permission_check', // content: {boolean question}^{default answer in boolean} -> ask boolean questions for event organizers before permission request
+  spacePostEventCheck = 'space:post_event_check', // content: boolean question for post event check
   // spaceEvent
   spaceEventGeneral = 'space_event:general',
-  spaceEventAccess = 'space_event:access', // content: {public|invited}:{free|paid}
-  spaceEventRequireEquipment = 'space_event:require_equipment', // content: {spaceEquipmentId}:{quantity}
+  spaceEventAccess = 'space_event:access', // content: {SpaceEventAccessType}
+  spaceEventRequireEquipment = 'space_event:require_equipment', // content: {spaceEquipmentId}^{quantity}
   spaceEventExpectedAttendeeCount = 'space_event:expected_attendee_count', // number
-  spaceEventException = 'space_event:exception', // content: {spaceRuleBlockId}:{reason}
-  spaceEventBenefit = 'space_event:benefit',
-  spaceEventRisk = 'space_event:risk',
-  spaceEventSelfRiskAssesment = 'space_event:self_risk_assesment',
+  spaceEventException = 'space_event:exception', // content: {spaceRuleBlockId}^{desiredValue}^{reason}
+  spaceEventBenefit = 'space_event:benefit', // content: expected benefit
+  spaceEventRisk = 'space_event:risk', // content: expected risk
+  spaceEventSelfRiskAssesment = 'space_event:self_risk_assesment', // content: description on self risk assesment
   spaceEventInsurance = 'space_event:insurance', // content: file download path: s3
-  spaceEventNoiseLevel = 'space_event:noise_level', // high | midium | low
-  spaceEventFood = 'space_event:food', // boolean
+  spaceEventNoiseLevel = 'space_event:noise_level', // {NoiseLevel}
+  spaceEventPrePermissionCheckAnswer = 'space_event:pre_permission_check_answer', // {spaceRuleBlockId}^{answer in boolean}
+}
+
+export enum RuleBlockContentDivider {
+  array = ';',
+  type = '^',
+  time = '-',
+}
+
+export enum NoiseLevel {
+  high = 'high',
+  medium = 'medium',
+  low = 'low',
 }
 
 export enum SpaceEventAccessType {
@@ -70,6 +94,11 @@ export enum SpaceEquipmentType {
   computer = 'computer',
   facility = 'facility',
 }
+
+export type SpaceAvailability = {
+  startTime: Date;
+  endTime: Date;
+};
 
 export enum PermissionRequestStatus {
   // created
@@ -153,7 +182,13 @@ export enum UserNotificationTemplateName {
    * Inform the space permissioners when rule change permission request is created for the space
    * Provide a link to space permissioner dashboard that would show the form UI for making permission response
    */
-  spaceRulePermissionRequested = 'space-rule-permission-requested',
+  spaceRuleChangePermissionRequested = 'space-rule-change-permission-requested',
+  /**
+   * <Permission for a space rule change requested>
+   * Inform the space permissioners when rule change permission request is created for the space
+   * Provide a link to space permissioner dashboard that would show the form UI for making permission response
+   */
+  spaceEventRulePreApprovePermissionRequested = 'space-event-rule-pre-approve-permission-requested',
   /**
    * <Permission request review is complete>
    * Inform the permission requester(event organizer) and space permissioners when permission request review result is made
@@ -292,7 +327,8 @@ export enum PermissionRequestTarget {
 
 export enum PermissionProcessType {
   spaceEventPermissionRequestCreated = 'space-event-permission-request-created',
-  spaceRulePermissionRequestCreated = 'space-rule-permission-request-created',
+  spaceRuleChangePermissionRequestCreated = 'space-rule-change-permission-request-created',
+  spaceEventRulePreApprovePermissionRequestCreated = 'space-event-rule-pre-approve-permission-request-created',
   permissionResponseReviewed = 'permission-response-reviewed',
   permissionResponseReviewCompleted = 'permission-response-review-completed',
   permissionRequestResolved = 'permission-request-resolved',

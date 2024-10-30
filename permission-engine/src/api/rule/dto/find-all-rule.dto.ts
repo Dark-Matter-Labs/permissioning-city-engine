@@ -5,6 +5,13 @@ import { PaginationDto } from 'src/lib/dto';
 
 export class FindAllRuleDto extends PaginationDto {
   @IsOptional()
+  @IsUUID()
+  @ApiPropertyOptional({
+    description: 'Rule ids',
+  })
+  ids?: string[];
+
+  @IsOptional()
   @IsString()
   @ApiPropertyOptional({
     description: 'Rule target: space|space_event',

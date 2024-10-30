@@ -19,6 +19,8 @@ import { Logger } from 'src/lib/logger/logger.service';
 import { PermissionRequest } from 'src/database/entity/permission-request.entity';
 import { UserNotification } from 'src/database/entity/user-notification.entity';
 import { UserNotificationService } from '../user-notification/user-notification.service';
+import { SpaceEquipment } from 'src/database/entity/space-equipment.entity';
+import { SpaceEquipmentService } from '../space-equipment/space-equipment.service';
 
 @Module({
   imports: [
@@ -27,6 +29,7 @@ import { UserNotificationService } from '../user-notification/user-notification.
       PermissionRequest,
       Space,
       SpaceEvent,
+      SpaceEquipment,
       User,
       UserNotification,
       Rule,
@@ -39,6 +42,7 @@ import { UserNotificationService } from '../user-notification/user-notification.
     PermissionResponseService,
     SpaceService,
     SpaceEventService,
+    SpaceEquipmentService,
     UserService,
     UserNotificationService,
     RuleService,

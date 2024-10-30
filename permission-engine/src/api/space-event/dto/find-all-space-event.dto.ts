@@ -1,4 +1,10 @@
-import { IsArray, IsOptional, IsString, IsUUID } from 'class-validator';
+import {
+  IsArray,
+  IsDateString,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { SpaceEventStatus } from 'src/lib/type';
 import { PaginationDto } from 'src/lib/dto';
@@ -56,12 +62,18 @@ export class FindAllSpaceEventDto extends PaginationDto {
   topicIds?: string[];
 
   @IsOptional()
-  @IsString()
+  @IsDateString()
   @ApiPropertyOptional({
     description: 'SpaceEvent startsAfter date',
-    type: Date,
   })
   startsAfter?: Date;
+
+  @IsOptional()
+  @IsDateString()
+  @ApiPropertyOptional({
+    description: 'SpaceEvent endsBefore date',
+  })
+  endsBefore?: Date;
 
   @IsOptional()
   @IsString()

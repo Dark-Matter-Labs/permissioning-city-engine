@@ -24,7 +24,6 @@ export class PermissionResponseService {
     const { page, limit, permissionRequestId, spacePermissionerIds, statuses } =
       findAllPermissionResponseDto;
 
-    console.log(page, limit);
     const where = [];
     const params: any[] = [(page - 1) * limit, limit];
     let paramIndex: number = params.length;

@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, In, Repository } from 'typeorm';
+import { FindManyOptions, FindOptionsWhere, In, Repository } from 'typeorm';
 import { Rule } from '../../database/entity/rule.entity';
 import {
   CreateRuleDto,
@@ -8,7 +8,11 @@ import {
   FindAllRuleDto,
   UpdateRuleDto,
 } from './dto';
-import { RuleBlockType, RuleTarget } from 'src/lib/type';
+import {
+  RuleBlockContentDivider,
+  RuleBlockType,
+  RuleTarget,
+} from 'src/lib/type';
 import { RuleBlock } from 'src/database/entity/rule-block.entity';
 import { PermissionRequest } from 'src/database/entity/permission-request.entity';
 import { Space } from 'src/database/entity/space.entity';
@@ -32,8 +36,9 @@ export class RuleService {
 
   async findAll(
     findAllRuleDto: FindAllRuleDto,
+    isPagination: boolean = true,
   ): Promise<{ data: Rule[]; total: number }> {
-    const { page, limit, target, authorId, parentRuleId, hash } =
+    const { page, limit, target, authorId, parentRuleId, hash, ids } =
       findAllRuleDto;
 
     const where: FindOptionsWhere<Rule> = { isActive: true };
@@ -54,11 +59,21 @@ export class RuleService {
       where.hash = hash;
     }
 
-    const [data, total] = await this.ruleRepository.findAndCount({
-      where,
-      skip: (page - 1) * limit,
-      take: limit,
-    });
+    if (ids != null) {
+      where.id = In(ids);
+    }
+
+    let queryOption: FindManyOptions<Rule> = { where };
+    if (isPagination === true) {
+      queryOption = {
+        ...queryOption,
+        relations: ['ruleBlocks'],
+        skip: (page - 1) * limit,
+        take: limit,
+      };
+    }
+
+    const [data, total] = await this.ruleRepository.findAndCount(queryOption);
 
     return {
       data: data ?? [],
@@ -77,6 +92,7 @@ export class RuleService {
       spaceEventExpectedAttendeeCount,
       spaceEventRequireEquipments,
       spaceEventExceptions,
+      spacePrePremissionCheckAnswers,
     } = findAllMatchedRuleDto;
 
     const where = [];
@@ -101,8 +117,9 @@ export class RuleService {
 
     if (spaceEventRequireEquipments != null) {
       spaceEventRequireEquipments.forEach((spaceEventRequireEquipment) => {
-        const [spaceEquipmentId, quantity] =
-          spaceEventRequireEquipment.split(':');
+        const [spaceEquipmentId, quantity] = spaceEventRequireEquipment.split(
+          RuleBlockContentDivider.type,
+        );
         where.push(
           `(rb.type = 'space_event:require_equipments' AND rb.content LIKE $${paramIndex + 1} AND CAST(split_part(rb.content, ':', 2) AS INTEGER) >= $${paramIndex + 2})`,
         );
@@ -117,8 +134,22 @@ export class RuleService {
         where.push(
           `(rb.type = 'space_event:exception' AND rb.content LIKE $${paramIndex})`,
         );
-        params.push(`${spaceEventException.split(':')[0]}%`);
+        params.push(
+          `${spaceEventException.split(RuleBlockContentDivider.type)[0]}%`,
+        );
       });
+    }
+
+    if (spacePrePremissionCheckAnswers != null) {
+      spacePrePremissionCheckAnswers.forEach(
+        (spacePrePremissionCheckAnswer) => {
+          paramIndex++;
+          where.push(
+            `(rb.type = 'space_event:pre_permission_check_answer' AND rb.content = $${paramIndex})`,
+          );
+          params.push(spacePrePremissionCheckAnswer);
+        },
+      );
     }
 
     function buildWhereClause(conditions = []) {
@@ -241,6 +272,56 @@ export class RuleService {
           'There should be one RuleBlock with space:consent_method type.',
         );
       }
+
+      const spaceAccess = ruleBlocks.filter(
+        (item) => item.type === RuleBlockType.spaceAccess,
+      );
+
+      if (spaceAccess.length !== 1) {
+        throw new BadRequestException(
+          'There should be one RuleBlock with space:access type.',
+        );
+      }
+
+      const spaceMaxAttendee = ruleBlocks.filter(
+        (item) => item.type === RuleBlockType.spaceMaxAttendee,
+      );
+
+      if (spaceMaxAttendee.length !== 1) {
+        throw new BadRequestException(
+          'There should be one RuleBlock with space:max_attendee type.',
+        );
+      }
+
+      const spaceAvailabilityBlocks = ruleBlocks.filter(
+        (item) => item.type === RuleBlockType.spaceAvailability,
+      );
+
+      if (spaceAvailabilityBlocks.length !== 1) {
+        throw new BadRequestException(
+          'There should be one RuleBlock with space:availability type.',
+        );
+      }
+
+      const spaceAvailabilityUnitBlocks = ruleBlocks.filter(
+        (item) => item.type === RuleBlockType.spaceAvailabilityUnit,
+      );
+
+      if (spaceAvailabilityUnitBlocks.length !== 1) {
+        throw new BadRequestException(
+          'There should be one RuleBlock with space:availability_unit type.',
+        );
+      }
+
+      const spaceAvailabilityBufferBlocks = ruleBlocks.filter(
+        (item) => item.type === RuleBlockType.spaceAvailabilityBuffer,
+      );
+
+      if (spaceAvailabilityBufferBlocks.length !== 1) {
+        throw new BadRequestException(
+          'There should be one RuleBlock with space:availability_buffer type.',
+        );
+      }
     } else if (target === RuleTarget.spaceEvent) {
       if (ruleBlocks.find((item) => item.type.startsWith('space:'))) {
         throw new BadRequestException('Target mismatch');
@@ -265,7 +346,10 @@ export class RuleService {
     forkRuleDto: { id: string; name?: string },
   ): Promise<Rule> {
     const { name, id } = forkRuleDto;
-    const rule = await this.ruleRepository.findOneBy({ id });
+    const rule = await this.ruleRepository.findOne({
+      where: { id },
+      relations: ['ruleBlocks'],
+    });
 
     if (!rule) {
       throw new BadRequestException();
