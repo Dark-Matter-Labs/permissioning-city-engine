@@ -26,21 +26,6 @@ export class AuthService {
   ): Promise<User> {
     let user = await this.userService.findOneByEmail(createUserDto.email);
 
-    // TODO. remove dev code after test
-    if (process.env.NODE_ENV === 'dev') {
-      try {
-        const ipLocationProvider = this.configService.get<string>(
-          'IP_LOCATION_PROVIDER',
-        );
-        const ipLocationInfo = await axios
-          .get(`${ipLocationProvider}/json/${ipAddress}`)
-          .then((res) => res.data);
-        this.logger.log('ip location info', ipLocationInfo);
-      } catch (error) {
-        this.logger.error('Failed to get location info from request ip', error);
-      }
-    }
-
     if (!user) {
       if (typeof ipAddress === 'string') {
         try {
