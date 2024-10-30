@@ -270,6 +270,26 @@ export class RuleService {
         );
       }
 
+      const spaceAccess = ruleBlocks.filter(
+        (item) => item.type === RuleBlockType.spaceAccess,
+      );
+
+      if (spaceAccess.length !== 1) {
+        throw new BadRequestException(
+          'There should be one RuleBlock with space:access type.',
+        );
+      }
+
+      const spaceMaxAttendee = ruleBlocks.filter(
+        (item) => item.type === RuleBlockType.spaceMaxAttendee,
+      );
+
+      if (spaceMaxAttendee.length !== 1) {
+        throw new BadRequestException(
+          'There should be one RuleBlock with space:max_attendee type.',
+        );
+      }
+
       const spaceAvailabilityBlocks = ruleBlocks.filter(
         (item) => item.type === RuleBlockType.spaceAvailability,
       );
@@ -287,6 +307,16 @@ export class RuleService {
       if (spaceAvailabilityUnitBlocks.length !== 1) {
         throw new BadRequestException(
           'There should be one RuleBlock with space:availability_unit type.',
+        );
+      }
+
+      const spaceAvailabilityBufferBlocks = ruleBlocks.filter(
+        (item) => item.type === RuleBlockType.spaceAvailabilityBuffer,
+      );
+
+      if (spaceAvailabilityBufferBlocks.length !== 1) {
+        throw new BadRequestException(
+          'There should be one RuleBlock with space:availability_buffer type.',
         );
       }
     } else if (target === RuleTarget.spaceEvent) {
