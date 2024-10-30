@@ -117,8 +117,9 @@ export class RuleService {
 
     if (spaceEventRequireEquipments != null) {
       spaceEventRequireEquipments.forEach((spaceEventRequireEquipment) => {
-        const [spaceEquipmentId, quantity] =
-          spaceEventRequireEquipment.split(':');
+        const [spaceEquipmentId, quantity] = spaceEventRequireEquipment.split(
+          RuleBlockContentDivider.type,
+        );
         where.push(
           `(rb.type = 'space_event:require_equipments' AND rb.content LIKE $${paramIndex + 1} AND CAST(split_part(rb.content, ':', 2) AS INTEGER) >= $${paramIndex + 2})`,
         );
@@ -133,7 +134,9 @@ export class RuleService {
         where.push(
           `(rb.type = 'space_event:exception' AND rb.content LIKE $${paramIndex})`,
         );
-        params.push(`${spaceEventException.split(':')[0]}%`);
+        params.push(
+          `${spaceEventException.split(RuleBlockContentDivider.type)[0]}%`,
+        );
       });
     }
 
@@ -343,7 +346,10 @@ export class RuleService {
     forkRuleDto: { id: string; name?: string },
   ): Promise<Rule> {
     const { name, id } = forkRuleDto;
-    const rule = await this.ruleRepository.findOneBy({ id });
+    const rule = await this.ruleRepository.findOne({
+      where: { id },
+      relations: ['ruleBlocks'],
+    });
 
     if (!rule) {
       throw new BadRequestException();
