@@ -1,15 +1,15 @@
-import { IsBoolean, IsOptional, IsUUID } from 'class-validator';
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsBoolean, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PaginationDto } from 'src/lib/dto';
 
 export class FindAllSpaceApprovedRuleDto extends PaginationDto {
-  @IsOptional()
+  @IsNotEmpty()
   @IsUUID()
-  @ApiPropertyOptional({
+  @ApiProperty({
     description: 'SpaceApprovedRule spaceId in uuid',
     type: String,
   })
-  spaceId?: string;
+  spaceId: string;
 
   @IsOptional()
   @IsUUID()

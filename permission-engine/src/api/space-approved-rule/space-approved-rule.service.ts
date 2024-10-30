@@ -1,25 +1,31 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import {
   CreateSpaceApprovedRuleDto,
   FindAllSpaceApprovedRuleDto,
   UpdateSpaceApprovedRuleDto,
 } from './dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { SpaceApprovedRule } from 'src/database/entity/space-approved-rule.entity';
 import { Rule } from 'src/database/entity/rule.entity';
+import { SpacePermissioner } from 'src/database/entity/space-permissioner.entity';
+import { SpaceService } from '../space/space.service';
 
 @Injectable()
 export class SpaceApprovedRuleService {
   constructor(
     @InjectRepository(SpaceApprovedRule)
     private spaceApprovedRuleRepository: Repository<SpaceApprovedRule>,
+    @InjectRepository(SpacePermissioner)
+    private spacePermissionerRepository: Repository<SpacePermissioner>,
+    private readonly spaceService: SpaceService,
   ) {}
 
   async findAll(
-    findAllRuleDto: FindAllSpaceApprovedRuleDto,
+    findAllSpaceApprovedRuleDto: FindAllSpaceApprovedRuleDto,
   ): Promise<{ data: Rule[]; total: number }> {
-    const { page, limit, spaceId, ruleId, isActive } = findAllRuleDto;
+    const { page, limit, spaceId, ruleId, isActive } =
+      findAllSpaceApprovedRuleDto;
 
     const where = [];
     const params: any[] = [(page - 1) * limit, limit];
@@ -111,9 +117,22 @@ export class SpaceApprovedRuleService {
     });
   }
 
-  create(
+  async create(
     createSpaceApprovedRuleDto: CreateSpaceApprovedRuleDto,
   ): Promise<SpaceApprovedRule> {
+    const { spaceId } = createSpaceApprovedRuleDto;
+    const space = await this.spaceService.findOneById(spaceId);
+    const isPermissionerExists =
+      await this.spacePermissionerRepository.existsBy({
+        spaceId,
+        isActive: true,
+        userId: Not(space.ownerId),
+      });
+
+    if (isPermissionerExists === true) {
+      throw new ForbiddenException('Cannot update rule whithout permission.');
+    }
+
     const spaceApprovedRule = this.spaceApprovedRuleRepository.create({
       ...createSpaceApprovedRuleDto,
       isActive: true,
@@ -123,13 +142,28 @@ export class SpaceApprovedRuleService {
   }
 
   async update(
-    id: string,
     updateSpaceApprovedRuleDto: UpdateSpaceApprovedRuleDto,
   ): Promise<{ data: { result: boolean } }> {
-    const updateResult = await this.spaceApprovedRuleRepository.update(id, {
-      ...updateSpaceApprovedRuleDto,
-      updatedAt: new Date(),
-    });
+    const { spaceId, ruleId, isActive } = updateSpaceApprovedRuleDto;
+    const space = await this.spaceService.findOneById(spaceId);
+    const isPermissionerExists =
+      await this.spacePermissionerRepository.existsBy({
+        spaceId,
+        isActive: true,
+        userId: Not(space.ownerId),
+      });
+
+    if (isPermissionerExists === true) {
+      throw new ForbiddenException('Cannot update rule whithout permission.');
+    }
+
+    const updateResult = await this.spaceApprovedRuleRepository.update(
+      { spaceId, ruleId },
+      {
+        isActive,
+        updatedAt: new Date(),
+      },
+    );
 
     return {
       data: {
