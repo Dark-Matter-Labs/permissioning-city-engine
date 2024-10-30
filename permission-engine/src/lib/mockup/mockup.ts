@@ -87,6 +87,30 @@ const createSpaceRuleBlockDtos: Partial<CreateRuleBlockDto>[] = [
   },
   {
     id: uuidv4(),
+    name: 'test Space Allowed Access Types [space1,space3]',
+    type: RuleBlockType.spaceAccess,
+    content: 'public:free;public:paid',
+  },
+  {
+    id: uuidv4(),
+    name: 'test Space Allowed Access Types [space2,space4]',
+    type: RuleBlockType.spaceAccess,
+    content: 'private:free;private:paid',
+  },
+  {
+    id: uuidv4(),
+    name: 'test Space Allowed Max Attendee count [space1,space3]',
+    type: RuleBlockType.spaceMaxAttendee,
+    content: '10',
+  },
+  {
+    id: uuidv4(),
+    name: 'test Space Allowed Max Attendee count [space2,space4]',
+    type: RuleBlockType.spaceMaxAttendee,
+    content: '20',
+  },
+  {
+    id: uuidv4(),
     name: 'test Space Availability Weekdays [space1,space3]',
     type: RuleBlockType.spaceAvailability,
     content:
@@ -108,6 +132,18 @@ const createSpaceRuleBlockDtos: Partial<CreateRuleBlockDto>[] = [
     id: uuidv4(),
     name: 'test Space Availability Unit 30m [space2,space4]',
     type: RuleBlockType.spaceAvailabilityUnit,
+    content: '30m',
+  },
+  {
+    id: uuidv4(),
+    name: 'test Space Availability Buffer 5m [space1,space3]',
+    type: RuleBlockType.spaceAvailabilityBuffer,
+    content: '5m',
+  },
+  {
+    id: uuidv4(),
+    name: 'test Space Availability Buffer 30m [space2,space4]',
+    type: RuleBlockType.spaceAvailabilityBuffer,
     content: '30m',
   },
   {
@@ -136,15 +172,21 @@ const createSpaceRuleBlockDtos: Partial<CreateRuleBlockDto>[] = [
   },
   {
     id: uuidv4(),
+    name: 'test Space Post Event Check [space1, space2, space3, space4]',
+    type: RuleBlockType.spacePostEventCheck,
+    content: 'Is space clean?',
+  },
+  {
+    id: uuidv4(),
     name: 'test space pre-permission check food [space1,space2,space3,space4]',
     type: RuleBlockType.spacePrePermissionCheck,
-    content: 'Will food or drinks be served at the event?',
+    content: 'Will food or drinks be served at the event?^false',
   },
   {
     id: uuidv4(),
     name: 'test space pre-permission check alcholic drink [space1,space2,space3,space4]',
     type: RuleBlockType.spacePrePermissionCheck,
-    content: 'Will alcholic drinks be served at the event?',
+    content: 'Will alcholic drinks be served at the event?^false',
   },
 ];
 
@@ -298,25 +340,25 @@ const createSpaceEventRuleBlockDtos: Partial<CreateRuleBlockDto>[] = [
     id: uuidv4(),
     name: 'test Food Service [event1, event3]',
     type: RuleBlockType.spaceEventPrePermissionCheckAnswer,
-    content: `${createSpaceRuleBlockDtos.find((item) => item.name.includes('food')).id}:true`,
+    content: `${createSpaceRuleBlockDtos.find((item) => item.name.includes('food')).id}^true`,
   },
   {
     id: uuidv4(),
     name: 'test Food Service [event2, event4]',
     type: RuleBlockType.spaceEventPrePermissionCheckAnswer,
-    content: `${createSpaceRuleBlockDtos.find((item) => item.name.includes('food')).id}:true`,
+    content: `${createSpaceRuleBlockDtos.find((item) => item.name.includes('food')).id}^true`,
   },
   {
     id: uuidv4(),
     name: 'test Alcholic drink Service [event1, event3]',
     type: RuleBlockType.spaceEventPrePermissionCheckAnswer,
-    content: `${createSpaceRuleBlockDtos.find((item) => item.name.includes('alcholic')).id}:true`,
+    content: `${createSpaceRuleBlockDtos.find((item) => item.name.includes('alcholic')).id}^true`,
   },
   {
     id: uuidv4(),
     name: 'test Alcholic drink Service [event2, event4]',
     type: RuleBlockType.spaceEventPrePermissionCheckAnswer,
-    content: `${createSpaceRuleBlockDtos.find((item) => item.name.includes('alcholic')).id}:false`,
+    content: `${createSpaceRuleBlockDtos.find((item) => item.name.includes('alcholic')).id}^false`,
   },
   {
     id: uuidv4(),
@@ -335,13 +377,13 @@ const createSpaceEventRuleBlockDtos: Partial<CreateRuleBlockDto>[] = [
   },
   {
     id: uuidv4(),
-    name: 'test Attendee Capacity Limit [event1, event2]',
+    name: 'test Event Expected Attendee Count [event1, event2]',
     type: RuleBlockType.spaceEventExpectedAttendeeCount,
     content: '50', // Maximum attendees allowed
   },
   {
     id: uuidv4(),
-    name: 'test Attendee Capacity Limit [event3, event4]',
+    name: 'test Event Expected Attendee Count [event3, event4]',
     type: RuleBlockType.spaceEventExpectedAttendeeCount,
     content: '10', // Maximum attendees allowed
   },
@@ -349,25 +391,49 @@ const createSpaceEventRuleBlockDtos: Partial<CreateRuleBlockDto>[] = [
     id: uuidv4(),
     name: 'test Event Equipment Requirements [event1]',
     type: RuleBlockType.spaceEventRequireEquipment,
-    // content: 'Projector:2, Microphone:4', // Will be filled after spaceEquipment insert
+    // content: '{uuid}:2, {uuid}:4', // Will be filled after spaceEquipment insert
   },
   {
     id: uuidv4(),
     name: 'test Event Equipment Requirements [event2]',
     type: RuleBlockType.spaceEventRequireEquipment,
-    // content: 'Projector:2, Microphone:4', // Will be filled after spaceEquipment insert
+    // content: '{uuid}:2, {uuid}:4', // Will be filled after spaceEquipment insert
   },
   {
     id: uuidv4(),
     name: 'test Event Equipment Requirements [event3]',
     type: RuleBlockType.spaceEventRequireEquipment,
-    // content: 'Projector:2, Microphone:4', // Will be filled after spaceEquipment insert
+    // content: '{uuid}:2, {uuid}:4', // Will be filled after spaceEquipment insert
   },
   {
     id: uuidv4(),
     name: 'test Event Equipment Requirements [event4]',
     type: RuleBlockType.spaceEventRequireEquipment,
-    // content: 'Projector:2, Microphone:4', // Will be filled after spaceEquipment insert
+    // content: '{uuid}:2, {uuid}:4', // Will be filled after spaceEquipment insert
+  },
+  {
+    id: uuidv4(),
+    name: 'test Space Eevent Benefit [space1, space2, space3, space4]',
+    type: RuleBlockType.spaceEventBenefit,
+    content: 'Good to have a test event',
+  },
+  {
+    id: uuidv4(),
+    name: 'test Space Eevent Risk [space1, space2, space3, space4]',
+    type: RuleBlockType.spaceEventRisk,
+    content: 'It is only a test',
+  },
+  {
+    id: uuidv4(),
+    name: 'test Space Eevent Self Risk Assesment [space1, space2, space3, space4]',
+    type: RuleBlockType.spaceEventSelfRiskAssesment,
+    content: 'Will debug if error is thrown',
+  },
+  {
+    id: uuidv4(),
+    name: 'test Event exception [event1]',
+    type: RuleBlockType.spaceEventException,
+    content: `${createSpaceRuleBlockDtos.find((item) => item.type === RuleBlockType.spaceAvailabilityBuffer && item.name.includes('space1')).id}^40m^Need more time to clean up`,
   },
 ];
 

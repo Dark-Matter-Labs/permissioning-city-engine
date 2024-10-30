@@ -353,18 +353,6 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
         );
       }
 
-      for (const [i, space] of spaces.entries()) {
-        spacePermissioners.push(
-          await this.spacePermissionerService.create(
-            {
-              spaceId: space.id,
-              userId: i + 1 < users.length ? users[i + 1].id : users[0].id,
-            },
-            true,
-          ),
-        );
-      }
-
       for (const createRuleBlockDto of createSpaceEventRuleBlockDtos.map(
         (item) => {
           return {
@@ -381,19 +369,19 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
         if (type === RuleBlockType.spaceEventRequireEquipment) {
           if (name.includes('event1')) {
             const spaceEquipment = spaceEquipments[0];
-            content = `${spaceEquipment.id}:${spaceEquipment.quantity}`;
+            content = `${spaceEquipment.id}^${spaceEquipment.quantity}`;
           }
           if (name.includes('event2')) {
             const spaceEquipment = spaceEquipments[1];
-            content = `${spaceEquipment.id}:${spaceEquipment.quantity}`;
+            content = `${spaceEquipment.id}^${spaceEquipment.quantity}`;
           }
           if (name.includes('event3')) {
             const spaceEquipment = spaceEquipments[2];
-            content = `${spaceEquipment.id}:${spaceEquipment.quantity}`;
+            content = `${spaceEquipment.id}^${spaceEquipment.quantity}`;
           }
           if (name.includes('event4')) {
             const spaceEquipment = spaceEquipments[3];
-            content = `${spaceEquipment.id}:${spaceEquipment.quantity}`;
+            content = `${spaceEquipment.id}^${spaceEquipment.quantity}`;
           }
         }
         spaceEventRuleBlocks.push(
@@ -417,6 +405,18 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
           spaceId: spaces[0].id,
           ruleId: spaceEventRule.id,
         });
+      }
+
+      for (const [i, space] of spaces.entries()) {
+        spacePermissioners.push(
+          await this.spacePermissionerService.create(
+            {
+              spaceId: space.id,
+              userId: i + 1 < users.length ? users[i + 1].id : users[0].id,
+            },
+            true,
+          ),
+        );
       }
 
       for (const [i, createSpaceEventDto] of createSpaceEventDtos
