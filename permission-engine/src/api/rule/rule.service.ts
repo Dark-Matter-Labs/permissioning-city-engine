@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, In, Repository } from 'typeorm';
+import { FindManyOptions, FindOptionsWhere, In, Repository } from 'typeorm';
 import { Rule } from '../../database/entity/rule.entity';
 import {
   CreateRuleDto,
@@ -8,7 +8,11 @@ import {
   FindAllRuleDto,
   UpdateRuleDto,
 } from './dto';
-import { RuleBlockType, RuleTarget } from 'src/lib/type';
+import {
+  RuleBlockContentDivider,
+  RuleBlockType,
+  RuleTarget,
+} from 'src/lib/type';
 import { RuleBlock } from 'src/database/entity/rule-block.entity';
 import { PermissionRequest } from 'src/database/entity/permission-request.entity';
 import { Space } from 'src/database/entity/space.entity';
@@ -32,8 +36,9 @@ export class RuleService {
 
   async findAll(
     findAllRuleDto: FindAllRuleDto,
+    isPagination: boolean = true,
   ): Promise<{ data: Rule[]; total: number }> {
-    const { page, limit, target, authorId, parentRuleId, hash } =
+    const { page, limit, target, authorId, parentRuleId, hash, ids } =
       findAllRuleDto;
 
     const where: FindOptionsWhere<Rule> = { isActive: true };
@@ -54,11 +59,21 @@ export class RuleService {
       where.hash = hash;
     }
 
-    const [data, total] = await this.ruleRepository.findAndCount({
-      where,
-      skip: (page - 1) * limit,
-      take: limit,
-    });
+    if (ids != null) {
+      where.id = In(ids);
+    }
+
+    let queryOption: FindManyOptions<Rule> = { where };
+    if (isPagination === true) {
+      queryOption = {
+        ...queryOption,
+        relations: ['ruleBlocks'],
+        skip: (page - 1) * limit,
+        take: limit,
+      };
+    }
+
+    const [data, total] = await this.ruleRepository.findAndCount(queryOption);
 
     return {
       data: data ?? [],
