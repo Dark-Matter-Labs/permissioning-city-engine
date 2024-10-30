@@ -24,9 +24,10 @@ import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { SpaceImageService } from '../space-image/space-image.service';
 import { Logger } from 'src/lib/logger/logger.service';
 import {
+  RuleBlockContentDivider,
   RuleBlockType,
   SpaceAvailability,
-  SpaceAvailabilityUnit,
+  SpaceEventStatus,
 } from 'src/lib/type';
 import { RuleService } from '../rule/rule.service';
 import { SpaceEventService } from '../space-event/space-event.service';
@@ -68,34 +69,70 @@ export class SpaceController {
       throw new BadRequestException(`There is no space with id: ${id}`);
     }
     const spaceRule = await this.ruleService.findOneById(space.ruleId);
-    const spaceEvents = await this.spaceEventService.findAll(
-      {
-        spaceId: id,
-        startsAfter: new Date(startDate),
-        endsBefore: new Date(endDate),
-      },
-      false,
-    );
-    const reservedTimeRanges =
-      spaceEvents?.data?.map((spaceEvent) => {
-        return {
-          startTime: spaceEvent.startsAt,
-          endTime: spaceEvent.endsAt,
-        };
-      }) ?? [];
+    const spaceEvents =
+      (
+        await this.spaceEventService.findAll(
+          {
+            spaceId: id,
+            startsAfter: new Date(startDate),
+            endsBefore: new Date(endDate),
+            statuses: [
+              // incomplete event statuses
+              SpaceEventStatus.pending,
+              SpaceEventStatus.permissionRequested,
+              SpaceEventStatus.permissionGranted,
+              SpaceEventStatus.running,
+              SpaceEventStatus.closed,
+            ],
+          },
+          false,
+        )
+      )?.data ?? [];
+
+    const spaceEventRules =
+      (
+        await this.ruleService.findAll(
+          { ids: spaceEvents.map((item) => item.ruleId) },
+          false,
+        )
+      )?.data ?? [];
+
     const spaceAvailabilityBlock = spaceRule.ruleBlocks.find(
       (item) => item.type === RuleBlockType.spaceAvailability,
     );
     const spaceAvailabilityUnitBlock = spaceRule.ruleBlocks.find(
       (item) => item.type === RuleBlockType.spaceAvailabilityUnit,
     );
+    const spaceAvailabilityBufferBlock = spaceRule.ruleBlocks.find(
+      (item) => item.type === RuleBlockType.spaceAvailabilityBuffer,
+    );
     const spaceAvailabilities = spaceAvailabilityBlock.content
       .trim()
       .toLowerCase()
-      .split(';')
+      .split(RuleBlockContentDivider.array)
       .filter((item) => item != null && item !== '');
-    const spaceAvailabilityUnit =
-      spaceAvailabilityUnitBlock.content as SpaceAvailabilityUnit;
+    const spaceAvailabilityUnit = spaceAvailabilityUnitBlock.content;
+    const spaceAvailabilityBuffer = spaceAvailabilityBufferBlock.content;
+
+    const reservedTimeRanges =
+      spaceEvents?.map((spaceEvent) => {
+        const spaceEventRule = spaceEventRules?.find(
+          (item) => item.id === spaceEvent.ruleId,
+        );
+        const bufferExceptionRuleBlock = spaceEventRule?.ruleBlocks?.find(
+          (item) =>
+            item.type === RuleBlockType.spaceEventException &&
+            item.content.startsWith(spaceAvailabilityBufferBlock.id),
+        );
+        return {
+          startTime: spaceEvent.startsAt,
+          endTime: spaceEvent.endsAt,
+          buffer:
+            bufferExceptionRuleBlock?.content?.split(
+              RuleBlockContentDivider.type,
+            )?.[1] ?? spaceAvailabilityBuffer,
+        };
+      }) ?? [];
 
     return {
       data: getTimeIntervals(
