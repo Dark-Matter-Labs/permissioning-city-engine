@@ -5,7 +5,7 @@ import { PaginationDto } from 'src/lib/dto';
 
 export class FindAllRuleDto extends PaginationDto {
   @IsOptional()
-  @IsUUID()
+  @IsUUID('4', { each: true })
   @ApiPropertyOptional({
     description: 'Rule ids',
   })

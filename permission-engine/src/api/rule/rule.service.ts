@@ -37,6 +37,7 @@ export class RuleService {
   async findAll(
     findAllRuleDto: FindAllRuleDto,
     isPagination: boolean = true,
+    isPublicOnly: boolean = true,
   ): Promise<{ data: Rule[]; total: number }> {
     const { page, limit, target, authorId, parentRuleId, hash, ids } =
       findAllRuleDto;
@@ -74,9 +75,21 @@ export class RuleService {
     }
 
     const [data, total] = await this.ruleRepository.findAndCount(queryOption);
+    let result = data ?? [];
+
+    if (isPublicOnly === true) {
+      result = result.map((rule) => {
+        const publicRuleBlocks = rule.ruleBlocks.filter(
+          (ruleBlock) => ruleBlock.isPublic === true,
+        );
+        rule.ruleBlocks = publicRuleBlocks;
+
+        return rule;
+      });
+    }
 
     return {
-      data: data ?? [],
+      data: result,
       total,
     };
   }
@@ -226,20 +239,41 @@ export class RuleService {
     };
   }
 
-  findOneById(id: string): Promise<Rule> {
-    return this.ruleRepository.findOne({
+  async findOneById(id: string, isPublicOnly: boolean = false): Promise<Rule> {
+    const rule = await this.ruleRepository.findOne({
       where: {
         id,
       },
       relations: ['ruleBlocks', 'topics'],
     });
+
+    if (isPublicOnly === true) {
+      const publicRuleBlocks = rule.ruleBlocks.filter(
+        (ruleBlock) => ruleBlock.isPublic === true,
+      );
+      rule.ruleBlocks = publicRuleBlocks;
+    }
+
+    return rule;
   }
 
-  findOneByName(name: string): Promise<Rule> {
-    return this.ruleRepository.findOne({
+  async findOneByName(
+    name: string,
+    isPublicOnly: boolean = false,
+  ): Promise<Rule> {
+    const rule = await this.ruleRepository.findOne({
       where: { name },
       relations: ['ruleBlocks', 'topics'],
     });
+
+    if (isPublicOnly === true) {
+      const publicRuleBlocks = rule.ruleBlocks.filter(
+        (ruleBlock) => ruleBlock.isPublic === true,
+      );
+      rule.ruleBlocks = publicRuleBlocks;
+    }
+
+    return rule;
   }
 
   async remove(id: string): Promise<void> {
@@ -247,12 +281,13 @@ export class RuleService {
   }
 
   async create(authorId: string, createRuleDto: CreateRuleDto): Promise<Rule> {
-    const { target, ruleBlockIds } = createRuleDto;
+    const { target, ruleBlockIds, topicIds } = createRuleDto;
     const ruleBlocks = await this.ruleBlockRepository.find({
       where: { id: In(ruleBlockIds) },
     });
     const hash = Util.hash(
       ruleBlocks
+        .filter((item) => item.isPublic === true)
         .map((item) => item.hash)
         .sort()
         .join(),
@@ -338,7 +373,19 @@ export class RuleService {
       hash,
     });
 
-    return this.ruleRepository.save(rule);
+    await this.ruleRepository.save(rule);
+
+    if (topicIds) {
+      for (const topicId of topicIds) {
+        try {
+          await this.addTopic(rule.id, topicId);
+        } catch (error) {
+          this.logger.error(error.message, error);
+        }
+      }
+    }
+
+    return rule;
   }
 
   async fork(
@@ -353,6 +400,13 @@ export class RuleService {
 
     if (!rule) {
       throw new BadRequestException();
+    }
+
+    if (rule.authorId !== authorId) {
+      const publicRuleBlocks = rule.ruleBlocks.filter(
+        (ruleBlock) => ruleBlock.isPublic === true,
+      );
+      rule.ruleBlocks = publicRuleBlocks;
     }
 
     const newRule = this.ruleRepository.create({
@@ -388,7 +442,7 @@ export class RuleService {
     });
 
     if (!rule) {
-      throw new BadRequestException();
+      throw new BadRequestException(`There is no rule with id: ${id}`);
     }
 
     const { target } = rule;
@@ -396,6 +450,10 @@ export class RuleService {
     const ruleBlocks = await this.ruleBlockRepository.find({
       where: { id: In(ruleBlockIds) },
     });
+
+    if (ruleBlocks.length !== ruleBlockIds.length) {
+      throw new BadRequestException(`ruleBlockIds contain wrong items`);
+    }
 
     const hash = Util.hash(
       ruleBlocks
@@ -487,6 +545,63 @@ export class RuleService {
         result,
         archivedRule,
         updatedRule,
+      },
+    };
+  }
+
+  async addTopic(
+    id: string,
+    topicId: string,
+  ): Promise<{ data: { result: boolean } }> {
+    let result = false;
+    try {
+      const rule = await this.findOneById(id);
+
+      if (rule.topics.length >= 20) {
+        throw new BadRequestException(`Cannot have more than 20 topics`);
+      }
+
+      await this.ruleRepository
+        .createQueryBuilder()
+        .relation(Rule, 'topics')
+        .of(id)
+        .add(topicId)
+        .then(() => {
+          result = true;
+        });
+    } catch (error) {
+      throw error;
+    }
+
+    return {
+      data: {
+        result,
+      },
+    };
+  }
+
+  async removeTopic(
+    id: string,
+    topicId: string,
+  ): Promise<{ data: { result: boolean } }> {
+    let result = false;
+
+    try {
+      await this.ruleRepository
+        .createQueryBuilder()
+        .relation(Rule, 'topics')
+        .of(id)
+        .remove(topicId)
+        .then(() => {
+          result = true;
+        });
+    } catch (error) {
+      result = false;
+    }
+
+    return {
+      data: {
+        result,
       },
     };
   }
