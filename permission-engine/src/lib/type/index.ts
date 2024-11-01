@@ -48,15 +48,17 @@ export enum RuleBlockType {
   spacePrePermissionCheck = 'space:pre_permission_check', // content: {boolean question}^{default answer in boolean} -> ask boolean questions for event organizers before permission request
   spacePostEventCheck = 'space:post_event_check', // content: boolean question for post event check
   // spaceEvent
+  // optional
   spaceEventGeneral = 'space_event:general',
-  spaceEventAccess = 'space_event:access', // content: {SpaceEventAccessType}
   spaceEventRequireEquipment = 'space_event:require_equipment', // content: {spaceEquipmentId}^{quantity}
-  spaceEventExpectedAttendeeCount = 'space_event:expected_attendee_count', // number
   spaceEventException = 'space_event:exception', // content: {spaceRuleBlockId}^{desiredValue}^{reason}
   spaceEventBenefit = 'space_event:benefit', // content: expected benefit
   spaceEventRisk = 'space_event:risk', // content: expected risk
   spaceEventSelfRiskAssesment = 'space_event:self_risk_assesment', // content: description on self risk assesment
   spaceEventInsurance = 'space_event:insurance', // content: file download path: s3
+  // required
+  spaceEventAccess = 'space_event:access', // content: {SpaceEventAccessType}
+  spaceEventExpectedAttendeeCount = 'space_event:expected_attendee_count', // number
   spaceEventNoiseLevel = 'space_event:noise_level', // {NoiseLevel}
   spaceEventPrePermissionCheckAnswer = 'space_event:pre_permission_check_answer', // {spaceRuleBlockId}^{answer in boolean}
 }
