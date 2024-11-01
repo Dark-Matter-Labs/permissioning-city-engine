@@ -65,7 +65,12 @@ CREATE TABLE IF NOT EXISTS "external_service" (
 
 CREATE TABLE IF NOT EXISTS "topic" (
   "id" uuid PRIMARY KEY,
-  "name" varchar UNIQUE NOT NULL,
+  "author_id" uuid,
+  "name" varchar NOT NULL,
+  "icon" varchar NOT NULL DEFAULT '✨',
+  "country" varchar NOT NULL DEFAULT 'common',
+  "region" varchar NOT NULL DEFAULT 'common',
+  "city" varchar NOT NULL DEFAULT 'common',
   "details" text,
   "is_active" bool NOT NULL DEFAULT true,
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
@@ -129,8 +134,10 @@ CREATE TABLE IF NOT EXISTS "rule_block" (
   "name" varchar NOT NULL,
   "hash" varchar NOT NULL,
   "author_id" uuid NOT NULL,
+  "is_public" bool NOT NULL DEFAULT true,
   "type" varchar NOT NULL,
   "content" text NOT NULL,
+  "details" text,
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
   "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
 );
@@ -227,6 +234,15 @@ CREATE TABLE IF NOT EXISTS "topic_follower" (
   PRIMARY KEY ("topic_id", "user_id")
 );
 
+CREATE TABLE IF NOT EXISTS "space_topic" (
+  "space_id" uuid NOT NULL,
+  "topic_id" uuid NOT NULL,
+  "is_desired" bool NOT NULL DEFAULT true,
+  "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
+  "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
+  PRIMARY KEY ("space_id", "topic_id")
+);
+
 CREATE TABLE IF NOT EXISTS "migration" (
   "id" uuid PRIMARY KEY,
   "name" varchar NOT NULL,
@@ -240,12 +256,6 @@ CREATE TABLE IF NOT EXISTS "external_service_user" (
   "external_service_id" uuid,
   "user_id" uuid,
   PRIMARY KEY ("external_service_id", "user_id")
-);
-
-CREATE TABLE IF NOT EXISTS "space_topic" (
-  "space_id" uuid,
-  "topic_id" uuid,
-  PRIMARY KEY ("space_id", "topic_id")
 );
 
 CREATE TABLE IF NOT EXISTS "space_event_topic" (
@@ -268,6 +278,7 @@ CREATE TABLE IF NOT EXISTS "rule_rule_block" (
 
 COMMENT ON COLUMN "user"."type" IS 'individual, organization, government';
 COMMENT ON COLUMN "user"."birth_year" IS 'year of birth';
+COMMENT ON COLUMN "topic"."icon" IS 'unicode emoji';
 COMMENT ON COLUMN "space_event"."status" IS 'pending, permission_requested, permission_approved, permission_approved_with_condition, permission_rejected, running, complete';
 COMMENT ON COLUMN "space_history"."type" IS 'create, update_details, activate, deactivate, permissioner_join, permissioner_leave, permission_request, permission_response';
 COMMENT ON COLUMN "permission_request"."space_event_id" IS 'when space_event_id is null, the permission_request is for the space rule revision';
@@ -383,6 +394,20 @@ BEGIN
         SELECT 1
         FROM information_schema.table_constraints
         WHERE constraint_type = 'FOREIGN KEY'
+        AND table_name = 'topic'
+        AND constraint_name = 'topic_fkey_author_id'
+    ) THEN
+        ALTER TABLE topic
+        ADD CONSTRAINT topic_fkey_author_id
+        FOREIGN KEY ("author_id") REFERENCES "user" ("id");
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.table_constraints
+        WHERE constraint_type = 'FOREIGN KEY'
         AND table_name = 'space_equipment'
         AND constraint_name = 'space_equipment_fkey_space_id'
     ) THEN
@@ -459,6 +484,20 @@ BEGIN
         ALTER TABLE space_event
         ADD CONSTRAINT space_event_fkey_rule_id
         FOREIGN KEY ("rule_id") REFERENCES "rule" ("id");
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.table_constraints
+        WHERE constraint_type = 'FOREIGN KEY'
+        AND table_name = 'space_event_image'
+        AND constraint_name = 'space_event_image_fkey_space_event_id'
+    ) THEN
+        ALTER TABLE space_event_image
+        ADD CONSTRAINT space_event_image_fkey_space_event_id
+        FOREIGN KEY ("space_event_id") REFERENCES "space_event" ("id");
     END IF;
 END $$;
 DO $$
@@ -831,34 +870,6 @@ BEGIN
         SELECT 1
         FROM information_schema.table_constraints
         WHERE constraint_type = 'FOREIGN KEY'
-        AND table_name = 'external_service_user'
-        AND constraint_name = 'external_service_user_fkey_external_service_id'
-    ) THEN
-        ALTER TABLE external_service_user
-        ADD CONSTRAINT external_service_user_fkey_external_service_id
-        FOREIGN KEY ("external_service_id") REFERENCES "external_service" ("id");
-    END IF;
-END $$;
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1
-        FROM information_schema.table_constraints
-        WHERE constraint_type = 'FOREIGN KEY'
-        AND table_name = 'external_service_user'
-        AND constraint_name = 'external_service_user_fkey_user_id'
-    ) THEN
-        ALTER TABLE external_service_user
-        ADD CONSTRAINT external_service_user_fkey_user_id
-        FOREIGN KEY ("user_id") REFERENCES "user" ("id");
-    END IF;
-END $$;
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1
-        FROM information_schema.table_constraints
-        WHERE constraint_type = 'FOREIGN KEY'
         AND table_name = 'space_topic'
         AND constraint_name = 'space_topic_fkey_space_id'
     ) THEN
@@ -879,6 +890,34 @@ BEGIN
         ALTER TABLE space_topic
         ADD CONSTRAINT space_topic_fkey_topic_id
         FOREIGN KEY ("topic_id") REFERENCES "topic" ("id");
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.table_constraints
+        WHERE constraint_type = 'FOREIGN KEY'
+        AND table_name = 'external_service_user'
+        AND constraint_name = 'external_service_user_fkey_external_service_id'
+    ) THEN
+        ALTER TABLE external_service_user
+        ADD CONSTRAINT external_service_user_fkey_external_service_id
+        FOREIGN KEY ("external_service_id") REFERENCES "external_service" ("id");
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.table_constraints
+        WHERE constraint_type = 'FOREIGN KEY'
+        AND table_name = 'external_service_user'
+        AND constraint_name = 'external_service_user_fkey_user_id'
+    ) THEN
+        ALTER TABLE external_service_user
+        ADD CONSTRAINT external_service_user_fkey_user_id
+        FOREIGN KEY ("user_id") REFERENCES "user" ("id");
     END IF;
 END $$;
 DO $$

@@ -28,3 +28,6 @@ WHERE type IN(
     'space_event:expected_attendee_count',
     'space_event:exception'
   );
+
+-- topic
+CREATE UNIQUE INDEX IF NOT EXISTS topic_idx_name_country_region_city ON "topic" (name, country, region, city);

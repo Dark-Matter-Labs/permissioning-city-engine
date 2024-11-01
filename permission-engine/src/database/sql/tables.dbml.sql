@@ -65,7 +65,12 @@ CREATE TABLE "external_service" (
 
 CREATE TABLE "topic" (
   "id" uuid PRIMARY KEY,
-  "name" varchar UNIQUE NOT NULL,
+  "author_id" uuid,
+  "name" varchar NOT NULL,
+  "icon" varchar NOT NULL DEFAULT '✨',
+  "country" varchar NOT NULL DEFAULT 'common',
+  "region" varchar NOT NULL DEFAULT 'common',
+  "city" varchar NOT NULL DEFAULT 'common',
   "details" text,
   "is_active" bool NOT NULL DEFAULT true,
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
@@ -129,8 +134,10 @@ CREATE TABLE "rule_block" (
   "name" varchar NOT NULL,
   "hash" varchar NOT NULL,
   "author_id" uuid NOT NULL,
+  "is_public" bool NOT NULL DEFAULT true,
   "type" varchar NOT NULL,
   "content" text NOT NULL,
+  "details" text,
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
   "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
 );
@@ -227,6 +234,15 @@ CREATE TABLE "topic_follower" (
   PRIMARY KEY ("topic_id", "user_id")
 );
 
+CREATE TABLE "space_topic" (
+  "space_id" uuid NOT NULL,
+  "topic_id" uuid NOT NULL,
+  "is_desired" bool NOT NULL DEFAULT true,
+  "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
+  "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
+  PRIMARY KEY ("space_id", "topic_id")
+);
+
 CREATE TABLE "migration" (
   "id" uuid PRIMARY KEY,
   "name" varchar NOT NULL,
@@ -239,6 +255,8 @@ CREATE TABLE "migration" (
 COMMENT ON COLUMN "user"."type" IS 'individual, organization, government';
 
 COMMENT ON COLUMN "user"."birth_year" IS 'year of birth';
+
+COMMENT ON COLUMN "topic"."icon" IS 'unicode emoji';
 
 COMMENT ON COLUMN "space_event"."status" IS 'pending, permission_requested, permission_approved, permission_approved_with_condition, permission_rejected, running, complete';
 
@@ -276,6 +294,8 @@ ALTER TABLE "space_approved_rule" ADD FOREIGN KEY ("permission_request_id") REFE
 
 ALTER TABLE "external_service" ADD FOREIGN KEY ("owner_id") REFERENCES "user" ("id");
 
+ALTER TABLE "topic" ADD FOREIGN KEY ("author_id") REFERENCES "user" ("id");
+
 ALTER TABLE "space_equipment" ADD FOREIGN KEY ("space_id") REFERENCES "space" ("id");
 
 ALTER TABLE "space_event" ADD FOREIGN KEY ("organizer_id") REFERENCES "user" ("id");
@@ -287,6 +307,8 @@ ALTER TABLE "space_event" ADD FOREIGN KEY ("permission_request_id") REFERENCES "
 ALTER TABLE "space_event" ADD FOREIGN KEY ("space_id") REFERENCES "space" ("id");
 
 ALTER TABLE "space_event" ADD FOREIGN KEY ("rule_id") REFERENCES "rule" ("id");
+
+ALTER TABLE "space_event_image" ADD FOREIGN KEY ("space_event_id") REFERENCES "space_event" ("id");
 
 ALTER TABLE "rule" ADD FOREIGN KEY ("author_id") REFERENCES "user" ("id");
 
@@ -340,6 +362,10 @@ ALTER TABLE "topic_follower" ADD FOREIGN KEY ("user_id") REFERENCES "user" ("id"
 
 ALTER TABLE "topic_follower" ADD FOREIGN KEY ("topic_id") REFERENCES "topic" ("id");
 
+ALTER TABLE "space_topic" ADD FOREIGN KEY ("space_id") REFERENCES "space" ("id");
+
+ALTER TABLE "space_topic" ADD FOREIGN KEY ("topic_id") REFERENCES "topic" ("id");
+
 CREATE TABLE "external_service_user" (
   "external_service_id" uuid,
   "user_id" uuid,
@@ -349,17 +375,6 @@ CREATE TABLE "external_service_user" (
 ALTER TABLE "external_service_user" ADD FOREIGN KEY ("external_service_id") REFERENCES "external_service" ("id");
 
 ALTER TABLE "external_service_user" ADD FOREIGN KEY ("user_id") REFERENCES "user" ("id");
-
-
-CREATE TABLE "space_topic" (
-  "space_id" uuid,
-  "topic_id" uuid,
-  PRIMARY KEY ("space_id", "topic_id")
-);
-
-ALTER TABLE "space_topic" ADD FOREIGN KEY ("space_id") REFERENCES "space" ("id");
-
-ALTER TABLE "space_topic" ADD FOREIGN KEY ("topic_id") REFERENCES "topic" ("id");
 
 
 CREATE TABLE "space_event_topic" (
