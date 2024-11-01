@@ -75,6 +75,7 @@ services:
     command: ["npm", "run", "start:prod"]
     depends_on:
       - postgres
+      - redis
     restart: always
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
@@ -104,6 +105,7 @@ services:
     command: ["npm", "run", "start:prod"]
     depends_on:
       - postgres
+      - redis
       - permission-engine-api
     restart: always
     healthcheck:
