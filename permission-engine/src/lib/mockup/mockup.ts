@@ -102,12 +102,14 @@ const createSpaceRuleBlockDtos: Partial<CreateRuleBlockDto>[] = [
     name: 'test Space Allowed Max Attendee count [space1,space3]',
     type: RuleBlockType.spaceMaxAttendee,
     content: '10',
+    details: 'Up to 10 adults are allowed',
   },
   {
     id: uuidv4(),
     name: 'test Space Allowed Max Attendee count [space2,space4]',
     type: RuleBlockType.spaceMaxAttendee,
     content: '20',
+    details: 'Up to 20 adults are allowed',
   },
   {
     id: uuidv4(),
