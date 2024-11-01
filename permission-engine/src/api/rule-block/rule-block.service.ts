@@ -151,6 +151,7 @@ export class RuleBlockService {
       content: trimmedContent,
       name: trimmedName,
       hash,
+      isPublic: type === RuleBlockType.spaceEventInsurance ? false : true,
     });
 
     return this.ruleBlockRepository.save(newRuleBlock);
