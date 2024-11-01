@@ -15,12 +15,14 @@ import dayjs from 'dayjs';
 import { FindAllSpaceEventDto } from './dto/find-all-space-event.dto';
 import { SpaceEventStatus } from 'src/lib/type';
 import { v4 as uuidv4 } from 'uuid';
+import { Logger } from 'src/lib/logger/logger.service';
 
 @Injectable()
 export class SpaceEventService {
   constructor(
     @InjectRepository(SpaceEvent)
     private spaceEventRepository: Repository<SpaceEvent>,
+    private readonly logger: Logger,
   ) {}
 
   async findAll(
@@ -32,6 +34,7 @@ export class SpaceEventService {
       limit,
       organizerId,
       spaceId,
+      ruleId,
       externalServiceId,
       permissionRequestId,
       statuses,
@@ -58,6 +61,12 @@ export class SpaceEventService {
       paramIndex++;
       where.push(`space_id = $${paramIndex}`);
       params.push(spaceId);
+    }
+
+    if (ruleId != null) {
+      paramIndex++;
+      where.push(`rule_id = $${paramIndex}`);
+      params.push(ruleId);
     }
 
     if (externalServiceId != null) {
@@ -179,14 +188,14 @@ export class SpaceEventService {
   findOneById(id: string): Promise<SpaceEvent> {
     return this.spaceEventRepository.findOne({
       where: { id },
-      relations: ['spaceEventImages'],
+      relations: ['spaceEventImages', 'topics'],
     });
   }
 
   findOneByName(name: string): Promise<SpaceEvent> {
     return this.spaceEventRepository.findOne({
       where: { name },
-      relations: ['spaceEventImages'],
+      relations: ['spaceEventImages', 'topics'],
     });
   }
 
@@ -194,11 +203,11 @@ export class SpaceEventService {
     await this.spaceEventRepository.delete(id);
   }
 
-  create(
+  async create(
     organizerId: string,
     createSpaceEventDto: CreateSpaceEventDto,
   ): Promise<SpaceEvent> {
-    const { duration, startsAt } = createSpaceEventDto;
+    const { duration, startsAt, topicIds } = createSpaceEventDto;
     const start = dayjs(new Date(startsAt));
     const match = duration.match(/^(\d+)([dwMyhms]+)$/);
     const numberPart = parseInt(match[1], 10);
@@ -224,7 +233,19 @@ export class SpaceEventService {
       endsAt: start.add(numberPart, stringPart).toDate(),
     });
 
-    return this.spaceEventRepository.save(spaceEvent);
+    await this.spaceEventRepository.save(spaceEvent);
+
+    if (topicIds) {
+      for (const topicId of topicIds) {
+        try {
+          await this.addTopic(spaceEvent.id, topicId);
+        } catch (error) {
+          this.logger.error(error.message, error);
+        }
+      }
+    }
+
+    return spaceEvent;
   }
 
   async update(
@@ -455,6 +476,64 @@ export class SpaceEventService {
     return {
       data: {
         result: updateResult.affected === 1,
+      },
+    };
+  }
+
+  async addTopic(
+    id: string,
+    topicId: string,
+  ): Promise<{ data: { result: boolean } }> {
+    let result = false;
+
+    try {
+      const spaceEvent = await this.findOneById(id);
+
+      if (spaceEvent.topics.length >= 20) {
+        throw new BadRequestException(`Cannot have more than 20 topics`);
+      }
+
+      await this.spaceEventRepository
+        .createQueryBuilder()
+        .relation(SpaceEvent, 'topics')
+        .of(id)
+        .add(topicId)
+        .then(() => {
+          result = true;
+        });
+    } catch (error) {
+      throw error;
+    }
+
+    return {
+      data: {
+        result,
+      },
+    };
+  }
+
+  async removeTopic(
+    id: string,
+    topicId: string,
+  ): Promise<{ data: { result: boolean } }> {
+    let result = false;
+
+    try {
+      await this.spaceEventRepository
+        .createQueryBuilder()
+        .relation(SpaceEvent, 'topics')
+        .of(id)
+        .remove(topicId)
+        .then(() => {
+          result = true;
+        });
+    } catch (error) {
+      result = false;
+    }
+
+    return {
+      data: {
+        result,
       },
     };
   }

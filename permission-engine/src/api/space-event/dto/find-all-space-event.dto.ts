@@ -30,6 +30,14 @@ export class FindAllSpaceEventDto extends PaginationDto {
   @IsOptional()
   @IsUUID()
   @ApiPropertyOptional({
+    description: 'SpaceEvent ruleId in uuid',
+    type: String,
+  })
+  ruleId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  @ApiPropertyOptional({
     description: 'SpaceEvent externalServiceId in uuid',
     type: String,
   })
