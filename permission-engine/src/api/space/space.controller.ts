@@ -32,6 +32,7 @@ import {
 import { RuleService } from '../rule/rule.service';
 import { SpaceEventService } from '../space-event/space-event.service';
 import { getTimeIntervals } from '../../lib/util/util';
+import { TopicService } from '../topic/topic.service';
 
 @ApiTags('space')
 @Controller('api/v1/space')
@@ -40,6 +41,7 @@ export class SpaceController {
     private readonly spaceService: SpaceService,
     private readonly userService: UserService,
     private readonly ruleService: RuleService,
+    private readonly topicService: TopicService,
     private readonly spaceEventService: SpaceEventService,
     private readonly spaceImageService: SpaceImageService,
     private readonly logger: Logger,
@@ -54,7 +56,7 @@ export class SpaceController {
   @Get(':id')
   @ApiOperation({ summary: 'Get space by id' })
   findOneById(@Param('id') id: string): Promise<Space> {
-    return this.spaceService.findOneById(id, ['spaceImages']);
+    return this.spaceService.findOneById(id, ['spaceImages', 'spaceTopics']);
   }
 
   @Get(':id/availability')
@@ -68,7 +70,7 @@ export class SpaceController {
     if (!space) {
       throw new BadRequestException(`There is no space with id: ${id}`);
     }
-    const spaceRule = await this.ruleService.findOneById(space.ruleId);
+    const spaceRule = await this.ruleService.findOneById(space.ruleId, false);
     const spaceEvents =
       (
         await this.spaceEventService.findAll(
@@ -236,5 +238,62 @@ export class SpaceController {
     });
 
     return this.spaceService.update(id, updateSpaceDto);
+  }
+
+  @Put(':id/topic/add/:topicId')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Add a topic to space' })
+  async addTopic(
+    @Req() req,
+    @Param('id') id: string,
+    @Param('topicId') topicId: string,
+  ) {
+    const user = await this.userService.findOneByEmail(req.user.email);
+    const space = await this.spaceService.findOneById(id);
+    const topic = await this.topicService.findOneById(id);
+
+    if (space.ownerId !== user.id) {
+      throw new ForbiddenException();
+    }
+
+    if (!topic) {
+      throw new BadRequestException(`There is no topic with id: ${topicId}`);
+    }
+
+    const isValidTopic =
+      ['common', space.country].includes(topic.country) &&
+      ['common', space.region].includes(topic.region) &&
+      ['common', space.city].includes(topic.city);
+
+    if (isValidTopic === false) {
+      throw new BadRequestException(
+        `This topic is not supported for the space`,
+      );
+    }
+
+    return this.spaceService.addTopic(id, topicId);
+  }
+
+  @Put(':id/topic/remove/:topicId')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Remove a topic from space' })
+  async removeTopic(
+    @Req() req,
+    @Param('id') id: string,
+    @Param('topicId') topicId: string,
+  ) {
+    const user = await this.userService.findOneByEmail(req.user.email);
+    const space = await this.spaceService.findOneById(id);
+    const topic = await this.topicService.findOneById(id);
+
+    if (space.ownerId !== user.id) {
+      throw new ForbiddenException();
+    }
+
+    if (!topic) {
+      throw new BadRequestException(`There is no topic with id: ${topicId}`);
+    }
+
+    return this.spaceService.removeTopic(id, topicId);
   }
 }

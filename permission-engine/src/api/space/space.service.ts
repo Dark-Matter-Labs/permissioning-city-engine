@@ -14,6 +14,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { RuleBlockType } from 'src/lib/type';
 import { RuleBlock } from 'src/database/entity/rule-block.entity';
 import { SpacePermissionerService } from '../space-permissioner/space-permissioner.service';
+import { Logger } from 'src/lib/logger/logger.service';
+import { SpaceTopicService } from '../space-topic/space-topic.service';
 
 @Injectable()
 export class SpaceService {
@@ -27,6 +29,8 @@ export class SpaceService {
     @InjectRepository(SpacePermissioner)
     private spacePermissionerRepository: Repository<SpacePermissioner>,
     private readonly spacePermissionerService: SpacePermissionerService,
+    private readonly spaceTopicService: SpaceTopicService,
+    private readonly logger: Logger,
   ) {}
 
   // TODO. implement dynamic search in the future
@@ -60,8 +64,17 @@ export class SpaceService {
     return this.spaceRepository.findOneBy({ name });
   }
 
-  findByRuleId(ruleId: string): Promise<Space[]> {
-    return this.spaceRepository.findBy({ ruleId });
+  async findByRuleId(
+    ruleId: string,
+  ): Promise<{ data: Space[]; total: number }> {
+    const [data, total] = await this.spaceRepository.findAndCount({
+      where: { ruleId },
+    });
+
+    return {
+      data: data ?? [],
+      total,
+    };
   }
 
   async remove(id: string): Promise<void> {
@@ -72,6 +85,7 @@ export class SpaceService {
     ownerId: string,
     createSpaceDto: CreateSpaceDto,
   ): Promise<Space> {
+    const { topicIds } = createSpaceDto;
     const space = this.spaceRepository.create({
       ...createSpaceDto,
       id: uuidv4(),
@@ -79,13 +93,28 @@ export class SpaceService {
     });
 
     await this.spaceRepository.save(space);
-    await this.spacePermissionerService.create(
-      {
-        spaceId: space.id,
-        userId: ownerId,
-      },
-      true,
-    );
+
+    try {
+      await this.spacePermissionerService.create(
+        {
+          spaceId: space.id,
+          userId: ownerId,
+        },
+        true,
+      );
+    } catch (error) {
+      this.logger.error(error.message, error);
+    }
+
+    if (topicIds) {
+      for (const topicId of topicIds) {
+        try {
+          await this.addTopic(space.id, topicId);
+        } catch (error) {
+          this.logger.error(error.message, error);
+        }
+      }
+    }
 
     return space;
   }
@@ -141,5 +170,65 @@ export class SpaceService {
     return rule.ruleBlocks.filter(
       (item) => item.type === RuleBlockType.spacePostEventCheck,
     );
+  }
+
+  async addTopic(
+    id: string,
+    topicId: string,
+    isDesired: boolean = true,
+  ): Promise<{ data: { result: boolean } }> {
+    let result = false;
+
+    try {
+      const space = await this.findOneById(id, ['topics']);
+
+      if (space.spaceTopics.length >= 20) {
+        throw new BadRequestException(`Cannot have more than 20 topics`);
+      }
+
+      await this.spaceTopicService
+        .create({
+          spaceId: id,
+          topicId,
+          isDesired,
+        })
+        .then((res) => {
+          result = !!res;
+        });
+    } catch (error) {
+      throw error;
+    }
+
+    return {
+      data: {
+        result,
+      },
+    };
+  }
+
+  async removeTopic(
+    id: string,
+    topicId: string,
+  ): Promise<{ data: { result: boolean } }> {
+    let result = false;
+
+    try {
+      await this.spaceTopicService
+        .remove({
+          spaceId: id,
+          topicId,
+        })
+        .then((res) => {
+          result = res?.affected === 1;
+        });
+    } catch (error) {
+      result = false;
+    }
+
+    return {
+      data: {
+        result,
+      },
+    };
   }
 }
