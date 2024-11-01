@@ -124,5 +124,5 @@ export class SpaceEvent {
 
   @ManyToMany(() => Topic, (topic) => topic.spaceEvents)
   @JoinTable({ name: 'space_event_topic' })
-  topics: Topic;
+  topics: Topic[];
 }

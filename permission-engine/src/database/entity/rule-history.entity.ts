@@ -85,6 +85,6 @@ export class RuleHistory {
   @OneToMany(() => SpaceEvent, (spaceEvent) => spaceEvent.organizer)
   spaceEvents: SpaceEvent[];
 
-  @ManyToMany(() => Topic, (topic) => topic.spaces)
+  @ManyToMany(() => Topic, (topic) => topic.spaceTopics)
   topics: Topic[];
 }
