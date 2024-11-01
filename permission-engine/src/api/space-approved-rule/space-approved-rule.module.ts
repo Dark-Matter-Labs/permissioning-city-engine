@@ -27,6 +27,8 @@ import { SpaceApprovedRuleService } from './space-approved-rule.service';
 import { SpaceApprovedRuleController } from './space-approved-rule.controller';
 import { SpaceEquipment } from 'src/database/entity/space-equipment.entity';
 import { SpaceEquipmentService } from '../space-equipment/space-equipment.service';
+import { SpaceTopic } from 'src/database/entity/space-topic.entity';
+import { SpaceTopicService } from '../space-topic/space-topic.service';
 
 @Module({
   imports: [
@@ -37,6 +39,7 @@ import { SpaceEquipmentService } from '../space-equipment/space-equipment.servic
       SpaceApprovedRule,
       SpaceEvent,
       SpaceEquipment,
+      SpaceTopic,
       User,
       UserNotification,
       PermissionRequest,
@@ -54,6 +57,7 @@ import { SpaceEquipmentService } from '../space-equipment/space-equipment.servic
     SpaceApprovedRuleService,
     SpaceEventService,
     SpaceEquipmentService,
+    SpaceTopicService,
     UserService,
     PermissionRequestService,
     SpaceService,

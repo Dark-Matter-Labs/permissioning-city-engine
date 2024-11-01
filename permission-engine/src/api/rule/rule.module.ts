@@ -22,6 +22,8 @@ import { PermissionResponse } from 'src/database/entity/permission-response.enti
 import { UserNotificationService } from '../user-notification/user-notification.service';
 import { PermissionHandlerService } from 'src/lib/permission-handler/permission-handler.service';
 import { PermissionHandlerModule } from 'src/lib/permission-handler/permission-handler.module';
+import { SpaceTopic } from 'src/database/entity/space-topic.entity';
+import { SpaceTopicService } from '../space-topic/space-topic.service';
 
 @Module({
   imports: [
@@ -34,6 +36,7 @@ import { PermissionHandlerModule } from 'src/lib/permission-handler/permission-h
       UserNotification,
       RuleBlock,
       Space,
+      SpaceTopic,
       PermissionRequest,
       PermissionResponse,
       SpaceEvent,
@@ -48,6 +51,7 @@ import { PermissionHandlerModule } from 'src/lib/permission-handler/permission-h
     UserService,
     UserNotificationService,
     SpaceService,
+    SpaceTopicService,
     PermissionRequestService,
     SpaceEventService,
     SpacePermissionerService,

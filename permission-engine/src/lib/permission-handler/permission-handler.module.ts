@@ -29,6 +29,8 @@ import { SpaceEquipment } from 'src/database/entity/space-equipment.entity';
 import { SpaceEquipmentService } from 'src/api/space-equipment/space-equipment.service';
 import { SpaceApprovedRule } from 'src/database/entity/space-approved-rule.entity';
 import { SpaceApprovedRuleService } from 'src/api/space-approved-rule/space-approved-rule.service';
+import { SpaceTopic } from 'src/database/entity/space-topic.entity';
+import { SpaceTopicService } from 'src/api/space-topic/space-topic.service';
 
 @Global()
 @Module({
@@ -46,6 +48,7 @@ import { SpaceApprovedRuleService } from 'src/api/space-approved-rule/space-appr
       SpaceEquipment,
       SpacePermissioner,
       SpaceApprovedRule,
+      SpaceTopic,
       Rule,
       RuleBlock,
     ]),
@@ -67,6 +70,7 @@ import { SpaceApprovedRuleService } from 'src/api/space-approved-rule/space-appr
     SpaceEquipmentService,
     SpacePermissionerService,
     SpaceApprovedRuleService,
+    SpaceTopicService,
     RuleService,
     RuleBlockService,
   ],

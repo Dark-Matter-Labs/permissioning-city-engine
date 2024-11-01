@@ -21,6 +21,8 @@ import { UserNotification } from 'src/database/entity/user-notification.entity';
 import { UserNotificationService } from '../user-notification/user-notification.service';
 import { SpaceEquipment } from 'src/database/entity/space-equipment.entity';
 import { SpaceEquipmentService } from '../space-equipment/space-equipment.service';
+import { SpaceTopicService } from '../space-topic/space-topic.service';
+import { SpaceTopic } from 'src/database/entity/space-topic.entity';
 
 @Module({
   imports: [
@@ -30,6 +32,7 @@ import { SpaceEquipmentService } from '../space-equipment/space-equipment.servic
       Space,
       SpaceEvent,
       SpaceEquipment,
+      SpaceTopic,
       User,
       UserNotification,
       Rule,
@@ -43,6 +46,7 @@ import { SpaceEquipmentService } from '../space-equipment/space-equipment.servic
     SpaceService,
     SpaceEventService,
     SpaceEquipmentService,
+    SpaceTopicService,
     UserService,
     UserNotificationService,
     RuleService,
