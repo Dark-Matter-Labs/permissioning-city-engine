@@ -52,7 +52,7 @@ export enum RuleBlockType {
   // optional
   spaceEventGeneral = 'space_event:general',
   spaceEventRequireEquipment = 'space_event:require_equipment', // content: {spaceEquipmentId}^{quantity}
-  spaceEventException = 'space_event:exception', // content: {spaceRuleBlockId}^{desiredValue}^{reason}
+  spaceEventException = 'space_event:exception', // content: {spaceRuleBlockHash}^{desiredValue}^{reason}
   spaceEventBenefit = 'space_event:benefit', // content: expected benefit
   spaceEventRisk = 'space_event:risk', // content: expected risk
   spaceEventSelfRiskAssesment = 'space_event:self_risk_assesment', // content: description on self risk assesment
@@ -61,13 +61,14 @@ export enum RuleBlockType {
   spaceEventAccess = 'space_event:access', // content: {SpaceEventAccessType}
   spaceEventExpectedAttendeeCount = 'space_event:expected_attendee_count', // number
   spaceEventNoiseLevel = 'space_event:noise_level', // {NoiseLevel}
-  spaceEventPrePermissionCheckAnswer = 'space_event:pre_permission_check_answer', // {spaceRuleBlockId}^{answer in boolean}
+  spaceEventPrePermissionCheckAnswer = 'space_event:pre_permission_check_answer', // {spaceRuleBlockHash}^{answer in boolean}
 }
 
 export enum RuleBlockContentDivider {
   array = ';',
   type = '^',
   time = '-',
+  operator = ':',
 }
 
 export enum NoiseLevel {
@@ -77,10 +78,10 @@ export enum NoiseLevel {
 }
 
 export enum SpaceEventAccessType {
-  publicFree = 'public:free',
-  publicPaid = 'public:paid',
-  privateFree = 'private:free',
-  privatePaid = 'private:paid',
+  publicFree = `public${RuleBlockContentDivider.operator}free`,
+  publicPaid = `public${RuleBlockContentDivider.operator}paid`,
+  privateFree = `private${RuleBlockContentDivider.operator}free`,
+  privatePaid = `private${RuleBlockContentDivider.operator}paid`,
 }
 
 export enum SpaceEquipmentType {
