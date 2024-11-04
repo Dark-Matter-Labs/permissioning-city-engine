@@ -392,8 +392,9 @@ export class PermissionHandlerProcessor {
           },
         })
         .catch((error) => {
-          throw new Error(
+          this.logger.error(
             `Failed to create userNotification: ${error.message}`,
+            error,
           );
         });
       const notificationTargetSpacePermissioners =
@@ -445,8 +446,83 @@ export class PermissionHandlerProcessor {
         }
       });
     } else {
-      // TODO. notice auto approval
-      // TODO. save spaceApprovedRule
+      // auto approve permission request
+      await this.permissionRequestService.updateToReviewApproved(
+        permissionRequestId,
+      );
+      // save spaceApprovedRule
+      await this.spaceApprovedRuleService.create({
+        spaceId: permissionRequest.spaceId,
+        ruleId: permissionRequest.spaceEventRuleId,
+        permissionRequestId: permissionRequestId,
+      });
+      // auto resolve permission request
+      await this.permissionRequestService.updateToResolveAccepted(
+        permissionRequestId,
+      );
+
+      // notice auto approval
+      // notify event organizer
+      await this.userNotificationService
+        .create({
+          userId: permissionRequest.spaceEvent.organizerId,
+          target: UserNotificationTarget.eventOrgnaizer,
+          type: UserNotificationType.external,
+          templateName: UserNotificationTemplateName.permissionRequestResolved,
+          params: {
+            permissionRequestId,
+            spaceRuleId: permissionRequest.spaceRule.id,
+            spaceRuleName: permissionRequest.spaceRule.name,
+            spaceEventId: permissionRequest.spaceEvent.id,
+            spaceEventName: permissionRequest.spaceEvent.name,
+            spaceEventStartsAt: permissionRequest.spaceEvent.startsAt,
+            spaceEventDuration: permissionRequest.spaceEvent.duration,
+            spaceEventRuleId: permissionRequest.spaceEventRule.id,
+            spaceEventRuleName: permissionRequest.spaceEventRule.name,
+          },
+        })
+        .catch((error) => {
+          this.logger.error(
+            `Failed to create userNotification: ${error.message}`,
+            error,
+          );
+        });
+
+      // notify space permissioners
+      const notificationTargetSpacePermissioners =
+        spacePermissioners?.data?.filter((spacePermissioner) => {
+          return spacePermissioner.userId !== permissionRequest.userId;
+        });
+      notificationTargetSpacePermissioners.map(async (spacePermissioner) => {
+        try {
+          await this.userNotificationService
+            .create({
+              userId: spacePermissioner.userId,
+              target: UserNotificationTarget.permissioner,
+              type: UserNotificationType.external,
+              templateName:
+                UserNotificationTemplateName.permissionRequestResolved,
+              params: {
+                permissionRequestId,
+                spaceRuleId: permissionRequest.spaceRule.id,
+                spaceRuleName: permissionRequest.spaceRule.name,
+                spaceEventId: permissionRequest.spaceEvent.id,
+                spaceEventName: permissionRequest.spaceEvent.name,
+                spaceEventStartsAt: permissionRequest.spaceEvent.startsAt,
+                spaceEventDuration: permissionRequest.spaceEvent.duration,
+                spaceEventRuleId: permissionRequest.spaceEventRule.id,
+                spaceEventRuleName: permissionRequest.spaceEventRule.name,
+              },
+            })
+            .catch((error) => {
+              throw new Error(
+                `Failed to create userNotification: ${error.message}`,
+              );
+            });
+        } catch (error) {
+          this.logger.error(error.message, error);
+        }
+      });
     }
   }
 
@@ -798,6 +874,13 @@ export class PermissionHandlerProcessor {
         await this.permissionRequestService.updateToReviewApproved(
           permissionRequest.id,
         );
+
+        // add to space approved rule table
+        await this.spaceApprovedRuleService.create({
+          spaceId: permissionRequest.spaceId,
+          ruleId: permissionRequest.spaceEventRuleId,
+          permissionRequestId: permissionRequestId,
+        });
       } else if (
         isConsent === true &&
         approvedWithConditionResponses.length > 0
