@@ -39,11 +39,12 @@ export enum RuleBlockType {
   // space
   spaceGeneral = 'space:general',
   spaceConsentMethod = 'space:consent_method',
+  spaceConsentTimeout = 'space:consent_timeout', // content: {number}{d|h}
   spaceAccess = 'space:access', // content: array of {SpaceEventAccessType};{SpaceEventAccessType}; ...
   spaceMaxAttendee = 'space:max_attendee', // content: number
   spaceMaxNoiseLevel = 'space:max_noise_level', // content: {NoiseLevel}
   spaceAvailability = 'space:availability', // content: {mon|tue|wed|thu|fri|sat|sun}-{00:00}-{24:00};{mon|tue|wed|thu|fri|sat|sun}-{00:00}-{24:00}; ...
-  spaceAvailabilityUnit = 'space:availability_unit', // content: {number}{dhm}
+  spaceAvailabilityUnit = 'space:availability_unit', // content: {number}{d|h|m}
   spaceAvailabilityBuffer = 'space:availability_buffer', // content: {number}{d|h|m}
   spacePrePermissionCheck = 'space:pre_permission_check', // content: {boolean question}^{default answer in boolean} -> ask boolean questions for event organizers before permission request
   spacePostEventCheck = 'space:post_event_check', // content: boolean question for post event check
