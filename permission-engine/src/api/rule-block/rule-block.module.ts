@@ -30,6 +30,7 @@ import { SpaceEquipmentService } from '../space-equipment/space-equipment.servic
 import { SpaceEquipment } from 'src/database/entity/space-equipment.entity';
 import { SpaceTopic } from 'src/database/entity/space-topic.entity';
 import { SpaceTopicService } from '../space-topic/space-topic.service';
+import { RuleService } from '../rule/rule.service';
 
 @Module({
   imports: [
@@ -74,6 +75,7 @@ import { SpaceTopicService } from '../space-topic/space-topic.service';
     Logger,
     UserService,
     UserNotificationService,
+    RuleService,
     RuleBlockService,
     SpaceService,
     SpaceTopicService,
