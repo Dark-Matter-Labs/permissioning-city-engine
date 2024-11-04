@@ -26,8 +26,11 @@ WHERE type IN(
     'space_event:access',
     'space_event:require_equipment',
     'space_event:expected_attendee_count',
+    'space_event:noise_level',
+    'space_event:pre_permission_check_answer',
     'space_event:exception'
   );
+CREATE INDEX IF NOT EXISTS rule_block_idx_type_hash ON "rule_block" (hash);
 
 -- topic
 CREATE UNIQUE INDEX IF NOT EXISTS topic_idx_name_country_region_city ON "topic" (name, country, region, city);
