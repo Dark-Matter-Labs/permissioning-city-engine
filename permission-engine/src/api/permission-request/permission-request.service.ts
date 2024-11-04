@@ -21,7 +21,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Space } from 'src/database/entity/space.entity';
 import { SpaceEvent } from 'src/database/entity/space-event.entity';
-import * as Util from 'src/lib/util/util';
+import { generateRandomCode } from 'src/lib/util/util';
 import { Logger } from 'src/lib/logger/logger.service';
 import { PermissionHandlerService } from 'src/lib/permission-handler/permission-handler.service';
 import { RuleService } from '../rule/rule.service';
@@ -406,7 +406,7 @@ export class PermissionRequestService {
     id: string,
     isForce: boolean = false,
   ): Promise<{ data: { result: boolean; permissionCode: string | null } }> {
-    const permissionCode = Util.generateRandomCode();
+    const permissionCode = generateRandomCode();
     const dto: Partial<PermissionRequest> = {
       resolveStatus: PermissionRequestResolveStatus.resolveAccepted,
       permissionCode,
