@@ -298,6 +298,7 @@ export enum PermissionResponseStatus {
   approved = 'approved',
   approvedWithCondition = 'approved_with_condition',
   rejected = 'rejected',
+  timeout = 'timeout',
 }
 
 export type IpLocationInfo = {
