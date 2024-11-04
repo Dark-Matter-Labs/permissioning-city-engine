@@ -1,5 +1,7 @@
 // src/app.module.ts
 import { Module, OnModuleInit } from '@nestjs/common';
+import Redis from 'ioredis';
+import { RedisService } from '@liaoliaots/nestjs-redis';
 import { BullModule } from '@nestjs/bull';
 import { AppService } from './app.service';
 import { AppController } from './app.controller';
@@ -28,12 +30,11 @@ import { NotificationHandlerService } from './lib/notification-handler/notificat
 import { PermissionResponseModule } from './api/permission-response/permission-response.module';
 import { PermissionHandlerService } from './lib/permission-handler/permission-handler.service';
 import { PermissionHandlerModule } from './lib/permission-handler/permission-handler.module';
-import { RedisService } from '@liaoliaots/nestjs-redis';
-import Redis from 'ioredis';
 import { EmailModule } from './api/email/email.module';
 import { MockupService } from './lib/mockup/mockup.service';
 import { MockupModule } from './lib/mockup/mockup.module';
 import { SpaceApprovedRuleModule } from './api/space-approved-rule/space-approved-rule.module';
+import { TopicModule } from './api/topic/topic.module';
 
 @Module({
   imports: [
@@ -92,6 +93,7 @@ import { SpaceApprovedRuleModule } from './api/space-approved-rule/space-approve
     SpaceModule,
     RuleBlockModule,
     RuleModule,
+    TopicModule,
     PermissionRequestModule,
     PermissionResponseModule,
     MockupModule,

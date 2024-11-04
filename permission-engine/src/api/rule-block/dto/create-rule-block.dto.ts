@@ -38,6 +38,14 @@ export class CreateRuleBlockDto {
   content?: string;
 
   @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({
+    description: 'RuleBlock details',
+    nullable: true,
+  })
+  details?: string;
+
+  @IsOptional()
   @IsArray()
   @ArrayMaxSize(1)
   @ApiPropertyOptional({

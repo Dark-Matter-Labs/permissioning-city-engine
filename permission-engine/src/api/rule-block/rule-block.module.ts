@@ -28,6 +28,9 @@ import multerS3 from 'multer-s3';
 import { v4 as uuidv4 } from 'uuid';
 import { SpaceEquipmentService } from '../space-equipment/space-equipment.service';
 import { SpaceEquipment } from 'src/database/entity/space-equipment.entity';
+import { SpaceTopic } from 'src/database/entity/space-topic.entity';
+import { SpaceTopicService } from '../space-topic/space-topic.service';
+import { RuleService } from '../rule/rule.service';
 
 @Module({
   imports: [
@@ -38,6 +41,7 @@ import { SpaceEquipment } from 'src/database/entity/space-equipment.entity';
       UserNotification,
       RuleBlock,
       Space,
+      SpaceTopic,
       PermissionRequest,
       PermissionResponse,
       SpaceEvent,
@@ -71,8 +75,10 @@ import { SpaceEquipment } from 'src/database/entity/space-equipment.entity';
     Logger,
     UserService,
     UserNotificationService,
+    RuleService,
     RuleBlockService,
     SpaceService,
+    SpaceTopicService,
     PermissionRequestService,
     SpaceEventService,
     SpaceEquipmentService,

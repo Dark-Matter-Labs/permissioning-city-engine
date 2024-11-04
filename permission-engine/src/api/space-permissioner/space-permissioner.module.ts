@@ -25,6 +25,8 @@ import { PermissionHandlerService } from 'src/lib/permission-handler/permission-
 import { PermissionHandlerModule } from 'src/lib/permission-handler/permission-handler.module';
 import { SpaceEquipment } from 'src/database/entity/space-equipment.entity';
 import { SpaceEquipmentService } from '../space-equipment/space-equipment.service';
+import { SpaceTopic } from 'src/database/entity/space-topic.entity';
+import { SpaceTopicService } from '../space-topic/space-topic.service';
 
 @Module({
   imports: [
@@ -38,6 +40,7 @@ import { SpaceEquipmentService } from '../space-equipment/space-equipment.servic
       Rule,
       SpacePermissioner,
       SpaceEquipment,
+      SpaceTopic,
       RuleBlock,
       PermissionRequest,
       PermissionResponse,
@@ -51,6 +54,7 @@ import { SpaceEquipmentService } from '../space-equipment/space-equipment.servic
     SpaceService,
     SpacePermissionerService,
     SpaceEquipmentService,
+    SpaceTopicService,
     UserService,
     UserNotificationService,
     RuleService,

@@ -33,6 +33,10 @@ import { PermissionHandlerService } from 'src/lib/permission-handler/permission-
 import { PermissionHandlerModule } from 'src/lib/permission-handler/permission-handler.module';
 import { SpaceEquipment } from 'src/database/entity/space-equipment.entity';
 import { SpaceEquipmentService } from '../space-equipment/space-equipment.service';
+import { Topic } from 'src/database/entity/topic.entity';
+import { TopicService } from '../topic/topic.service';
+import { SpaceTopic } from 'src/database/entity/space-topic.entity';
+import { SpaceTopicService } from '../space-topic/space-topic.service';
 
 @Module({
   imports: [
@@ -42,6 +46,7 @@ import { SpaceEquipmentService } from '../space-equipment/space-equipment.servic
     TypeOrmModule.forFeature([
       Space,
       SpaceEquipment,
+      SpaceTopic,
       User,
       UserNotification,
       Rule,
@@ -51,6 +56,7 @@ import { SpaceEquipmentService } from '../space-equipment/space-equipment.servic
       SpaceEvent,
       SpacePermissioner,
       SpaceImage,
+      Topic,
     ]),
     MulterModule.registerAsync({
       imports: [ConfigModule],
@@ -79,6 +85,7 @@ import { SpaceEquipmentService } from '../space-equipment/space-equipment.servic
     Logger,
     SpaceService,
     SpaceEquipmentService,
+    SpaceTopicService,
     UserService,
     UserNotificationService,
     RuleService,
@@ -88,6 +95,7 @@ import { SpaceEquipmentService } from '../space-equipment/space-equipment.servic
     SpacePermissionerService,
     S3Service,
     SpaceImageService,
+    TopicService,
     PermissionHandlerService,
   ],
 })

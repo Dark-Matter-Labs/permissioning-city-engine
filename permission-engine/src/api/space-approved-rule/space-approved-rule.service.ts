@@ -73,6 +73,7 @@ export class SpaceApprovedRuleService {
           r.id = rrb.rule_id
         AND
           rrb.rule_block_id = rb.id
+        ${where.length > 0 ? ' AND ' : ''}
         ${where.join(' AND ')}
         GROUP BY r.id
       )

@@ -10,8 +10,15 @@ import { CreateSpacePermissionerDto } from 'src/api/space-permissioner/dto';
 import { CreateSpaceDto } from 'src/api/space/dto';
 import { CreateUserNotificationDto } from 'src/api/user-notification/dto';
 import { CreateUserDto } from 'src/api/user/dto';
-import { RuleBlockType, RuleTarget, SpaceEquipmentType } from 'src/lib/type';
+import {
+  RuleBlockContentDivider,
+  RuleBlockType,
+  RuleTarget,
+  SpaceEquipmentType,
+  SpaceEventAccessType,
+} from 'src/lib/type';
 import { v4 as uuidv4 } from 'uuid';
+import { hash } from '../util/util';
 
 function getDate(
   day: 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun',
@@ -89,32 +96,34 @@ const createSpaceRuleBlockDtos: Partial<CreateRuleBlockDto>[] = [
     id: uuidv4(),
     name: 'test Space Allowed Access Types [space1,space3]',
     type: RuleBlockType.spaceAccess,
-    content: 'public:free;public:paid',
+    content: `${SpaceEventAccessType.publicFree};${SpaceEventAccessType.publicPaid}`,
   },
   {
     id: uuidv4(),
     name: 'test Space Allowed Access Types [space2,space4]',
     type: RuleBlockType.spaceAccess,
-    content: 'private:free;private:paid',
+    content: `${SpaceEventAccessType.privateFree};${SpaceEventAccessType.privatePaid}`,
   },
   {
     id: uuidv4(),
     name: 'test Space Allowed Max Attendee count [space1,space3]',
     type: RuleBlockType.spaceMaxAttendee,
     content: '10',
+    details: 'Up to 10 adults are allowed',
   },
   {
     id: uuidv4(),
     name: 'test Space Allowed Max Attendee count [space2,space4]',
     type: RuleBlockType.spaceMaxAttendee,
     content: '20',
+    details: 'Up to 20 adults are allowed',
   },
   {
     id: uuidv4(),
     name: 'test Space Availability Weekdays [space1,space3]',
     type: RuleBlockType.spaceAvailability,
     content:
-      'mon-09:00-18:00;tue-09:00-18:00;wed-09:00-18:00;thu-09:00-18:00;fri-09:00-18:00;',
+      'mon-09:00-18:00;tue-09:00-18:00;wed-09:00-18:00;thu-09:00-18:00;fri-09:00-18:00',
   },
   {
     id: uuidv4(),
@@ -148,27 +157,39 @@ const createSpaceRuleBlockDtos: Partial<CreateRuleBlockDto>[] = [
   },
   {
     id: uuidv4(),
-    name: 'test Consent Collection Method over_50_yes [space1]',
+    name: `test Consent Method over${RuleBlockContentDivider.operator}50${RuleBlockContentDivider.operator}yes [space1]`,
     type: RuleBlockType.spaceConsentMethod,
-    content: 'over_50_yes',
+    content: `over${RuleBlockContentDivider.operator}50${RuleBlockContentDivider.operator}yes`,
   },
   {
     id: uuidv4(),
-    name: 'test Consent Collection Method over_30_yes [space2]',
+    name: `test Consent Method over${RuleBlockContentDivider.operator}30${RuleBlockContentDivider.operator}yes [space2]`,
     type: RuleBlockType.spaceConsentMethod,
-    content: 'over_30_yes',
+    content: `over${RuleBlockContentDivider.operator}30${RuleBlockContentDivider.operator}yes`,
   },
   {
     id: uuidv4(),
-    name: 'test Consent Collection Method under_50_no [space3]',
+    name: `test Consent Method under${RuleBlockContentDivider.operator}50${RuleBlockContentDivider.operator}no [space3]`,
     type: RuleBlockType.spaceConsentMethod,
-    content: 'under_50_no',
+    content: `under${RuleBlockContentDivider.operator}50${RuleBlockContentDivider.operator}no`,
   },
   {
     id: uuidv4(),
-    name: 'test Consent Collection Method is_100_yes [space4]',
+    name: `test Consent Method is${RuleBlockContentDivider.operator}100${RuleBlockContentDivider.operator}yes [space4]`,
     type: RuleBlockType.spaceConsentMethod,
-    content: 'is_100_yes',
+    content: `is${RuleBlockContentDivider.operator}100${RuleBlockContentDivider.operator}yes`,
+  },
+  {
+    id: uuidv4(),
+    name: 'test Consent Timeout 1d [space1, space3]',
+    type: RuleBlockType.spaceConsentTimeout,
+    content: '1d',
+  },
+  {
+    id: uuidv4(),
+    name: 'test Consent Timeout 12h [space2, space4]',
+    type: RuleBlockType.spaceConsentTimeout,
+    content: '12h',
   },
   {
     id: uuidv4(),
@@ -314,6 +335,30 @@ const createSpaceEquipmentDtos: Partial<CreateSpaceEquipmentDto>[] = [
 const createSpaceEventRuleBlockDtos: Partial<CreateRuleBlockDto>[] = [
   {
     id: uuidv4(),
+    name: 'test Event Access Control [event1]',
+    type: RuleBlockType.spaceEventAccess,
+    content: SpaceEventAccessType.publicFree,
+  },
+  {
+    id: uuidv4(),
+    name: 'test Event Access Control [event2]',
+    type: RuleBlockType.spaceEventAccess,
+    content: SpaceEventAccessType.publicPaid,
+  },
+  {
+    id: uuidv4(),
+    name: 'test Event Access Control [event3]',
+    type: RuleBlockType.spaceEventAccess,
+    content: SpaceEventAccessType.privateFree,
+  },
+  {
+    id: uuidv4(),
+    name: 'test Event Access Control [event4]',
+    type: RuleBlockType.spaceEventAccess,
+    content: SpaceEventAccessType.privatePaid,
+  },
+  {
+    id: uuidv4(),
     name: 'test Event Noise Level Control [event1]',
     type: RuleBlockType.spaceEventNoiseLevel,
     content: 'low',
@@ -340,25 +385,53 @@ const createSpaceEventRuleBlockDtos: Partial<CreateRuleBlockDto>[] = [
     id: uuidv4(),
     name: 'test Food Service [event1, event3]',
     type: RuleBlockType.spaceEventPrePermissionCheckAnswer,
-    content: `${createSpaceRuleBlockDtos.find((item) => item.name.includes('food')).id}^true`,
+    content: `${hash(
+      [
+        createSpaceRuleBlockDtos.find((item) => item.name.includes('food'))
+          .type,
+        createSpaceRuleBlockDtos.find((item) => item.name.includes('food'))
+          .content,
+      ].join(RuleBlockContentDivider.type),
+    )}^true`,
   },
   {
     id: uuidv4(),
     name: 'test Food Service [event2, event4]',
     type: RuleBlockType.spaceEventPrePermissionCheckAnswer,
-    content: `${createSpaceRuleBlockDtos.find((item) => item.name.includes('food')).id}^true`,
+    content: `${hash(
+      [
+        createSpaceRuleBlockDtos.find((item) => item.name.includes('food'))
+          .type,
+        createSpaceRuleBlockDtos.find((item) => item.name.includes('food'))
+          .content,
+      ].join(RuleBlockContentDivider.type),
+    )}^true`,
   },
   {
     id: uuidv4(),
     name: 'test Alcholic drink Service [event1, event3]',
     type: RuleBlockType.spaceEventPrePermissionCheckAnswer,
-    content: `${createSpaceRuleBlockDtos.find((item) => item.name.includes('alcholic')).id}^true`,
+    content: `${hash(
+      [
+        createSpaceRuleBlockDtos.find((item) => item.name.includes('alcholic'))
+          .type,
+        createSpaceRuleBlockDtos.find((item) => item.name.includes('alcholic'))
+          .content,
+      ].join(RuleBlockContentDivider.type),
+    )}^true`,
   },
   {
     id: uuidv4(),
     name: 'test Alcholic drink Service [event2, event4]',
     type: RuleBlockType.spaceEventPrePermissionCheckAnswer,
-    content: `${createSpaceRuleBlockDtos.find((item) => item.name.includes('alcholic')).id}^false`,
+    content: `${hash(
+      [
+        createSpaceRuleBlockDtos.find((item) => item.name.includes('alcholic'))
+          .type,
+        createSpaceRuleBlockDtos.find((item) => item.name.includes('alcholic'))
+          .content,
+      ].join(RuleBlockContentDivider.type),
+    )}^false`,
   },
   {
     id: uuidv4(),
@@ -433,7 +506,20 @@ const createSpaceEventRuleBlockDtos: Partial<CreateRuleBlockDto>[] = [
     id: uuidv4(),
     name: 'test Event exception [event1]',
     type: RuleBlockType.spaceEventException,
-    content: `${createSpaceRuleBlockDtos.find((item) => item.type === RuleBlockType.spaceAvailabilityBuffer && item.name.includes('space1')).id}^40m^Need more time to clean up`,
+    content: `${hash(
+      [
+        createSpaceRuleBlockDtos.find(
+          (item) =>
+            item.type === RuleBlockType.spaceAvailabilityBuffer &&
+            item.name.includes('space1'),
+        ).type,
+        createSpaceRuleBlockDtos.find(
+          (item) =>
+            item.type === RuleBlockType.spaceAvailabilityBuffer &&
+            item.name.includes('space1'),
+        ).content,
+      ].join(RuleBlockContentDivider.type),
+    )}^40m^Need more time to clean up`,
   },
 ];
 

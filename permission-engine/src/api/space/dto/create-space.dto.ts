@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
@@ -73,4 +74,15 @@ export class CreateSpaceDto {
     maxItems: 5,
   })
   images?: Express.Multer.File[];
+
+  @IsOptional()
+  @Transform(({ value }) => (Array.isArray(value) ? value : value.split(',')))
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsUUID('4', { each: true })
+  @ApiPropertyOptional({
+    description: 'Space topicIds in uuid',
+    nullable: true,
+  })
+  topicIds?: string[];
 }

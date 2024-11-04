@@ -43,6 +43,13 @@ export class RuleBlock {
   @ApiProperty({ description: 'Rule block content' })
   content: string;
 
+  @Column()
+  @ApiProperty({ description: 'Rule block details' })
+  details: string;
+
+  @Column({ default: true })
+  isPublic: boolean;
+
   @CreateDateColumn()
   @ApiProperty({ description: 'Created timestamp' })
   createdAt: Date;

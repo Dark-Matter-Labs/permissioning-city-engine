@@ -4,19 +4,18 @@ import {
   Column,
   PrimaryGeneratedColumn,
   OneToMany,
-  ManyToMany,
   CreateDateColumn,
   JoinColumn,
   ManyToOne,
 } from 'typeorm';
 import { SpaceEvent } from './space-event.entity';
-import { Topic } from './topic.entity';
 import { User } from './user.entity';
 import { Rule } from './rule.entity';
 import { PermissionRequest } from './permission-request.entity';
 import { SpacePermissioner } from './space-permissioner.entity';
 import { SpaceImage } from './space-image.entity';
 import { SpaceApprovedRule } from './space-approved-rule.entity';
+import { SpaceTopic } from './space-topic.entity';
 
 @Entity()
 export class Space {
@@ -95,6 +94,9 @@ export class Space {
   @OneToMany(() => SpaceImage, (spaceImage) => spaceImage.space)
   spaceImages: SpaceImage[];
 
+  @OneToMany(() => SpaceTopic, (spaceTopic) => spaceTopic.space)
+  spaceTopics: SpaceTopic[];
+
   @OneToMany(
     () => SpaceApprovedRule,
     (spaceApprovedRule) => spaceApprovedRule.space,
@@ -115,7 +117,4 @@ export class Space {
     (SpacePermissioner) => SpacePermissioner.space,
   )
   spacePermissioners: SpacePermissioner[];
-
-  @ManyToMany(() => Topic, (topic) => topic.spaces)
-  topics: Topic[];
 }

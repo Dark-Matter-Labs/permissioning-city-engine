@@ -185,3 +185,51 @@ export const getTimeIntervals = (
 
   return intervals;
 };
+
+// Convert time to a comparable value (HH:MM as string)
+export const formatTime = (date: Date) => {
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  return `${hours}:${minutes}`;
+};
+
+export const isInAvailabilities = (
+  availabilities: string[],
+  startTime: Date,
+  endTime: Date,
+): boolean => {
+  // Parse availability into a map { 'mon': { start: '09:30', end: '18:05' }, ... }
+  const availabilityMap = availabilities.reduce(
+    (map, entry) => {
+      const [day, start, end] = entry.split('-');
+      map[day.toLowerCase()] = { start, end };
+      return map;
+    },
+    {} as Record<string, { start: string; end: string }>,
+  );
+
+  // Get the weekday (0 = Sunday, 1 = Monday, etc.)
+  const dayNames = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+  const startDay = dayNames[startTime.getUTCDay()];
+  const endDay = dayNames[endTime.getUTCDay()];
+
+  const startFormatted = formatTime(startTime);
+  const endFormatted = formatTime(endTime);
+
+  // Check if start and end times fall within the availability for each day
+  if (availabilityMap[startDay] && availabilityMap[endDay]) {
+    const startAvailable = availabilityMap[startDay];
+    const endAvailable = availabilityMap[endDay];
+
+    // Compare start and end times with availability
+    const isStartValid =
+      startFormatted >= startAvailable.start &&
+      startFormatted <= startAvailable.end;
+    const isEndValid =
+      endFormatted >= endAvailable.start && endFormatted <= endAvailable.end;
+
+    return isStartValid && isEndValid;
+  }
+
+  return false;
+};

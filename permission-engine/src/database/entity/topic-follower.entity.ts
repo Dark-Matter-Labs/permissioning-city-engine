@@ -1,4 +1,10 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToMany, CreateDateColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToMany,
+  CreateDateColumn,
+} from 'typeorm';
 import { SpaceEvent } from './space-event.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import { Space } from './space.entity';
@@ -32,6 +38,6 @@ export class TopicFollower {
   @ManyToMany(() => SpaceEvent, (spaceEvent) => spaceEvent.topics)
   spaceEvents: SpaceEvent[];
 
-  @ManyToMany(() => Space, (space) => space.topics)
+  @ManyToMany(() => Space, (space) => space.spaceTopics)
   spaces: Space[];
 }

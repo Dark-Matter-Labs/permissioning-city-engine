@@ -77,12 +77,18 @@ Ref: external_service.owner_id > user.id
 
 Table topic {
   id uuid [primary key]
-  name varchar [not null, unique]
+  author_id uuid
+  name varchar [not null]
+  icon varchar [not null, default: '✨', note: 'unicode emoji']
+  country varchar [not null, default: 'common']
+  region varchar [not null, default: 'common']
+  city varchar [not null, default: 'common']
   details text
-  is_active bool [not null, default: true] 
+  is_active bool [not null, default: true]
   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
   updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
 }
+Ref: topic.author_id > user.id
 
 Table space_equipment {
   id uuid [primary key]
@@ -129,6 +135,7 @@ Table space_event_image {
   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
   updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
 }
+Ref: space_event_image.space_event_id > space_event.id
 
 Table rule {
   id uuid [primary key]
@@ -149,8 +156,10 @@ Table rule_block {
   name varchar [not null]
   hash varchar [not null]
   author_id uuid [not null]
+  is_public bool [not null, default: true]
   type varchar [not null]
   content text [not null]
+  details text
   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
   updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
 }
@@ -280,7 +289,7 @@ Ref: space_permissioner.space_id > space.id
 Table topic_follower {
   topic_id uuid [not null]
   user_id uuid [not null]
-  is_active bool [not null, default: true] 
+  is_active bool [not null, default: true]
   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
   updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
 
@@ -290,6 +299,20 @@ Table topic_follower {
 }
 Ref: topic_follower.user_id > user.id
 Ref: topic_follower.topic_id > topic.id
+
+Table space_topic {
+  space_id uuid [not null]
+  topic_id uuid [not null]
+  is_desired bool [not null, default: true]
+  created_at timestamptz [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (space_id, topic_id) [pk]
+  }
+}
+Ref: space_topic.space_id > space.id
+Ref: space_topic.topic_id > topic.id
 
 Table migration {
   id uuid [primary key]
@@ -313,12 +336,9 @@ Table migration {
 // }
 // Ref: space_event_attendee.user_id > user.id
 // Ref: space_event_attendee.space_event_id > space_event.id
-// Ref: space_event_image.space_event_id > space_event.id
 
 // many-to-many
 Ref external_service_user: external_service.id <> user.id
-
-Ref space_topic: space.id <> topic.id
 
 Ref space_event_topic: space_event.id <> topic.id
 

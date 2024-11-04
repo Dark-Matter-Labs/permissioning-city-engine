@@ -30,6 +30,8 @@ import { SpaceService } from 'src/api/space/space.service';
 import { UserNotificationService } from 'src/api/user-notification/user-notification.service';
 import { SpaceApprovedRuleService } from 'src/api/space-approved-rule/space-approved-rule.service';
 import { SpaceApprovedRule } from 'src/database/entity/space-approved-rule.entity';
+import { SpaceTopic } from 'src/database/entity/space-topic.entity';
+import { SpaceTopicService } from 'src/api/space-topic/space-topic.service';
 
 @Module({
   imports: [
@@ -40,6 +42,7 @@ import { SpaceApprovedRule } from 'src/database/entity/space-approved-rule.entit
       User,
       UserNotification,
       Space,
+      SpaceTopic,
       SpaceApprovedRule,
       SpaceImage,
       SpaceEvent,
@@ -58,6 +61,7 @@ import { SpaceApprovedRule } from 'src/database/entity/space-approved-rule.entit
     UserService,
     UserNotificationService,
     SpaceService,
+    SpaceTopicService,
     SpaceApprovedRuleService,
     SpaceImageService,
     SpaceEventService,

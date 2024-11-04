@@ -281,6 +281,7 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
           name: item.name,
           type: item.type,
           content: item.content,
+          details: item.details,
         };
       })) {
         spaceRuleBlocks.push(

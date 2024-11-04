@@ -1,10 +1,4 @@
-import {
-  IsOptional,
-  IsUUID,
-  IsString,
-  IsArray,
-  Matches,
-} from 'class-validator';
+import { IsOptional, IsString, IsArray, Matches } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { PaginationDto } from 'src/lib/dto';
 import { Transform } from 'class-transformer';
@@ -47,10 +41,13 @@ export class FindAllMatchedRuleDto extends PaginationDto {
   @IsOptional()
   @Transform(({ value }) => (Array.isArray(value) ? value : value.split(',')))
   @IsArray()
-  @IsUUID('4', { each: true })
+  @IsString({ each: true })
+  @Matches(/^[a-f0-9]{64}\^.+\^.+$/, {
+    each: true,
+    message: 'Each item must match {ruleBlockHash}^{desired value} format',
+  })
   @ApiPropertyOptional({
-    description:
-      'RuleBlock content(spaceRuleBlockId[]) with spaceEventException type',
+    description: 'RuleBlock content({spaceRuleBlockHash}^{desired value}[])',
   })
   spaceEventExceptions?: string[];
 
@@ -58,16 +55,13 @@ export class FindAllMatchedRuleDto extends PaginationDto {
   @Transform(({ value }) => (Array.isArray(value) ? value : value.split(',')))
   @IsArray()
   @IsString({ each: true })
-  @Matches(
-    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}:(true|false)$/,
-    {
-      each: true,
-      message: 'Each item must match {ruleBlockId}:{boolean} format',
-    },
-  )
+  @Matches(/^[a-f0-9]{64}\^(true|false)$/, {
+    each: true,
+    message: 'Each item must match {ruleBlockHash}:{boolean} format',
+  })
   @ApiPropertyOptional({
     description:
-      'RuleBlock content({spaceRuleBlockId with spacePrePermissionCheck type}:{boolean}[])',
+      'RuleBlock content({spaceRuleBlockHash with spacePrePermissionCheck type}^{boolean}[])',
   })
   spacePrePremissionCheckAnswers?: string[];
 }

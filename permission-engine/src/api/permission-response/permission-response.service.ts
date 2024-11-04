@@ -145,7 +145,6 @@ export class PermissionResponseService {
     };
   }
 
-  // TODO. add permission-handler logic
   async updateToRejected(
     id: string,
     rejectPermissionResponseDto: RejectPermissionResponseDto,
@@ -153,6 +152,19 @@ export class PermissionResponseService {
     const updateResult = await this.permissionResponseRepository.update(id, {
       ...rejectPermissionResponseDto,
       status: PermissionResponseStatus.rejected,
+      updatedAt: new Date(),
+    });
+
+    return {
+      data: {
+        result: updateResult.affected === 1,
+      },
+    };
+  }
+
+  async updateToTimeout(id: string): Promise<{ data: { result: boolean } }> {
+    const updateResult = await this.permissionResponseRepository.update(id, {
+      status: PermissionResponseStatus.timeout,
       updatedAt: new Date(),
     });
 

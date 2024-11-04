@@ -26,6 +26,8 @@ import configuration from 'src/config/configuration';
 import { PermissionHandlerModule } from 'src/lib/permission-handler/permission-handler.module';
 import { SpaceEquipment } from 'src/database/entity/space-equipment.entity';
 import { SpaceEquipmentService } from '../space-equipment/space-equipment.service';
+import { SpaceTopic } from 'src/database/entity/space-topic.entity';
+import { SpaceTopicService } from '../space-topic/space-topic.service';
 
 @Module({
   imports: [
@@ -38,6 +40,7 @@ import { SpaceEquipmentService } from '../space-equipment/space-equipment.servic
       Space,
       SpaceEvent,
       SpaceEquipment,
+      SpaceTopic,
       User,
       UserNotification,
       Rule,
@@ -55,6 +58,7 @@ import { SpaceEquipmentService } from '../space-equipment/space-equipment.servic
     SpaceService,
     SpaceEventService,
     SpaceEquipmentService,
+    SpaceTopicService,
     UserService,
     UserNotificationService,
     RuleService,

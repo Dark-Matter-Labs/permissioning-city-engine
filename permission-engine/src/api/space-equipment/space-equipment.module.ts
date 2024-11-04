@@ -25,6 +25,8 @@ import { PermissionHandlerService } from 'src/lib/permission-handler/permission-
 import { ConfigModule } from '@nestjs/config';
 import configuration from 'src/config/configuration';
 import { PermissionHandlerModule } from 'src/lib/permission-handler/permission-handler.module';
+import { SpaceTopic } from 'src/database/entity/space-topic.entity';
+import { SpaceTopicService } from '../space-topic/space-topic.service';
 
 @Module({
   imports: [
@@ -34,6 +36,7 @@ import { PermissionHandlerModule } from 'src/lib/permission-handler/permission-h
     TypeOrmModule.forFeature([
       SpaceEquipment,
       SpaceEvent,
+      SpaceTopic,
       User,
       UserNotification,
       PermissionRequest,
@@ -50,6 +53,7 @@ import { PermissionHandlerModule } from 'src/lib/permission-handler/permission-h
     Logger,
     SpaceEquipmentService,
     SpaceEventService,
+    SpaceTopicService,
     UserService,
     PermissionRequestService,
     SpaceService,

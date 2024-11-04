@@ -39,32 +39,36 @@ export enum RuleBlockType {
   // space
   spaceGeneral = 'space:general',
   spaceConsentMethod = 'space:consent_method',
+  spaceConsentTimeout = 'space:consent_timeout', // content: {number}{d|h}
   spaceAccess = 'space:access', // content: array of {SpaceEventAccessType};{SpaceEventAccessType}; ...
   spaceMaxAttendee = 'space:max_attendee', // content: number
   spaceMaxNoiseLevel = 'space:max_noise_level', // content: {NoiseLevel}
   spaceAvailability = 'space:availability', // content: {mon|tue|wed|thu|fri|sat|sun}-{00:00}-{24:00};{mon|tue|wed|thu|fri|sat|sun}-{00:00}-{24:00}; ...
-  spaceAvailabilityUnit = 'space:availability_unit', // content: {number}{dhm}
+  spaceAvailabilityUnit = 'space:availability_unit', // content: {number}{d|h|m}
   spaceAvailabilityBuffer = 'space:availability_buffer', // content: {number}{d|h|m}
   spacePrePermissionCheck = 'space:pre_permission_check', // content: {boolean question}^{default answer in boolean} -> ask boolean questions for event organizers before permission request
   spacePostEventCheck = 'space:post_event_check', // content: boolean question for post event check
   // spaceEvent
+  // optional
   spaceEventGeneral = 'space_event:general',
-  spaceEventAccess = 'space_event:access', // content: {SpaceEventAccessType}
   spaceEventRequireEquipment = 'space_event:require_equipment', // content: {spaceEquipmentId}^{quantity}
-  spaceEventExpectedAttendeeCount = 'space_event:expected_attendee_count', // number
-  spaceEventException = 'space_event:exception', // content: {spaceRuleBlockId}^{desiredValue}^{reason}
+  spaceEventException = 'space_event:exception', // content: {spaceRuleBlockHash}^{desiredValue}^{reason}
   spaceEventBenefit = 'space_event:benefit', // content: expected benefit
   spaceEventRisk = 'space_event:risk', // content: expected risk
   spaceEventSelfRiskAssesment = 'space_event:self_risk_assesment', // content: description on self risk assesment
   spaceEventInsurance = 'space_event:insurance', // content: file download path: s3
+  // required
+  spaceEventAccess = 'space_event:access', // content: {SpaceEventAccessType}
+  spaceEventExpectedAttendeeCount = 'space_event:expected_attendee_count', // number
   spaceEventNoiseLevel = 'space_event:noise_level', // {NoiseLevel}
-  spaceEventPrePermissionCheckAnswer = 'space_event:pre_permission_check_answer', // {spaceRuleBlockId}^{answer in boolean}
+  spaceEventPrePermissionCheckAnswer = 'space_event:pre_permission_check_answer', // {spaceRuleBlockHash}^{answer in boolean}
 }
 
 export enum RuleBlockContentDivider {
   array = ';',
   type = '^',
   time = '-',
+  operator = ':',
 }
 
 export enum NoiseLevel {
@@ -74,10 +78,10 @@ export enum NoiseLevel {
 }
 
 export enum SpaceEventAccessType {
-  publicFree = 'public:free',
-  publicPaid = 'public:paid',
-  privateFree = 'private:free',
-  privatePaid = 'private:paid',
+  publicFree = `public${RuleBlockContentDivider.operator}free`,
+  publicPaid = `public${RuleBlockContentDivider.operator}paid`,
+  privateFree = `private${RuleBlockContentDivider.operator}free`,
+  privatePaid = `private${RuleBlockContentDivider.operator}paid`,
 }
 
 export enum SpaceEquipmentType {
@@ -296,6 +300,7 @@ export enum PermissionResponseStatus {
   approved = 'approved',
   approvedWithCondition = 'approved_with_condition',
   rejected = 'rejected',
+  timeout = 'timeout',
 }
 
 export type IpLocationInfo = {

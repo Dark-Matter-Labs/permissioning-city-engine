@@ -52,11 +52,31 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     try {
       await this.client.query('BEGIN');
       await this.client.query(querySQL);
+      if (name.startsWith('migrations/')) {
+        await this.client.query(
+          `INSERT INTO "migration" (id, name, is_successful) VALUES (uuid_generate_v4(), $1, TRUE)`,
+          [`${name}.sql`],
+        );
+      }
       await this.client.query('COMMIT');
       this.logger.log(`database: schema.${name} applied successfully.`);
     } catch (error) {
       await this.client.query('ROLLBACK');
-      this.logger.error(`database: Error applying schema.${name}:`, error);
+      if (name.startsWith('migrations/')) {
+        if (
+          !error.message.startsWith(
+            'duplicate key value violates unique constraint "migration_unique_name_is_successful"',
+          )
+        ) {
+          this.logger.error(`database: Error applying schema.${name}:`, error);
+          await this.client.query(
+            `INSERT INTO "migration" (id, name, is_successful, error_message) VALUES (uuid_generate_v4(), $1, FALSE, $2)`,
+            [`${name}.sql`, error.message],
+          );
+        }
+      } else {
+        this.logger.error(`database: Error applying schema.${name}:`, error);
+      }
     }
   }
 
@@ -75,7 +95,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     );
     const pastMigrationNames = pastMigrations.rows.map((item) => item.name);
     const pendingMigrationNames = migrationFiles.filter(
-      (item) => !pastMigrationNames.includes(item),
+      (item) => !pastMigrationNames.includes(`migrations/${item}`),
     );
 
     for (const migrationName of pendingMigrationNames.sort((a, b) => {
@@ -83,30 +103,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       const timestampB = parseInt(b.split('_')[0], 10);
       return timestampA - timestampB;
     })) {
-      try {
-        await this.client.query('BEGIN');
-        await this.runSQLQueryByName(
-          `migrations/${migrationName.split('.')[0]}`,
-        ).then(async () => {
-          await this.client.query(
-            `INSERT INTO "migration" (id, name, is_successful) VALUES (uuid_generate_v4(), $1, TRUE)`,
-            [migrationName],
-          );
-        });
-        await this.client.query('COMMIT');
-      } catch (error) {
-        await this.client.query('ROLLBACK');
-        if (
-          !error.message.startsWith(
-            'duplicate key value violates unique constraint "migration_unique_name_is_successful"',
-          )
-        ) {
-          await this.client.query(
-            `INSERT INTO "migration" (id, name, is_successful, error_message) VALUES (uuid_generate_v4(), $1, FALSE, $2)`,
-            [migrationName, error.message],
-          );
-        }
-      }
+      await this.runSQLQueryByName(`migrations/${migrationName.split('.')[0]}`);
     }
   }
 

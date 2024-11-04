@@ -1,13 +1,15 @@
 import BigNumber from 'bignumber.js';
-import dayjs from 'dayjs';
+import dayjs, { ManipulateType } from 'dayjs';
 import { Process, Processor } from '@nestjs/bull';
 import { Job } from 'bull';
 import {
+  NoiseLevel,
   PermissionProcessType,
   PermissionRequestResolveStatus,
   PermissionRequestStatus,
   PermissionRequestTarget,
   PermissionResponseStatus,
+  RuleBlockContentDivider,
   RuleBlockType,
   UserNotificationTarget,
   UserNotificationTemplateName,
@@ -21,17 +23,23 @@ import { PermissionRequestService } from 'src/api/permission-request/permission-
 import { RuleService } from 'src/api/rule/rule.service';
 import { SpaceService } from 'src/api/space/space.service';
 import { SpaceEventService } from 'src/api/space-event/space-event.service';
+import { SpaceApprovedRuleService } from 'src/api/space-approved-rule/space-approved-rule.service';
+import { RuleBlockService } from 'src/api/rule-block/rule-block.service';
+import { isInAvailabilities, formatTime } from 'src/lib/util/util';
+import { RuleBlock } from 'src/database/entity/rule-block.entity';
 
 @Processor('permission-handler')
 export class PermissionHandlerProcessor {
   constructor(
     private readonly spaceService: SpaceService,
     private readonly spaceEventService: SpaceEventService,
+    private readonly spaceApprovedRuleService: SpaceApprovedRuleService,
     private readonly userNotificationService: UserNotificationService,
     private readonly spacePermissionerService: SpacePermissionerService,
     private readonly permissionResponseService: PermissionResponseService,
     private readonly permissionRequestService: PermissionRequestService,
     private readonly ruleService: RuleService,
+    private readonly ruleBlockService: RuleBlockService,
     private readonly logger: Logger,
   ) {}
 
@@ -46,30 +54,50 @@ export class PermissionHandlerProcessor {
       try {
         switch (job.data.permissionProcessType) {
           case PermissionProcessType.spaceEventPermissionRequestCreated:
-            await this.spaceEventPermissionRequestCreated(job.data);
+            await this.spaceEventPermissionRequestCreated(job.data).then(
+              (res) => {
+                resolve(res);
+              },
+            );
             break;
           case PermissionProcessType.spaceRuleChangePermissionRequestCreated:
-            await this.spaceRuleChangePermissionRequestCreated(job.data);
+            await this.spaceRuleChangePermissionRequestCreated(job.data).then(
+              (res) => {
+                resolve(res);
+              },
+            );
             break;
           case PermissionProcessType.spaceEventRulePreApprovePermissionRequestCreated:
             await this.spaceEventRulePreApprovePermissionRequestCreated(
               job.data,
-            );
+            ).then((res) => {
+              resolve(res);
+            });
             break;
           case PermissionProcessType.permissionResponseReviewed:
-            await this.permissionResponseReviewed(job.data);
+            await this.permissionResponseReviewed(job.data).then((res) => {
+              resolve(res);
+            });
             break;
           case PermissionProcessType.permissionResponseReviewCompleted:
-            await this.permissionResponseReviewCompleted(job.data);
+            await this.permissionResponseReviewCompleted(job.data).then(
+              (res) => {
+                resolve(res);
+              },
+            );
             break;
           case PermissionProcessType.permissionRequestResolved:
-            await this.permissionRequestResolved(job.data);
+            await this.permissionRequestResolved(job.data).then((res) => {
+              resolve(res);
+            });
             break;
 
           default:
+            throw new Error(
+              `Unsupported permissionProcessType: ${job.data.permissionProcessType}`,
+            );
             break;
         }
-        resolve();
       } catch (error) {
         reject(error);
       }
@@ -83,6 +111,7 @@ export class PermissionHandlerProcessor {
   /**
    * assign responses to SpacePermissioners
    * send notifications to SpacePermissioners and EventOrganizer
+   * automatic resolve when conditions are met
    */
   async spaceEventPermissionRequestCreated(option: {
     permissionRequestId: string;
@@ -90,86 +119,411 @@ export class PermissionHandlerProcessor {
     const { permissionRequestId } = option;
     const permissionRequest =
       await this.permissionRequestService.findOneById(permissionRequestId);
+
+    // compare spaceTopics and spaceEventTopics
+    // compare spaceRule and spaceEventRule
+    const space = await this.spaceService.findOneById(
+      permissionRequest.spaceId,
+      ['spaceTopics'],
+    );
+    const spaceEvent = await this.spaceEventService.findOneById(
+      permissionRequest.spaceId,
+    );
+    const spaceRule = await this.ruleService.findOneById(
+      permissionRequest.spaceRuleId,
+      false,
+    );
+    const spaceEventRule = await this.ruleService.findOneById(
+      permissionRequest.spaceEventRuleId,
+      false,
+    );
+    const spaceApprovedRules = await this.spaceApprovedRuleService.findAll({
+      spaceId: permissionRequest.spaceId,
+      ruleId: permissionRequest.spaceEventRuleId,
+      isActive: true,
+    });
     const spacePermissioners =
       await this.spacePermissionerService.findAllBySpaceId(
         permissionRequest.spaceId,
         { isActive: true },
         false,
       );
+    const spaceRuleBlocks = spaceRule.ruleBlocks;
+    const spaceEventRuleBlocks = spaceEventRule.ruleBlocks;
+    /**
+     * Auto Approval Conditions
+     * (Topic matches the space && No Exceptions or collisions on SpaceRule) || in SpaceApprovedRule table
+     */
+    let isAutoApproval = false;
 
-    // TODO. apply dynamic timeout value
-    const timeoutAt = dayjs(permissionRequest.createdAt).add(1, 'day').toDate();
+    // check spaceApprovedRules
+    if (spaceApprovedRules.data.find((item) => item.id === spaceEventRule.id)) {
+      isAutoApproval = true;
+    } else {
+      // check topics
+      const { spaceTopics } = space;
+      const spaceDesiredTopics = spaceTopics.filter(
+        (item) => item.isDesired === true,
+      );
+      const spaceForbiddenTopics = spaceTopics.filter(
+        (item) => item.isDesired === false,
+      );
+      const {
+        topics: spaceEventTopics,
+        startsAt,
+        duration,
+        endsAt,
+      } = spaceEvent;
 
-    await this.userNotificationService
-      .create({
-        userId: permissionRequest.spaceEvent.organizerId,
-        target: UserNotificationTarget.general,
-        type: UserNotificationType.external,
-        templateName:
-          UserNotificationTemplateName.spaceEventPermissionRequested,
-        params: {
-          permissionRequestId,
-          spaceRuleId: permissionRequest.spaceRule.id,
-          spaceRuleName: permissionRequest.spaceRule.name,
-          spaceEventId: permissionRequest.spaceEvent.id,
-          spaceEventName: permissionRequest.spaceEvent.name,
-          spaceEventStartsAt: permissionRequest.spaceEvent.startsAt,
-          spaceEventDuration: permissionRequest.spaceEvent.duration,
-          spaceEventRuleId: permissionRequest.spaceEventRule.id,
-          spaceEventRuleName: permissionRequest.spaceEventRule.name,
-        },
-      })
-      .catch((error) => {
-        throw new Error(`Failed to create userNotification: ${error.message}`);
-      });
-    const notificationTargetSpacePermissioners =
-      spacePermissioners?.data?.filter((spacePermissioner) => {
-        return spacePermissioner.userId !== permissionRequest.userId;
-      });
-    notificationTargetSpacePermissioners.map(async (spacePermissioner) => {
-      try {
-        const permissionResponse = await this.permissionResponseService
-          .create({
-            permissionRequestId: permissionRequest.id,
-            spacePermissionerId: spacePermissioner.id,
-            timeoutAt,
-          })
-          .catch((error) => {
-            throw new Error(
-              `Failed to create permissionResponse: ${error.message}`,
-            );
-          });
-
-        await this.userNotificationService
-          .create({
-            userId: spacePermissioner.userId,
-            target: UserNotificationTarget.general,
-            type: UserNotificationType.external,
-            templateName:
-              UserNotificationTemplateName.spaceEventPermissionRequested,
-            params: {
-              permissionRequestId,
-              spaceRuleId: permissionRequest.spaceRule.id,
-              spaceRuleName: permissionRequest.spaceRule.name,
-              spaceEventId: permissionRequest.spaceEvent.id,
-              spaceEventName: permissionRequest.spaceEvent.name,
-              spaceEventStartsAt: permissionRequest.spaceEvent.startsAt,
-              spaceEventDuration: permissionRequest.spaceEvent.duration,
-              spaceEventRuleId: permissionRequest.spaceEventRule.id,
-              spaceEventRuleName: permissionRequest.spaceEventRule.name,
-              permissionResponseId: permissionResponse.id,
-              permissionResponseTimeoutAt: permissionResponse.timeoutAt,
-            },
-          })
-          .catch((error) => {
-            throw new Error(
-              `Failed to create userNotification: ${error.message}`,
-            );
-          });
-      } catch (error) {
-        this.logger.error(error.message, error);
+      // check desired topics
+      for (const spaceEventTopic of spaceEventTopics) {
+        if (
+          spaceDesiredTopics.find((item) => item.topicId === spaceEventTopic.id)
+        ) {
+          isAutoApproval = true;
+          break;
+        }
       }
-    });
+
+      // check forbidden topics
+      for (const spaceEventTopic of spaceEventTopics) {
+        if (
+          spaceForbiddenTopics.find(
+            (item) => item.topicId === spaceEventTopic.id,
+          )
+        ) {
+          isAutoApproval = false; // TODO. force rejection?
+          break;
+        }
+      }
+
+      // check ruleBlock collisions
+      // if ruleBlock collision exists, add to spaceEventRule.ruleBlocks as spaceEventException type and save
+      for (const spaceRuleBlock of spaceRuleBlocks) {
+        const { id, type, hash, content } = spaceRuleBlock;
+        const spaceEventExceptionRuleBlock = spaceEventRuleBlocks.find(
+          (item) =>
+            item.type === RuleBlockType.spaceEventException &&
+            item.content.startsWith(hash),
+        );
+
+        // skip if already exception raised
+        if (spaceEventExceptionRuleBlock) {
+          continue;
+        }
+
+        let isInAutoApprovalRange: boolean = false;
+        let spaceEventRuleBlock: RuleBlock | null = null;
+        let desiredValue: any = null;
+
+        // find spaceEventRuleBlock
+        switch (type) {
+          case RuleBlockType.spaceAccess:
+            spaceEventRuleBlock = spaceEventRuleBlocks.find(
+              (item) => item.type === RuleBlockType.spaceEventAccess,
+            );
+            break;
+          case RuleBlockType.spaceMaxAttendee:
+            spaceEventRuleBlock = spaceEventRuleBlocks.find(
+              (item) =>
+                item.type === RuleBlockType.spaceEventExpectedAttendeeCount,
+            );
+            break;
+          case RuleBlockType.spaceMaxNoiseLevel:
+            spaceEventRuleBlock = spaceEventRuleBlocks.find(
+              (item) => item.type === RuleBlockType.spaceEventNoiseLevel,
+            );
+            break;
+          case RuleBlockType.spacePrePermissionCheck:
+            spaceEventRuleBlock = spaceEventRuleBlocks.find(
+              (item) =>
+                item.type ===
+                  RuleBlockType.spaceEventPrePermissionCheckAnswer &&
+                item.content.startsWith(hash),
+            );
+            break;
+          default:
+            break;
+        }
+
+        // check if in auto approval range
+        switch (type) {
+          case RuleBlockType.spaceAccess:
+            isInAutoApprovalRange = !!content
+              .split(RuleBlockContentDivider.array)
+              .find((item) => item === spaceEventRuleBlock.content);
+            desiredValue = spaceEventRuleBlock.content;
+            break;
+          case RuleBlockType.spaceMaxAttendee:
+            isInAutoApprovalRange = new BigNumber(
+              spaceEventRuleBlock.content,
+            ).lte(content);
+            desiredValue = spaceEventRuleBlock.content;
+            break;
+          case RuleBlockType.spaceMaxNoiseLevel:
+            const noiseLevelTypes = [
+              NoiseLevel.low,
+              NoiseLevel.medium,
+              NoiseLevel.high,
+            ];
+
+            isInAutoApprovalRange =
+              noiseLevelTypes.indexOf(content as NoiseLevel) >=
+                noiseLevelTypes.indexOf(
+                  spaceEventRuleBlock.content as NoiseLevel,
+                ) &&
+              noiseLevelTypes.indexOf(
+                spaceEventRuleBlock.content as NoiseLevel,
+              ) >= 0;
+            desiredValue = spaceEventRuleBlock.content;
+            break;
+          case RuleBlockType.spaceAvailability: // check with spaceEvent.startsAt, spaceEvent.endsAt
+            isInAutoApprovalRange = isInAvailabilities(
+              content.split(RuleBlockContentDivider.array),
+              startsAt,
+              endsAt,
+            );
+            desiredValue = [
+              ...content,
+              [
+                dayjs(startsAt).format('ddd').toLowerCase(),
+                formatTime(startsAt),
+                formatTime(endsAt),
+              ].join(RuleBlockContentDivider.time),
+            ];
+            break;
+          case RuleBlockType.spaceAvailabilityUnit: // check with spaceEvent.duration
+            const spaceEventUnitAmount = parseInt(duration.slice(0, -1), 10);
+            const spaceEventUnitType = duration.slice(-1);
+            const spaceUnitAmount = parseInt(content.slice(0, -1), 10);
+            const spaceUnitType = content.slice(-1);
+            isInAutoApprovalRange =
+              dayjs().add(spaceUnitAmount, spaceUnitType as ManipulateType) >=
+              dayjs().add(
+                spaceEventUnitAmount,
+                spaceEventUnitType as ManipulateType,
+              );
+            desiredValue = duration;
+            break;
+          case RuleBlockType.spacePrePermissionCheck:
+            const [spaceRuleBlockId, answer] =
+              spaceEventRuleBlock.content.split(RuleBlockContentDivider.type);
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const [_question, defaultAnswer] = content.split(
+              RuleBlockContentDivider.type,
+            );
+            isInAutoApprovalRange =
+              id === spaceRuleBlockId &&
+              answer.toLowerCase() === defaultAnswer.toLowerCase();
+            desiredValue = answer;
+            break;
+          default:
+            continue;
+        }
+
+        if (isInAutoApprovalRange === false && !spaceEventExceptionRuleBlock) {
+          // add exception ruleBlock to spaceEventRule and save
+          const newRuleBlock = await this.ruleBlockService.create(
+            spaceEvent.organizerId,
+            {
+              name: `Exception on space rule: ${spaceRule.name}`,
+              type: RuleBlockType.spaceEventException,
+              content: [hash, desiredValue].join(RuleBlockContentDivider.type),
+              details: `Automatic exception raised by Permissioning Engine`,
+            },
+          );
+          spaceEventRule.ruleBlocks.push(newRuleBlock);
+          await this.ruleService.update(spaceEventRule.id, {
+            ruleBlockIds: spaceEventRule.ruleBlocks.map((item) => item.id),
+          });
+        }
+      }
+
+      // check ruleBlock exceptions
+      if (
+        !spaceEventRule.ruleBlocks.find(
+          (item) => item.type === RuleBlockType.spaceEventException,
+        ) === true
+      ) {
+        isAutoApproval = true;
+      }
+    }
+
+    if (isAutoApproval === false) {
+      const spaceConsentTimeoutRuleBlock = spaceRule.ruleBlocks.find(
+        (item) => item.type === RuleBlockType.spaceConsentTimeout,
+      );
+      const timeoutAmount = parseInt(
+        spaceConsentTimeoutRuleBlock.content.slice(0, -1),
+        10,
+      );
+      const timeoutType = spaceConsentTimeoutRuleBlock.content.slice(-1);
+
+      if (
+        new BigNumber(timeoutAmount).lte(0) &&
+        ['d', 'h'].includes(timeoutType) === false
+      ) {
+        throw new Error(
+          `Space rule consent timeout must be in format: {number}{dh}`,
+        );
+      }
+
+      const timeoutAt = dayjs(permissionRequest.createdAt)
+        .add(timeoutAmount, timeoutType as ManipulateType)
+        .toDate();
+
+      await this.userNotificationService
+        .create({
+          userId: permissionRequest.spaceEvent.organizerId,
+          target: UserNotificationTarget.general,
+          type: UserNotificationType.external,
+          templateName:
+            UserNotificationTemplateName.spaceEventPermissionRequested,
+          params: {
+            permissionRequestId,
+            spaceRuleId: permissionRequest.spaceRule.id,
+            spaceRuleName: permissionRequest.spaceRule.name,
+            spaceEventId: permissionRequest.spaceEvent.id,
+            spaceEventName: permissionRequest.spaceEvent.name,
+            spaceEventStartsAt: permissionRequest.spaceEvent.startsAt,
+            spaceEventDuration: permissionRequest.spaceEvent.duration,
+            spaceEventRuleId: permissionRequest.spaceEventRule.id,
+            spaceEventRuleName: permissionRequest.spaceEventRule.name,
+          },
+        })
+        .catch((error) => {
+          this.logger.error(
+            `Failed to create userNotification: ${error.message}`,
+            error,
+          );
+        });
+      const notificationTargetSpacePermissioners =
+        spacePermissioners?.data?.filter((spacePermissioner) => {
+          return spacePermissioner.userId !== permissionRequest.userId;
+        });
+      notificationTargetSpacePermissioners.map(async (spacePermissioner) => {
+        try {
+          const permissionResponse = await this.permissionResponseService
+            .create({
+              permissionRequestId: permissionRequest.id,
+              spacePermissionerId: spacePermissioner.id,
+              timeoutAt,
+            })
+            .catch((error) => {
+              throw new Error(
+                `Failed to create permissionResponse: ${error.message}`,
+              );
+            });
+
+          await this.userNotificationService
+            .create({
+              userId: spacePermissioner.userId,
+              target: UserNotificationTarget.general,
+              type: UserNotificationType.external,
+              templateName:
+                UserNotificationTemplateName.spaceEventPermissionRequested,
+              params: {
+                permissionRequestId,
+                spaceRuleId: permissionRequest.spaceRule.id,
+                spaceRuleName: permissionRequest.spaceRule.name,
+                spaceEventId: permissionRequest.spaceEvent.id,
+                spaceEventName: permissionRequest.spaceEvent.name,
+                spaceEventStartsAt: permissionRequest.spaceEvent.startsAt,
+                spaceEventDuration: permissionRequest.spaceEvent.duration,
+                spaceEventRuleId: permissionRequest.spaceEventRule.id,
+                spaceEventRuleName: permissionRequest.spaceEventRule.name,
+                permissionResponseId: permissionResponse.id,
+                permissionResponseTimeoutAt: permissionResponse.timeoutAt,
+              },
+            })
+            .catch((error) => {
+              throw new Error(
+                `Failed to create userNotification: ${error.message}`,
+              );
+            });
+        } catch (error) {
+          this.logger.error(error.message, error);
+        }
+      });
+    } else {
+      // auto approve permission request
+      await this.permissionRequestService.updateToReviewApproved(
+        permissionRequestId,
+      );
+      // save spaceApprovedRule
+      await this.spaceApprovedRuleService.create({
+        spaceId: permissionRequest.spaceId,
+        ruleId: permissionRequest.spaceEventRuleId,
+        permissionRequestId: permissionRequestId,
+      });
+      // auto resolve permission request
+      await this.permissionRequestService.updateToResolveAccepted(
+        permissionRequestId,
+      );
+
+      // notice auto approval
+      // notify event organizer
+      await this.userNotificationService
+        .create({
+          userId: permissionRequest.spaceEvent.organizerId,
+          target: UserNotificationTarget.eventOrgnaizer,
+          type: UserNotificationType.external,
+          templateName: UserNotificationTemplateName.permissionRequestResolved,
+          params: {
+            permissionRequestId,
+            spaceRuleId: permissionRequest.spaceRule.id,
+            spaceRuleName: permissionRequest.spaceRule.name,
+            spaceEventId: permissionRequest.spaceEvent.id,
+            spaceEventName: permissionRequest.spaceEvent.name,
+            spaceEventStartsAt: permissionRequest.spaceEvent.startsAt,
+            spaceEventDuration: permissionRequest.spaceEvent.duration,
+            spaceEventRuleId: permissionRequest.spaceEventRule.id,
+            spaceEventRuleName: permissionRequest.spaceEventRule.name,
+          },
+        })
+        .catch((error) => {
+          this.logger.error(
+            `Failed to create userNotification: ${error.message}`,
+            error,
+          );
+        });
+
+      // notify space permissioners
+      const notificationTargetSpacePermissioners =
+        spacePermissioners?.data?.filter((spacePermissioner) => {
+          return spacePermissioner.userId !== permissionRequest.userId;
+        });
+      notificationTargetSpacePermissioners.map(async (spacePermissioner) => {
+        try {
+          await this.userNotificationService
+            .create({
+              userId: spacePermissioner.userId,
+              target: UserNotificationTarget.permissioner,
+              type: UserNotificationType.external,
+              templateName:
+                UserNotificationTemplateName.permissionRequestResolved,
+              params: {
+                permissionRequestId,
+                spaceRuleId: permissionRequest.spaceRule.id,
+                spaceRuleName: permissionRequest.spaceRule.name,
+                spaceEventId: permissionRequest.spaceEvent.id,
+                spaceEventName: permissionRequest.spaceEvent.name,
+                spaceEventStartsAt: permissionRequest.spaceEvent.startsAt,
+                spaceEventDuration: permissionRequest.spaceEvent.duration,
+                spaceEventRuleId: permissionRequest.spaceEventRule.id,
+                spaceEventRuleName: permissionRequest.spaceEventRule.name,
+              },
+            })
+            .catch((error) => {
+              throw new Error(
+                `Failed to create userNotification: ${error.message}`,
+              );
+            });
+        } catch (error) {
+          this.logger.error(error.message, error);
+        }
+      });
+    }
   }
 
   /**
@@ -184,9 +538,11 @@ export class PermissionHandlerProcessor {
       await this.permissionRequestService.findOneById(permissionRequestId);
     const oldSpaceRule = await this.ruleService.findOneById(
       permissionRequest.space.ruleId,
+      false,
     );
     const newSpaceRule = await this.ruleService.findOneById(
       permissionRequest.spaceRuleId,
+      false,
     );
     const spacePermissioners =
       await this.spacePermissionerService.findAllBySpaceId(
@@ -195,8 +551,27 @@ export class PermissionHandlerProcessor {
         false,
       );
 
-    // TODO. apply dynamic timeout value
-    const timeoutAt = dayjs(permissionRequest.createdAt).add(1, 'day').toDate();
+    const spaceConsentTimeoutRuleBlock = oldSpaceRule.ruleBlocks.find(
+      (item) => item.type === RuleBlockType.spaceConsentTimeout,
+    );
+    const timeoutAmount = parseInt(
+      spaceConsentTimeoutRuleBlock.content.slice(0, -1),
+      10,
+    );
+    const timeoutType = spaceConsentTimeoutRuleBlock.content.slice(-1);
+
+    if (
+      new BigNumber(timeoutAmount).lte(0) &&
+      ['d', 'h'].includes(timeoutType) === false
+    ) {
+      throw new Error(
+        `Space rule consent timeout must be in format: {number}{dh}`,
+      );
+    }
+
+    const timeoutAt = dayjs(permissionRequest.createdAt)
+      .add(timeoutAmount, timeoutType as ManipulateType)
+      .toDate();
 
     await this.userNotificationService
       .create({
@@ -277,8 +652,13 @@ export class PermissionHandlerProcessor {
     const { permissionRequestId } = option;
     const permissionRequest =
       await this.permissionRequestService.findOneById(permissionRequestId);
+    const spaceRule = await this.ruleService.findOneById(
+      permissionRequest.spaceRuleId,
+      false,
+    );
     const spaceEventRule = await this.ruleService.findOneById(
       permissionRequest.spaceEventRuleId,
+      false,
     );
     const spacePermissioners =
       await this.spacePermissionerService.findAllBySpaceId(
@@ -286,9 +666,27 @@ export class PermissionHandlerProcessor {
         { isActive: true },
         false,
       );
+    const spaceConsentTimeoutRuleBlock = spaceRule.ruleBlocks.find(
+      (item) => item.type === RuleBlockType.spaceConsentTimeout,
+    );
+    const timeoutAmount = parseInt(
+      spaceConsentTimeoutRuleBlock.content.slice(0, -1),
+      10,
+    );
+    const timeoutType = spaceConsentTimeoutRuleBlock.content.slice(-1);
 
-    // TODO. apply dynamic timeout value
-    const timeoutAt = dayjs(permissionRequest.createdAt).add(1, 'day').toDate();
+    if (
+      new BigNumber(timeoutAmount).lte(0) &&
+      ['d', 'h'].includes(timeoutType) === false
+    ) {
+      throw new Error(
+        `Space rule consent timeout must be in format: {number}{dh}`,
+      );
+    }
+
+    const timeoutAt = dayjs(permissionRequest.createdAt)
+      .add(timeoutAmount, timeoutType as ManipulateType)
+      .toDate();
 
     await this.userNotificationService
       .create({
@@ -362,8 +760,13 @@ export class PermissionHandlerProcessor {
     const { permissionResponses, spaceEventId } = permissionRequest;
     const { timeoutAt } = permissionResponses[0];
     const reviewedResponses = permissionResponses.filter(
-      (item) => item.status !== PermissionResponseStatus.pending,
+      (item) =>
+        [
+          PermissionResponseStatus.pending,
+          PermissionResponseStatus.timeout,
+        ].includes(item.status) === false,
     );
+
     const spacePermissioners =
       await this.spacePermissionerService.findAllBySpaceId(
         permissionRequest.spaceId,
@@ -376,11 +779,14 @@ export class PermissionHandlerProcessor {
       }) ?? [];
     const spaceRule = await this.ruleService.findOneById(
       permissionRequest.space.ruleId,
+      false,
     );
     const consentMethod = spaceRule.ruleBlocks.find(
       (item) => item.type === RuleBlockType.spaceConsentMethod,
     );
-    const [operator, percent, flag] = consentMethod.content.split('_');
+    const [operator, percent, flag] = consentMethod.content.split(
+      RuleBlockContentDivider.operator,
+    );
     const oldSpaceRuleId = permissionRequest.space.ruleId;
     const newSpaceRuleId = permissionRequest.spaceRuleId;
 
@@ -389,12 +795,22 @@ export class PermissionHandlerProcessor {
         ? PermissionRequestTarget.spaceEvent
         : PermissionRequestTarget.spaceRule;
 
+    // Everyone reviewed || timeout reached: can resolve
     const isResolveReady =
-      spacePermissioners.total === reviewedResponses.length ||
+      permissionResponses.length === reviewedResponses.length ||
       dayjs(timeoutAt) <= dayjs();
 
-    // Everyone reviewed: can resolve
     if (isResolveReady === true) {
+      const timeoutResponses = permissionResponses.filter(
+        (item) => item.status === PermissionResponseStatus.pending,
+      );
+
+      for (const permissionResponse of timeoutResponses) {
+        await this.permissionResponseService.updateToTimeout(
+          permissionResponse.id,
+        );
+      }
+
       const approvedResponses = permissionResponses.filter((item) =>
         [PermissionResponseStatus.approved].includes(item.status),
       );
@@ -429,14 +845,14 @@ export class PermissionHandlerProcessor {
         return result;
       }
 
-      if (flag === 'yes') {
+      if (flag.toLowerCase() === 'yes') {
         const approvedPercent = new BigNumber(approvedResponses.length)
           .plus(approvedWithConditionResponses.length)
           .div(reviewedResponses.length)
           .times(100)
           .toString();
         isConsent = comparePercent(operator, approvedPercent, percent);
-      } else if (flag == 'no') {
+      } else if (flag.toLowerCase() == 'no') {
         const rejectedPercent = new BigNumber(rejectedResponses.length)
           .div(reviewedResponses.length)
           .times(100)
@@ -458,6 +874,13 @@ export class PermissionHandlerProcessor {
         await this.permissionRequestService.updateToReviewApproved(
           permissionRequest.id,
         );
+
+        // add to space approved rule table
+        await this.spaceApprovedRuleService.create({
+          spaceId: permissionRequest.spaceId,
+          ruleId: permissionRequest.spaceEventRuleId,
+          permissionRequestId: permissionRequestId,
+        });
       } else if (
         isConsent === true &&
         approvedWithConditionResponses.length > 0

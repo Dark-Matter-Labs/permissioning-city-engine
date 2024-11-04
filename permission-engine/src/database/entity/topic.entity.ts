@@ -5,11 +5,12 @@ import {
   ManyToMany,
   CreateDateColumn,
   JoinTable,
+  OneToMany,
 } from 'typeorm';
 import { SpaceEvent } from './space-event.entity';
 import { ApiProperty } from '@nestjs/swagger';
-import { Space } from './space.entity';
 import { Rule } from './rule.entity';
+import { SpaceTopic } from './space-topic.entity';
 
 @Entity()
 export class Topic {
@@ -18,8 +19,24 @@ export class Topic {
   id: string;
 
   @Column()
+  @ApiProperty({ description: 'Topic author userId in uuid' })
+  authorId: string;
+
+  @Column()
   @ApiProperty({ description: 'Topic name in string' })
   name: string;
+
+  @Column()
+  @ApiProperty({ description: 'Country' })
+  country: string;
+
+  @Column()
+  @ApiProperty({ description: 'Region' })
+  region: string;
+
+  @Column()
+  @ApiProperty({ description: 'City' })
+  city: string;
 
   @Column()
   @ApiProperty({ description: 'Topic detail in string' })
@@ -37,6 +54,9 @@ export class Topic {
   @ApiProperty({ description: 'Updated timestamp' })
   updatedAt: Date;
 
+  @OneToMany(() => SpaceTopic, (spaceTopic) => spaceTopic.space)
+  spaceTopics: SpaceTopic[];
+
   @ManyToMany(() => SpaceEvent, (spaceEvent) => spaceEvent.topics)
   @JoinTable({ name: 'space_event_topic' })
   spaceEvents: SpaceEvent[];
@@ -44,7 +64,4 @@ export class Topic {
   @ManyToMany(() => Rule, (rule) => rule.topics)
   @JoinTable({ name: 'rule_topic' })
   rules: Rule[];
-
-  @ManyToMany(() => Space, (space) => space.topics)
-  spaces: Space[];
 }
