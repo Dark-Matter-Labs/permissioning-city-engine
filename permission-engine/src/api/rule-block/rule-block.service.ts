@@ -108,6 +108,9 @@ export class RuleBlockService {
       case RuleBlockType.spaceConsentMethod:
         this.validateSpaceConsentMethod(trimmedContent);
         break;
+      case RuleBlockType.spaceConsentTimeout:
+        this.validateSpaceConsentTimeout(trimmedContent);
+        break;
       case RuleBlockType.spaceAccess:
         this.validateSpaceAccess(trimmedContent);
         break;
@@ -164,9 +167,11 @@ export class RuleBlockService {
   }
 
   private validateSpaceConsentMethod(content: string) {
-    const testRegex = /^(under|over|is)_[0-9]+_(yes|no)$/;
+    const testRegex = /^(under|over|is):(100|[1-9]?[0-9]):(yes|no)$/;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [operator, percent, _flag] = content;
+    const [operator, percent, _flag] = content.split(
+      RuleBlockContentDivider.operator,
+    );
     if (
       testRegex.test(content) === false ||
       (operator === 'under' && parseInt(percent) === 0) ||
@@ -175,7 +180,16 @@ export class RuleBlockService {
       parseInt(percent) < 0
     ) {
       throw new BadRequestException(
-        'Consent condition must be in format: {under|over|is}_{percent}_{yes|no}',
+        `Consent condition must be in format: {under|over|is}${RuleBlockContentDivider.operator}{percent}${RuleBlockContentDivider.operator}{yes|no}`,
+      );
+    }
+  }
+
+  private validateSpaceConsentTimeout(content: string) {
+    const testRegex = /^\d+[dh]$/;
+    if (testRegex.test(content) === false) {
+      throw new BadRequestException(
+        'Space consent timeout must be in format: {number}{d|h}',
       );
     }
   }
@@ -288,7 +302,7 @@ export class RuleBlockService {
       content.split(RuleBlockContentDivider.type).length > 2
     ) {
       throw new BadRequestException(
-        'Space pre permission check must be in format: {boolean question}^{default answer in boolean}',
+        `Space pre permission check must be in format: {boolean question}${RuleBlockContentDivider.type}{default answer in boolean}`,
       );
     }
   }
@@ -303,7 +317,7 @@ export class RuleBlockService {
       ].includes(content)
     ) {
       throw new BadRequestException(
-        'SpaceEvent access type must be in format: {public|invited}_{free|paid}',
+        `SpaceEvent access type must be in format: {public|invited}${RuleBlockContentDivider.operator}{free|paid}`,
       );
     }
   }
