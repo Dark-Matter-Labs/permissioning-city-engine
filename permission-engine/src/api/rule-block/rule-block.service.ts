@@ -77,15 +77,21 @@ export class RuleBlockService {
       throw new BadRequestException('Should provide content');
     }
 
-    const trimmedContent = content?.trim();
+    const trimmedContent = content?.trim() ?? '';
     const trimmedName = name.trim();
-    const hash = Util.hash([type, trimmedName, trimmedContent].join(':'));
-
-    const ruleBlock = await this.ruleBlockRepository.findOneBy({ hash });
-
-    if (ruleBlock) {
-      return ruleBlock;
-    }
+    // omit after 3rd item in the splitted array: which is reason
+    const contentSplitByType = trimmedContent.split(
+      RuleBlockContentDivider.type,
+    );
+    const [contentKey, contentValue] = contentSplitByType;
+    const hash = Util.hash(
+      [
+        type,
+        contentSplitByType.length > 2
+          ? [contentKey, contentValue].join(RuleBlockContentDivider.type)
+          : trimmedContent,
+      ].join(RuleBlockContentDivider.type),
+    );
 
     switch (type) {
       case RuleBlockType.spaceGeneral:
@@ -330,23 +336,24 @@ export class RuleBlockService {
 
   private async validateSpaceEventException(content: string) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [spaceRuleBlockId, desiredValue, _reason] = content.split(
+    const [spaceRuleBlockHash, desiredValue, _reason] = content.split(
       RuleBlockContentDivider.type,
     );
-    const spaceRuleBlock = await this.findOneById(spaceRuleBlockId);
+    const spaceRuleBlocks =
+      (await this.findAll({ hash: spaceRuleBlockHash, page: 1, limit: 1 }))
+        ?.data ?? [];
 
-    if (!spaceRuleBlock) {
+    if (spaceRuleBlocks.length === 0) {
       throw new BadRequestException(
-        `There is no space ruleBlock with id: ${spaceRuleBlockId}`,
+        `There is no space ruleBlock with hash: ${spaceRuleBlockHash}`,
       );
     } else if (content.split(RuleBlockContentDivider.type).length !== 3) {
       throw new BadRequestException(
-        `content must be in format: {spaceRuleBlockId}:{desiredValue}:{reason}`,
+        `content must be in format: {spaceRuleBlockHash}${RuleBlockContentDivider.type}{desiredValue}${RuleBlockContentDivider.type}{reason}`,
       );
     } else {
-      const { type, content } = spaceRuleBlock;
+      const { type, content } = spaceRuleBlocks[0];
 
-      // TODO. finish conditionals
       if (type === RuleBlockType.spaceAccess) {
         this.validateSpaceEventAccess(desiredValue);
 
@@ -384,25 +391,30 @@ export class RuleBlockService {
   }
 
   private async validateSpaceEventPrePermissionCheckAnswer(content: string) {
-    const [spaceRuleBlockId, answer] = content.split(
-      RuleBlockContentDivider.type,
-    );
+    const dividedContent = content?.split(RuleBlockContentDivider.type) ?? [];
+    const [spaceRuleBlockHash, answer] = dividedContent;
 
-    if (content.split(RuleBlockContentDivider.type).length !== 2) {
+    if (dividedContent.length !== 2) {
       throw new BadRequestException(
-        `Content must be in format: {spaceRuleBlockId}^{true|false}`,
+        `Content must be in format: {spaceRuleBlockHash}^{true|false}`,
       );
     }
 
-    const spaceRuleBlock = await this.findOneById(spaceRuleBlockId);
+    const spaceRuleBlocks =
+      (await this.findAll({ hash: spaceRuleBlockHash, page: 1, limit: 1 }))
+        ?.data ?? [];
 
-    if (!spaceRuleBlock) {
+    if (spaceRuleBlocks.length === 0) {
       throw new BadRequestException(
-        `There is no space ruleBlock with id: ${spaceRuleBlockId}`,
+        `There is no space ruleBlock with id: ${spaceRuleBlockHash}`,
       );
     }
 
-    if (spaceRuleBlock.type !== RuleBlockType.spacePrePermissionCheck) {
+    if (
+      spaceRuleBlocks.find(
+        (item) => item.type !== RuleBlockType.spacePrePermissionCheck,
+      )
+    ) {
       throw new BadRequestException(
         `The space ruleBlock is not ${RuleBlockType.spacePrePermissionCheck} type`,
       );

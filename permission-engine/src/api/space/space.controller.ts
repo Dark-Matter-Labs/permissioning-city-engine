@@ -124,7 +124,7 @@ export class SpaceController {
         const bufferExceptionRuleBlock = spaceEventRule?.ruleBlocks?.find(
           (item) =>
             item.type === RuleBlockType.spaceEventException &&
-            item.content.startsWith(spaceAvailabilityBufferBlock.id),
+            item.content.startsWith(spaceAvailabilityBufferBlock.hash),
         );
         return {
           startTime: spaceEvent.startsAt,

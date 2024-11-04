@@ -254,7 +254,7 @@ export class PermissionRequestService {
     for (const spaceRuleBlock of spacePrePermissionCheckRuleBlocks) {
       if (
         !spaceEventPrePermissionCheckAnswerRuleBlocks.find((item) =>
-          item.content.startsWith(spaceRuleBlock.id),
+          item.content.startsWith(spaceRuleBlock.hash),
         )
       ) {
         throw new BadRequestException(
