@@ -134,10 +134,13 @@ export class RuleService {
           RuleBlockContentDivider.type,
         );
         where.push(
-          `(rb.type = 'space_event:require_equipments' AND rb.content LIKE $${paramIndex + 1} AND CAST(split_part(rb.content, ':', 2) AS INTEGER) >= $${paramIndex + 2})`,
+          `(rb.type = 'space_event:require_equipments' AND rb.content LIKE $${paramIndex++} AND CAST(split_part(rb.content, $${paramIndex++}, 2) AS INTEGER) >= $${paramIndex++})`,
         );
-        paramIndex = paramIndex + 2;
-        params.push(`${spaceEquipmentId}%`, quantity);
+        params.push(
+          `${spaceEquipmentId}%`,
+          RuleBlockContentDivider.type,
+          quantity,
+        );
       });
     }
 
@@ -294,73 +297,9 @@ export class RuleService {
     );
 
     if (target === RuleTarget.space) {
-      if (ruleBlocks.find((item) => item.type.startsWith('space_event:'))) {
-        throw new BadRequestException('Target mismatch');
-      }
-
-      const spaceConsentMethodBlocks = ruleBlocks.filter(
-        (item) => item.type === RuleBlockType.spaceConsentMethod,
-      );
-
-      if (spaceConsentMethodBlocks.length !== 1) {
-        throw new BadRequestException(
-          'There should be one RuleBlock with space:consent_method type.',
-        );
-      }
-
-      const spaceAccess = ruleBlocks.filter(
-        (item) => item.type === RuleBlockType.spaceAccess,
-      );
-
-      if (spaceAccess.length !== 1) {
-        throw new BadRequestException(
-          'There should be one RuleBlock with space:access type.',
-        );
-      }
-
-      const spaceMaxAttendee = ruleBlocks.filter(
-        (item) => item.type === RuleBlockType.spaceMaxAttendee,
-      );
-
-      if (spaceMaxAttendee.length !== 1) {
-        throw new BadRequestException(
-          'There should be one RuleBlock with space:max_attendee type.',
-        );
-      }
-
-      const spaceAvailabilityBlocks = ruleBlocks.filter(
-        (item) => item.type === RuleBlockType.spaceAvailability,
-      );
-
-      if (spaceAvailabilityBlocks.length !== 1) {
-        throw new BadRequestException(
-          'There should be one RuleBlock with space:availability type.',
-        );
-      }
-
-      const spaceAvailabilityUnitBlocks = ruleBlocks.filter(
-        (item) => item.type === RuleBlockType.spaceAvailabilityUnit,
-      );
-
-      if (spaceAvailabilityUnitBlocks.length !== 1) {
-        throw new BadRequestException(
-          'There should be one RuleBlock with space:availability_unit type.',
-        );
-      }
-
-      const spaceAvailabilityBufferBlocks = ruleBlocks.filter(
-        (item) => item.type === RuleBlockType.spaceAvailabilityBuffer,
-      );
-
-      if (spaceAvailabilityBufferBlocks.length !== 1) {
-        throw new BadRequestException(
-          'There should be one RuleBlock with space:availability_buffer type.',
-        );
-      }
+      this.validateSpaceRuleBlockSet(ruleBlocks);
     } else if (target === RuleTarget.spaceEvent) {
-      if (ruleBlocks.find((item) => item.type.startsWith('space:'))) {
-        throw new BadRequestException('Target mismatch');
-      }
+      this.validateSpaceEventRuleBlockSet(ruleBlocks);
     } else {
       throw new BadRequestException();
     }
@@ -422,7 +361,7 @@ export class RuleService {
 
   /**
    * The author of the rule can update the Rule.
-   * Cannot update space rule
+   * Cannot update assigned space rule
    * Cannot update spaceEvent rule when permission is requested
    */
   async archiveAndUpdate(
@@ -535,7 +474,7 @@ export class RuleService {
         ruleBlocks,
       })
       .catch((error) => {
-        this.logger.error('Failed to save atch', error);
+        this.logger.error('Failed to save rule', error);
         result = false;
         return null;
       });
@@ -545,6 +484,75 @@ export class RuleService {
         result,
         archivedRule,
         updatedRule,
+      },
+    };
+  }
+
+  /**
+   * Only allowed to PermissionHandler
+   */
+  async update(
+    id: string,
+    updateRuleDto: UpdateRuleDto,
+  ): Promise<{
+    data: {
+      result: boolean;
+    };
+  }> {
+    const { name, ruleBlockIds } = updateRuleDto;
+    const rule = await this.ruleRepository.findOne({
+      where: { id },
+      relations: ['ruleBlocks'],
+    });
+
+    if (!rule) {
+      throw new BadRequestException(`There is no rule with id: ${id}`);
+    }
+
+    const { target } = rule;
+
+    const ruleBlocks = await this.ruleBlockRepository.find({
+      where: { id: In(ruleBlockIds) },
+    });
+
+    if (ruleBlocks.length !== ruleBlockIds.length) {
+      throw new BadRequestException(`ruleBlockIds contain wrong items`);
+    }
+
+    const hash = Util.hash(
+      ruleBlocks
+        .map((item) => item.hash)
+        .sort()
+        .join(),
+    );
+
+    if (target === RuleTarget.space) {
+      this.validateSpaceRuleBlockSet(ruleBlocks);
+    } else if (target === RuleTarget.spaceEvent) {
+      this.validateSpaceEventRuleBlockSet(ruleBlocks);
+    } else {
+      throw new BadRequestException();
+    }
+
+    let result = true;
+
+    // save archive
+    await this.ruleRepository
+      .save({
+        ...rule,
+        name: name ?? rule.name,
+        hash,
+        ruleBlocks,
+      })
+      .catch((error) => {
+        this.logger.error('Failed to save rule', error);
+        result = false;
+        return null;
+      });
+
+    return {
+      data: {
+        result,
       },
     };
   }
@@ -604,5 +612,111 @@ export class RuleService {
         result,
       },
     };
+  }
+
+  validateSpaceRuleBlockSet(ruleBlocks: RuleBlock[]): boolean {
+    if (ruleBlocks.find((item) => item.type.startsWith('space_event:'))) {
+      throw new BadRequestException('Target mismatch');
+    }
+
+    const spaceConsentMethodBlocks = ruleBlocks.filter(
+      (item) => item.type === RuleBlockType.spaceConsentMethod,
+    );
+
+    if (spaceConsentMethodBlocks.length !== 1) {
+      throw new BadRequestException(
+        'There should be one RuleBlock with space:consent_method type.',
+      );
+    }
+
+    const spaceAccess = ruleBlocks.filter(
+      (item) => item.type === RuleBlockType.spaceAccess,
+    );
+
+    if (spaceAccess.length !== 1) {
+      throw new BadRequestException(
+        'There should be one RuleBlock with space:access type.',
+      );
+    }
+
+    const spaceMaxAttendee = ruleBlocks.filter(
+      (item) => item.type === RuleBlockType.spaceMaxAttendee,
+    );
+
+    if (spaceMaxAttendee.length !== 1) {
+      throw new BadRequestException(
+        'There should be one RuleBlock with space:max_attendee type.',
+      );
+    }
+
+    const spaceAvailabilityBlocks = ruleBlocks.filter(
+      (item) => item.type === RuleBlockType.spaceAvailability,
+    );
+
+    if (spaceAvailabilityBlocks.length !== 1) {
+      throw new BadRequestException(
+        'There should be one RuleBlock with space:availability type.',
+      );
+    }
+
+    const spaceAvailabilityUnitBlocks = ruleBlocks.filter(
+      (item) => item.type === RuleBlockType.spaceAvailabilityUnit,
+    );
+
+    if (spaceAvailabilityUnitBlocks.length !== 1) {
+      throw new BadRequestException(
+        'There should be one RuleBlock with space:availability_unit type.',
+      );
+    }
+
+    const spaceAvailabilityBufferBlocks = ruleBlocks.filter(
+      (item) => item.type === RuleBlockType.spaceAvailabilityBuffer,
+    );
+
+    if (spaceAvailabilityBufferBlocks.length !== 1) {
+      throw new BadRequestException(
+        'There should be one RuleBlock with space:availability_buffer type.',
+      );
+    }
+
+    return true;
+  }
+
+  validateSpaceEventRuleBlockSet(ruleBlocks: RuleBlock[]): boolean {
+    if (ruleBlocks.find((item) => item.type.startsWith('space:'))) {
+      throw new BadRequestException('Target mismatch');
+    }
+
+    const spaceEventAccessBlocks = ruleBlocks.filter(
+      (item) => item.type === RuleBlockType.spaceEventAccess,
+    );
+
+    if (spaceEventAccessBlocks.length !== 1) {
+      throw new BadRequestException(
+        'There should be one RuleBlock with space_event:access type.',
+      );
+    }
+
+    const spaceEventExpectedAttendeeCountBlocks = ruleBlocks.filter(
+      (item) => item.type === RuleBlockType.spaceEventExpectedAttendeeCount,
+    );
+
+    if (spaceEventExpectedAttendeeCountBlocks.length !== 1) {
+      throw new BadRequestException(
+        'There should be one RuleBlock with space_event:expected_attendee_count type.',
+      );
+    }
+
+    const spaceEventNoiseLevelBlocks = ruleBlocks.filter(
+      (item) => item.type === RuleBlockType.spaceEventNoiseLevel,
+    );
+
+    if (spaceEventNoiseLevelBlocks.length !== 1) {
+      throw new BadRequestException(
+        'There should be one RuleBlock with space_event:noise_level type.',
+      );
+    }
+
+    return true;
   }
 }
