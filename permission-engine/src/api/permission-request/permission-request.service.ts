@@ -1,9 +1,15 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  forwardRef,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import {
   PermissionProcessType,
   PermissionRequestResolveStatus,
   PermissionRequestStatus,
+  RuleBlockType,
 } from 'src/lib/type';
 import {
   CreatePermissionRequestDto,
@@ -18,6 +24,7 @@ import { SpaceEvent } from 'src/database/entity/space-event.entity';
 import * as Util from 'src/lib/util/util';
 import { Logger } from 'src/lib/logger/logger.service';
 import { PermissionHandlerService } from 'src/lib/permission-handler/permission-handler.service';
+import { RuleService } from '../rule/rule.service';
 
 @Injectable()
 export class PermissionRequestService {
@@ -30,6 +37,7 @@ export class PermissionRequestService {
     private spaceEventRepository: Repository<SpaceEvent>,
     @Inject(forwardRef(() => PermissionHandlerService))
     private readonly permissionHandlerService: PermissionHandlerService,
+    private readonly ruleService: RuleService,
     private readonly logger: Logger,
   ) {}
 
@@ -230,6 +238,29 @@ export class PermissionRequestService {
     } else if (spaceEventRuleId) {
       permissionProcessType =
         PermissionProcessType.spaceEventRulePreApprovePermissionRequestCreated;
+    }
+
+    const spaceRule = await this.ruleService.findOneById(spaceRuleId);
+    const spacePrePermissionCheckRuleBlocks = spaceRule.ruleBlocks.filter(
+      (item) => item.type === RuleBlockType.spacePrePermissionCheck,
+    );
+    const spaceEventRule = await this.ruleService.findOneById(spaceEventRuleId);
+    const spaceEventPrePermissionCheckAnswerRuleBlocks =
+      spaceEventRule.ruleBlocks.filter(
+        (item) =>
+          item.type === RuleBlockType.spaceEventPrePermissionCheckAnswer,
+      );
+
+    for (const spaceRuleBlock of spacePrePermissionCheckRuleBlocks) {
+      if (
+        !spaceEventPrePermissionCheckAnswerRuleBlocks.find((item) =>
+          item.content.startsWith(spaceRuleBlock.id),
+        )
+      ) {
+        throw new BadRequestException(
+          `SpaceEventRule must have all answers for each prePermissionCheck ruleBlock: ${spaceRuleBlock.id}`,
+        );
+      }
     }
 
     const permissionRequest = this.permissionRequestRepository.create({
