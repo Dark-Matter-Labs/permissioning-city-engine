@@ -180,7 +180,7 @@ export class SpaceService {
     let result = false;
 
     try {
-      const space = await this.findOneById(id, ['topics']);
+      const space = await this.findOneById(id, ['spaceTopics']);
 
       if (space.spaceTopics.length >= 20) {
         throw new BadRequestException(`Cannot have more than 20 topics`);
