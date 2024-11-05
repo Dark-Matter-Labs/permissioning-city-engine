@@ -32,6 +32,7 @@ import { User } from 'src/database/entity/user.entity';
 import { mockup } from './mockup';
 import { RuleBlockType } from 'src/lib/type';
 import { SpaceApprovedRuleService } from 'src/api/space-approved-rule/space-approved-rule.service';
+import { TopicService } from 'src/api/topic/topic.service';
 
 @Injectable()
 export class MockupService implements OnModuleInit, OnModuleDestroy {
@@ -78,6 +79,7 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
     private readonly permissionResponseService: PermissionResponseService,
     private readonly ruleService: RuleService,
     private readonly ruleBlockService: RuleBlockService,
+    private readonly topicService: TopicService,
     private readonly logger: Logger,
   ) {
     this.pool = new Pool(this.configService.get<DatabaseConfig>('database'));
@@ -198,6 +200,19 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
         [spacePermissioners.map((item) => item.id)],
       );
       await this.client.query(
+        `DELETE FROM "rule_topic" WHERE rule_id = ANY($1)`,
+        [rules.map((item) => item.id)],
+      );
+      await this.client.query(
+        `DELETE FROM "space_topic" WHERE space_id = ANY($1)`,
+        [spaces.map((item) => item.id)],
+      );
+      await this.client.query(
+        `DELETE FROM "space_event_topic" WHERE space_event_id = ANY($1)`,
+        [spaceEvents.map((item) => item.id)],
+      );
+      // mock down datasets
+      await this.client.query(
         `DELETE FROM "permission_request" WHERE id = ANY($1)`,
         [permissionRequests.map((item) => item.id)],
       );
@@ -255,6 +270,10 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
         createSpaceEventImageDtos,
       } = mockup;
 
+      const topics =
+        (await this.topicService.findAll({ isActive: true }, false))?.data ??
+        [];
+
       const users = [];
       const spaceRuleBlocks = [];
       const spaceRules = [];
@@ -292,10 +311,11 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
         );
       }
 
-      for (const createRuleDto of createSpaceRuleDtos) {
+      for (const [i, createRuleDto] of createSpaceRuleDtos.entries()) {
         spaceRules.push(
           await this.ruleService.create(spaceRuleBlockAuthor.id, {
             ...createRuleDto,
+            topicIds: [topics[i].id],
           }),
         );
       }
@@ -320,6 +340,7 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
           await this.spaceService.create(users[i].id, {
             ...createSpaceDto,
             ruleId: spaceRules[i].id,
+            topicIds: [topics[i + 1].id],
           }),
         );
       }
@@ -393,10 +414,11 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
         );
       }
 
-      for (const createRuleDto of createSpaceEventRuleDtos) {
+      for (const [i, createRuleDto] of createSpaceEventRuleDtos.entries()) {
         spaceEventRules.push(
           await this.ruleService.create(spaceEventRuleBlockAuthor.id, {
             ...createRuleDto,
+            topicIds: [topics[i + 2].id],
           }),
         );
       }
@@ -435,6 +457,7 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
             ...createSpaceEventDto,
             spaceId: spaces[i].id,
             ruleId: spaceEventRules[i].id,
+            topicIds: [topics[i + 2].id],
           }),
         );
       }
@@ -450,6 +473,12 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
             });
           });
       }
+
+      await this.spaceEventService.updateToPermissionRequested(
+        spaceEvents[3].id,
+      );
+      await this.spaceEventService.updateToPermissionGranted(spaceEvents[3].id);
+      await this.spaceEventService.updateToRunning(spaceEvents[3].id);
 
       this.logger.log(`mockup: Successfully mocked up test data`);
     } catch (error) {

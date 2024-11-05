@@ -20,7 +20,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { hash } from '../util/util';
 
-function getDate(
+function getNextWeekDate(
   day: 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun',
   hour: number,
   minute: number,
@@ -63,6 +63,51 @@ function getDate(
   nextWeekDay.setHours(hour, minute, 0, 0); // Set time to 09:00:00
 
   return nextWeekDay;
+}
+
+function getPreviousWeekDate(
+  day: 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun',
+  hour: number,
+  minute: number,
+) {
+  const now = new Date();
+
+  let dayFlag = 8; // default: mon
+
+  switch (day) {
+    case 'mon':
+      break;
+    case 'tue':
+      dayFlag = 2;
+      break;
+    case 'wed':
+      dayFlag = 3;
+      break;
+    case 'thu':
+      dayFlag = 4;
+      break;
+    case 'fri':
+      dayFlag = 5;
+      break;
+    case 'sat':
+      dayFlag = 6;
+      break;
+    case 'sun':
+      dayFlag = 7;
+      break;
+
+    default:
+      break;
+  }
+
+  const dayOfWeek = now.getDay(); // 0 is Sunday, 1 is Monday, ..., 6 is Saturday
+  const daysFromPreviousWeekDay = (dayFlag + dayOfWeek) % 7 || 7; // Calculate how many days until previous Monday
+
+  const previousWeekDay = new Date(now);
+  previousWeekDay.setDate(now.getDate() - daysFromPreviousWeekDay); // Move to previous Monday
+  previousWeekDay.setHours(hour, minute, 0, 0); // Set time to 09:00:00
+
+  return previousWeekDay;
 }
 
 const testEmails = process.env.TEST_EMAILS?.split(',') ?? [];
@@ -561,7 +606,7 @@ const createSpaceEventDtos: Partial<CreateSpaceEventDto>[] = [
     // ruleId: '',
     details: 'event1 at space1',
     duration: '1h',
-    startsAt: getDate('mon', 9, 0),
+    startsAt: getNextWeekDate('mon', 9, 0),
   },
   {
     name: 'test Event 2',
@@ -569,7 +614,7 @@ const createSpaceEventDtos: Partial<CreateSpaceEventDto>[] = [
     // ruleId: '',
     details: 'event2 at space2',
     duration: '2h',
-    startsAt: getDate('sat', 13, 0),
+    startsAt: getNextWeekDate('sat', 13, 0),
   },
   {
     name: 'test Event 3',
@@ -577,7 +622,7 @@ const createSpaceEventDtos: Partial<CreateSpaceEventDto>[] = [
     // ruleId: '',
     details: 'event3 at space3',
     duration: '3h',
-    startsAt: getDate('fri', 15, 0),
+    startsAt: getNextWeekDate('fri', 15, 0),
   },
   {
     name: 'test Event 4',
@@ -585,7 +630,7 @@ const createSpaceEventDtos: Partial<CreateSpaceEventDto>[] = [
     // ruleId: '',
     details: 'event4 at space4',
     duration: '4h',
-    startsAt: getDate('sun', 9, 0),
+    startsAt: getPreviousWeekDate('sun', 9, 0),
   },
 ];
 const createSpacePermissionerDtos: Partial<CreateSpacePermissionerDto>[] = [];
