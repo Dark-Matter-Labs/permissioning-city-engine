@@ -104,9 +104,9 @@ export class UserNotificationService {
   ): Promise<{ data: { result: boolean } }> {
     const updateResult = await this.userNotificationRepository.update(id, {
       status: UserNotificationStatus.queued,
-      subjectPart: email.subject,
-      textPart: email.text,
-      htmlPart: email.html,
+      subjectPart: email?.subject ?? '',
+      textPart: email?.text ?? '',
+      htmlPart: email?.html ?? '',
       updatedAt: new Date(),
     });
 
@@ -159,11 +159,16 @@ export class UserNotificationService {
     id: string,
     errorMessage?: string,
   ): Promise<{ data: { result: boolean } }> {
-    const updateResult = await this.userNotificationRepository.update(id, {
+    const dto: Partial<UserNotification> = {
       status: UserNotificationStatus.noticeFailed,
-      errorMessage,
       updatedAt: new Date(),
-    });
+    };
+
+    if (errorMessage) {
+      dto.errorMessage = errorMessage;
+    }
+
+    const updateResult = await this.userNotificationRepository.update(id, dto);
 
     return {
       data: {
