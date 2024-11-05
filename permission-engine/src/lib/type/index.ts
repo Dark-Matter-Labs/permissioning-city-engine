@@ -328,6 +328,7 @@ export enum Language {
 export enum PermissionRequestTarget {
   spaceEvent = 'space-event',
   spaceRule = 'space-rule',
+  spaceEventRulePreApprove = 'space-event-rule-pre-approve',
 }
 
 export enum PermissionProcessType {

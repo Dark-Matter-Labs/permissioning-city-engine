@@ -792,7 +792,9 @@ export class PermissionHandlerProcessor {
 
     const permissionRequestType =
       oldSpaceRuleId === newSpaceRuleId
-        ? PermissionRequestTarget.spaceEvent
+        ? permissionRequest.spaceEventId
+          ? PermissionRequestTarget.spaceEvent
+          : PermissionRequestTarget.spaceEventRulePreApprove
         : PermissionRequestTarget.spaceRule;
 
     // Everyone reviewed || timeout reached: can resolve
@@ -920,6 +922,29 @@ export class PermissionHandlerProcessor {
           );
           await this.spaceService.update(permissionRequest.spaceId, {
             ruleId: permissionRequest.spaceRuleId,
+          });
+        } else {
+          permissionRequestResolveStatus =
+            PermissionRequestResolveStatus.resolveRejected;
+          await this.permissionRequestService.updateToResolveRejected(
+            permissionRequest.id,
+            true,
+          );
+        }
+      } else if (
+        permissionRequestType ===
+        PermissionRequestTarget.spaceEventRulePreApprove
+      ) {
+        if (isConsent === true) {
+          permissionRequestResolveStatus =
+            PermissionRequestResolveStatus.resolveAccepted;
+          await this.permissionRequestService.updateToResolveAccepted(
+            permissionRequest.id,
+            true,
+          );
+          await this.spaceApprovedRuleService.create({
+            spaceId: permissionRequest.spaceId,
+            ruleId: permissionRequest.spaceEventRuleId,
           });
         } else {
           permissionRequestResolveStatus =
