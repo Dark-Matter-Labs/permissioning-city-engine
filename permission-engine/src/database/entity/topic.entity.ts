@@ -27,6 +27,10 @@ export class Topic {
   name: string;
 
   @Column()
+  @ApiProperty({ description: 'Topic icon' })
+  icon: string;
+
+  @Column()
   @ApiProperty({ description: 'Country' })
   country: string;
 
