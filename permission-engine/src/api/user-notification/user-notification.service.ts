@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, In, Repository } from 'typeorm';
+import { FindOptionsWhere, In, LessThanOrEqual, Repository } from 'typeorm';
 import { UserNotification } from '../../database/entity/user-notification.entity';
 import { UserNotificationStatus, UserNotificationType } from 'src/lib/type';
 import { CreateUserNotificationDto, FindAllUserNotificationDto } from './dto';
 import { v4 as uuidv4 } from 'uuid';
 import { EmailTemplate } from 'src/lib/email-template';
+import dayjs from 'dayjs';
 
 @Injectable()
 export class UserNotificationService {
@@ -41,10 +42,17 @@ export class UserNotificationService {
 
   async findPendingExternal(limit: number = 100): Promise<UserNotification[]> {
     return await this.userNotificationRepository.find({
-      where: {
-        status: UserNotificationStatus.pending,
-        type: UserNotificationType.external,
-      },
+      where: [
+        {
+          status: UserNotificationStatus.pending,
+          type: UserNotificationType.external,
+        },
+        {
+          status: UserNotificationStatus.queued,
+          updatedAt: LessThanOrEqual(dayjs().subtract(5, 'm').toDate()),
+          type: UserNotificationType.external,
+        },
+      ],
       relations: ['user'],
       order: {
         createdAt: 'ASC',
@@ -96,9 +104,9 @@ export class UserNotificationService {
   ): Promise<{ data: { result: boolean } }> {
     const updateResult = await this.userNotificationRepository.update(id, {
       status: UserNotificationStatus.queued,
-      subjectPart: email.subject,
-      textPart: email.text,
-      htmlPart: email.html,
+      subjectPart: email?.subject ?? '',
+      textPart: email?.text ?? '',
+      htmlPart: email?.html ?? '',
       updatedAt: new Date(),
     });
 
@@ -151,11 +159,16 @@ export class UserNotificationService {
     id: string,
     errorMessage?: string,
   ): Promise<{ data: { result: boolean } }> {
-    const updateResult = await this.userNotificationRepository.update(id, {
+    const dto: Partial<UserNotification> = {
       status: UserNotificationStatus.noticeFailed,
-      errorMessage,
       updatedAt: new Date(),
-    });
+    };
+
+    if (errorMessage) {
+      dto.errorMessage = errorMessage;
+    }
+
+    const updateResult = await this.userNotificationRepository.update(id, dto);
 
     return {
       data: {

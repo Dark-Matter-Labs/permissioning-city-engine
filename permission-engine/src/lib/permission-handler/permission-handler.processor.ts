@@ -45,13 +45,15 @@ export class PermissionHandlerProcessor {
 
   @Process({ concurrency: 1 })
   async handlePermissionProcess(job: Job<any>) {
-    if (process.env.ENGINE_MODE !== 'daemon') {
-      return;
-    }
-    this.logger.log('Handling permission:', job.data);
     // Job processing logic
     await new Promise<void>(async (resolve, reject) => {
       try {
+        if (process.env.ENGINE_MODE === 'daemon') {
+          this.logger.log('Handling permission:', job.data);
+        } else {
+          reject();
+        }
+
         switch (job.data.permissionProcessType) {
           case PermissionProcessType.spaceEventPermissionRequestCreated:
             await this.spaceEventPermissionRequestCreated(job.data).then(
@@ -375,20 +377,15 @@ export class PermissionHandlerProcessor {
       await this.userNotificationService
         .create({
           userId: permissionRequest.spaceEvent.organizerId,
-          target: UserNotificationTarget.general,
+          target: UserNotificationTarget.eventOrgnaizer,
           type: UserNotificationType.external,
           templateName:
-            UserNotificationTemplateName.spaceEventPermissionRequested,
+            UserNotificationTemplateName.spaceEventPermissionRequestCreated,
           params: {
             permissionRequestId,
-            spaceRuleId: permissionRequest.spaceRule.id,
-            spaceRuleName: permissionRequest.spaceRule.name,
+            spaceName: permissionRequest.space.name,
+            timeoutAt: timeoutAt,
             spaceEventId: permissionRequest.spaceEvent.id,
-            spaceEventName: permissionRequest.spaceEvent.name,
-            spaceEventStartsAt: permissionRequest.spaceEvent.startsAt,
-            spaceEventDuration: permissionRequest.spaceEvent.duration,
-            spaceEventRuleId: permissionRequest.spaceEventRule.id,
-            spaceEventRuleName: permissionRequest.spaceEventRule.name,
           },
         })
         .catch((error) => {
@@ -418,22 +415,14 @@ export class PermissionHandlerProcessor {
           await this.userNotificationService
             .create({
               userId: spacePermissioner.userId,
-              target: UserNotificationTarget.general,
+              target: UserNotificationTarget.permissioner,
               type: UserNotificationType.external,
               templateName:
                 UserNotificationTemplateName.spaceEventPermissionRequested,
               params: {
                 permissionRequestId,
-                spaceRuleId: permissionRequest.spaceRule.id,
-                spaceRuleName: permissionRequest.spaceRule.name,
-                spaceEventId: permissionRequest.spaceEvent.id,
-                spaceEventName: permissionRequest.spaceEvent.name,
-                spaceEventStartsAt: permissionRequest.spaceEvent.startsAt,
-                spaceEventDuration: permissionRequest.spaceEvent.duration,
-                spaceEventRuleId: permissionRequest.spaceEventRule.id,
-                spaceEventRuleName: permissionRequest.spaceEventRule.name,
+                spaceId: permissionRequest.spaceId,
                 permissionResponseId: permissionResponse.id,
-                permissionResponseTimeoutAt: permissionResponse.timeoutAt,
               },
             })
             .catch((error) => {
@@ -792,7 +781,9 @@ export class PermissionHandlerProcessor {
 
     const permissionRequestType =
       oldSpaceRuleId === newSpaceRuleId
-        ? PermissionRequestTarget.spaceEvent
+        ? permissionRequest.spaceEventId
+          ? PermissionRequestTarget.spaceEvent
+          : PermissionRequestTarget.spaceEventRulePreApprove
         : PermissionRequestTarget.spaceRule;
 
     // Everyone reviewed || timeout reached: can resolve
@@ -920,6 +911,29 @@ export class PermissionHandlerProcessor {
           );
           await this.spaceService.update(permissionRequest.spaceId, {
             ruleId: permissionRequest.spaceRuleId,
+          });
+        } else {
+          permissionRequestResolveStatus =
+            PermissionRequestResolveStatus.resolveRejected;
+          await this.permissionRequestService.updateToResolveRejected(
+            permissionRequest.id,
+            true,
+          );
+        }
+      } else if (
+        permissionRequestType ===
+        PermissionRequestTarget.spaceEventRulePreApprove
+      ) {
+        if (isConsent === true) {
+          permissionRequestResolveStatus =
+            PermissionRequestResolveStatus.resolveAccepted;
+          await this.permissionRequestService.updateToResolveAccepted(
+            permissionRequest.id,
+            true,
+          );
+          await this.spaceApprovedRuleService.create({
+            spaceId: permissionRequest.spaceId,
+            ruleId: permissionRequest.spaceEventRuleId,
           });
         } else {
           permissionRequestResolveStatus =

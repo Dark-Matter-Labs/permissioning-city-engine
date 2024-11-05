@@ -1,0 +1,42 @@
+{
+  "welcome": {
+    "subject": "{platformName}에 오신 것을 환영합니다!",
+    "text": "안녕하세요 {name}님,\n\n시민들이 함께 만드는 공간 예약/관리 플랫폼 {platformName}에 가입해주셔서 감사합니다.\n\n처음 시작하는 방법은 {howToGuideLink} 에서 확인해 보세요. 여러분의 참여로 더 활기찬 공간이 만들어집니다!",
+    "html": "<h1>안녕하세요 {name}님,</h1><p>시민들이 함께 만드는 공간 예약/관리 플랫폼 {platformName}에 가입해주셔서 감사합니다.</p><p>처음 시작하는 방법은 <a href='{howToGuideLink}'>how-to guide</a>에서 확인해 보세요. 여러분의 참여로 더 활기찬 공간이 만들어집니다!</p>"
+  },
+  "spaceEventPermissionRequestCreated": {
+    "subject": "활동 신청이 제출되었습니다",
+    "text": "안녕하세요, {name}님!\n활동 신청이 성공적으로 제출되었습니다.\n이제 {spaceName} 커뮤니티 리뷰어가 신청을 검토하며, 결과는 {timeoutAt} 내에 안내될 예정입니다.\n\n신청 진행 상황은 {eventDashboardLink} 에서 확인하실 수 있어요.\n곧 좋은 소식으로 찾아뵙길 기대합니다!",
+    "html": "<h1>안녕하세요, {name}님!</h1><p>활동 신청이 성공적으로 제출되었습니다.</p><p>이제 {spaceName} 커뮤니티 리뷰어가 신청을 검토하며, 결과는 {timeoutAt} 내에 안내될 예정입니다.</p><p>청 진행 상황은 <a href='{eventDashboardLink}'>활동 대시보드</a>에서 확인하실 수 있어요.\n곧 좋은 소식으로 찾아뵙길 기대합니다!</p>"
+  },
+  "spaceEventPermissionRequested": {
+    "subject": "새로운 활동 신청 - 검토가 필요합니다",
+    "text": "안녕하세요 {name}님,\n\n새로운 활동 신청이 접수되었습니다. {communityDashboardLink} 에서 검토하고 응답해 주세요.",
+    "html": "<h1>안녕하세요 {name}님,</h1><p>새로운 활동 신청이 접수되었습니다. <a href='{communityDashboardLink}'>커뮤니티 대시보드</a>에서 검토하고 응답해 주세요.</p>"
+  },
+  "spaceRuleChangePermissionRequestCreated": {
+    "subject": "규칙 템플릿 변경 신청이 제출되었습니다",
+    "text": "안녕하세요, {name}님!\n규칙 템플릿 변경 신청이 성공적으로 제출되었습니다.\n이제 {spaceName} 커뮤니티 리뷰어가 신청을 검토하며, 결과는 {timeoutAt} 내에 안내될 예정입니다.\n\n신청 진행 상황은 {communityDashboardLink} 에서 확인하실 수 있어요.\n곧 좋은 소식으로 찾아뵙길 기대합니다!",
+    "html": "<h1>안녕하세요, {name}님!</h1><p>규칙 템플릿 변경 신청이 성공적으로 제출되었습니다.</p><p>이제 {spaceName} 커뮤니티 리뷰어가 신청을 검토하며, 결과는 {timeoutAt} 내에 안내될 예정입니다.</p><p>청 진행 상황은 <a href='{communityDashboardLink}'>커뮤니티 대시보드</a>에서 확인하실 수 있어요.\n곧 좋은 소식으로 찾아뵙길 기대합니다!</p>"
+  },
+  "spaceRuleChangePermissionRequested": {
+    "subject": "규칙 템플릿 변경 요청 - 검토 필요",
+    "text": "안녕하세요 {name}님,\n\n새로운 규칙 템플릿 수정 요청이 접수되었습니다. {communityDashboardLink}에서 내용을 확인하고 검토해 주세요.",
+    "html": "<h1>안녕하세요 {name}님,</h1><p>새로운 규칙 템플릿 수정 요청이 접수되었습니다. <a href='{communityDashboardLink}'>커뮤니티 대시보드</a>.</p>에서 내용을 확인하고 검토해 주세요."
+  },
+  "spaceEventPermissionRequestApproved": {
+    "subject": "활동 신청이 승인되었습니다",
+    "text": "안녕하세요 {name}님,\n\n요청하신 {eventTitle}에 대한 신청이 승인되었습니다.\n\n{permissionResponseSummary}\n\n{resolveLink} 에서 신청 결과를 확인하고 {externalBookingLink} 에서 **승인 코드**를 입력해 예약을 완료하세요.\n{eventDashboardLink} 에서 자세한 내용을 확인하실 수 있습니다.",
+    "html": "<h1>안녕하세요 {name}님,</h1><p>요청하신 {eventTitle}에 대한 신청이 승인되었습니다.</p><p>{permissionResponseSummary}</p><p><a href='{resolveLink}'>활동 신청 결과 확인 페이지</a>에서 신청 결과를 확인하고 <a href='{externalBookingLink}'>예약 사이트</a>에서 <strong>승인 코드</strong>를 입력해 예약을 완료하세요.\n<a href='{eventDashboardLink}'>활동 대시보드</a>에서 자세한 내용을 확인하실 수 있습니다.</p>"
+  },
+  "spaceEventPermissionRequestRejected": {
+    "subject": "활동 신청 검토 결과 안내",
+    "text": "안녕하세요 {name}님,\n\n{eventTitle} 신청을 검토했지만, 아쉽게도 이번에는 승인되지 않았어요.\n\n{permissionResponseSummary}\n\n리뷰어의 검토 내용을 참고하셔서 새로운 신청을 제출해 보시면 어떨까요? 저희는 언제나 새로운 시도와 도전을 응원합니다!\n{eventDashboardLink} 에서 자세한 내용을 확인하실 수 있습니다.",
+    "html": "<h1>안녕하세요 {name}님,</h1><p>{eventTitle} 신청을 검토했지만, 아쉽게도 이번에는 승인되지 않았어요.</p><p>{permissionResponseSummary}</p><p>리뷰어의 검토 내용을 참고하셔서 새로운 신청을 제출해 보시면 어떨까요? 저희는 언제나 새로운 시도와 도전을 응원합니다!\n<a href='{eventDashboardLink}'>활동 대시보드</a>에서 자세한 내용을 확인하실 수 있습니다.</p>"
+  },
+  "spaceEventPermissionRequestReviewCompleted": {
+    "subject": "검토가 완료되었습니다",
+    "text": "안녕하세요 {name}님,\n\n{eventTitle}에 대한 검토가 완료되었습니다!\n\n{permissionResponseSummary}\n\n리뷰 과정에 함께해 주셔서 감사합니다. {name}님의 소중한 기여로 다양한 활동들이 커뮤니티의 가치를 반영하며 원활하게 진행될 수 있습니다.\n\n{communityDashboardLink} 에서 자세한 내용을 확인해 주세요. 앞으로도 지속적인 참여와 협력을 기대합니다!",
+    "html": "<h1>안녕하세요 {name}님,</h1><p>{eventTitle}에 대한 검토가 완료되었습니다!</p><p>{permissionResponseSummary}</p><p>리뷰 과정에 함께해 주셔서 감사합니다. {name}님의 소중한 기여로 다양한 활동들이 커뮤니티의 가치를 반영하며 원활하게 진행될 수 있습니다.</p><p><a href='{communityDashboardLink}'>커뮤니티 대시보드</a> 에서 자세한 내용을 확인해 주세요. 앞으로도 지속적인 참여와 협력을 기대합니다!</p>"
+  }
+}

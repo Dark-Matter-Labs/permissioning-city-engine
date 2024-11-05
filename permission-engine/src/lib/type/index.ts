@@ -238,6 +238,13 @@ export enum UserNotificationTemplateName {
    */
   spaceEventStarted = 'space-event-started',
   /**
+   * <Event is closed>
+   * Inform the event organizer when the event is closed
+   *  Tell them what to do next: event complete process
+   * Provide a link to space/event dashboard
+   */
+  spaceEventClosed = 'space-event-closed',
+  /**
    * <Event is completed>
    * Inform the event organizer and space permissioners when the event is completed
    * Show event completion result
@@ -321,13 +328,14 @@ export type IpLocationInfo = {
 };
 
 export enum Language {
-  en = 'EN',
-  ko = 'KO',
+  en = 'en',
+  ko = 'ko',
 }
 
 export enum PermissionRequestTarget {
   spaceEvent = 'space-event',
   spaceRule = 'space-rule',
+  spaceEventRulePreApprove = 'space-event-rule-pre-approve',
 }
 
 export enum PermissionProcessType {

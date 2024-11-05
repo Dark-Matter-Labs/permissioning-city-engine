@@ -13,6 +13,8 @@ import { UserService } from 'src/api/user/user.service';
 import { UserNotification } from 'src/database/entity/user-notification.entity';
 import { UserNotificationService } from 'src/api/user-notification/user-notification.service';
 import { UserNotificationModule } from 'src/api/user-notification/user-notification.module';
+import { SpaceEvent } from 'src/database/entity/space-event.entity';
+import { SpaceEventService } from 'src/api/space-event/space-event.service';
 
 @Global()
 @Module({
@@ -20,7 +22,7 @@ import { UserNotificationModule } from 'src/api/user-notification/user-notificat
     ConfigModule.forRoot({
       load: [configuration],
     }),
-    TypeOrmModule.forFeature([User, UserNotification]),
+    TypeOrmModule.forFeature([User, UserNotification, SpaceEvent]),
     BullModule.registerQueue({
       name: 'notification-handler',
     }),
@@ -34,6 +36,7 @@ import { UserNotificationModule } from 'src/api/user-notification/user-notificat
     Logger,
     UserService,
     UserNotificationService,
+    SpaceEventService,
   ],
   exports: [NotificationHandlerService],
 })

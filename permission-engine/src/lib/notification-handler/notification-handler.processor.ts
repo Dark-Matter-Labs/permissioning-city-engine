@@ -13,14 +13,16 @@ export class NotificationHandlerProcessor {
   ) {}
 
   @Process({ concurrency: 1 })
-  async handleNotificationProcess(job: Job<any>): Promise<string> {
-    this.logger.log('Handling notification:', job.data);
-    if (process.env.ENGINE_MODE !== 'daemon') {
-      return;
-    }
+  async handleNotificationProcess(job: Job<any>) {
     // Job processing logic
     return await new Promise<string>(async (resolve, reject) => {
       try {
+        if (process.env.ENGINE_MODE === 'daemon') {
+          this.logger.log('Handling notification:', job.data);
+        } else {
+          reject();
+        }
+
         // 1. parse job.data into AWS SES send email object type
         // 2. Send email by calling SESService.send() method
         const { to, email } = job.data;
@@ -33,7 +35,7 @@ export class NotificationHandlerProcessor {
           });
       } catch (error) {
         await this.userNotificationService.updateToNoticeFailed(
-          job.data.id,
+          job.data.userNotificationId,
           error.message,
         );
         reject(error);

@@ -32,6 +32,8 @@ import { SpaceApprovedRuleService } from 'src/api/space-approved-rule/space-appr
 import { SpaceApprovedRule } from 'src/database/entity/space-approved-rule.entity';
 import { SpaceTopic } from 'src/database/entity/space-topic.entity';
 import { SpaceTopicService } from 'src/api/space-topic/space-topic.service';
+import { TopicService } from 'src/api/topic/topic.service';
+import { Topic } from 'src/database/entity/topic.entity';
 
 @Module({
   imports: [
@@ -53,6 +55,7 @@ import { SpaceTopicService } from 'src/api/space-topic/space-topic.service';
       PermissionResponse,
       Rule,
       RuleBlock,
+      Topic,
     ]),
   ],
   providers: [
@@ -72,6 +75,7 @@ import { SpaceTopicService } from 'src/api/space-topic/space-topic.service';
     PermissionResponseService,
     RuleService,
     RuleBlockService,
+    TopicService,
   ],
   exports: [MockupService],
 })

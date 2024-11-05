@@ -126,13 +126,16 @@ export class PermissionHandlerService
     });
   }
 
-  // check timeout reached permission responses
   async run() {
+    await this.handlePermissionRequests();
+  }
+
+  // check timeout reached permission responses
+  async handlePermissionRequests() {
     const queryRunner: QueryRunner = this.dataSource.createQueryRunner();
-
-    await queryRunner.startTransaction();
-
     try {
+      await queryRunner.startTransaction();
+
       const timeoutReachedPermissionRequests =
         await this.findTimeoutReachedPermissionRequests();
 

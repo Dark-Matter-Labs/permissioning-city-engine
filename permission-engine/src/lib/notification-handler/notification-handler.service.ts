@@ -9,19 +9,30 @@ import {
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import {
+  Language,
   NotificationHandlerJobData,
+  SpaceEventStatus,
+  UserNotificationTarget,
   UserNotificationTemplateName,
+  UserNotificationType,
 } from 'src/lib/type';
 import { ConfigService } from '@nestjs/config';
 import { Logger } from '../logger/logger.service';
 import { UserNotificationService } from 'src/api/user-notification/user-notification.service';
-import { EmailTemplate, WelcomeEmail } from '../email-template';
+import {
+  EmailTemplate,
+  SpaceEventPermissionRequestCreatedEmail,
+  SpaceEventPermissionRequestedEmail,
+  WelcomeEmail,
+} from '../email-template';
 import { DataSource, QueryRunner } from 'typeorm';
-import { SpaceEventPermissionRequestedEmail } from '../email-template/space-event-permission-requested-email';
 import { UserNotification } from 'src/database/entity/user-notification.entity';
 import { RedisService } from '@liaoliaots/nestjs-redis';
 import Redis from 'ioredis';
 import { v4 as uuidv4 } from 'uuid';
+import { I18nService } from 'nestjs-i18n';
+import { countryCodeToLanguage } from 'src/lib/util/locale';
+import { SpaceEventService } from 'src/api/space-event/space-event.service';
 
 @Injectable()
 export class NotificationHandlerService
@@ -44,6 +55,8 @@ export class NotificationHandlerService
     private readonly dataSource: DataSource,
     @Inject(forwardRef(() => UserNotificationService))
     private readonly userNotificationService: UserNotificationService,
+    private readonly spaceEventService: SpaceEventService,
+    private readonly i18n: I18nService,
     private readonly redisService: RedisService,
     private readonly logger: Logger,
   ) {
@@ -144,40 +157,59 @@ export class NotificationHandlerService
 
   async enqueue(userNotification: UserNotification) {
     try {
-      let email: EmailTemplate;
+      let email: EmailTemplate | null = null;
+      const country = userNotification?.user?.country;
+      const language = !!country ? countryCodeToLanguage(country) : Language.en;
+
       switch (userNotification.templateName) {
         case UserNotificationTemplateName.welcome:
-          email = new WelcomeEmail({
+          email = new WelcomeEmail(this.i18n, {
+            language: language as Language,
             name: userNotification.user.name,
           });
           break;
-        case UserNotificationTemplateName.spaceEventPermissionRequested:
-          email = new SpaceEventPermissionRequestedEmail({
+        case UserNotificationTemplateName.spaceEventPermissionRequestCreated:
+          email = new SpaceEventPermissionRequestCreatedEmail(this.i18n, {
+            language: language as Language,
             name: userNotification.user.name,
-            space: userNotification.params.space,
+            spaceName: userNotification.params.spaceName,
+            timeoutAt: userNotification.params.timeoutAt,
+            spaceEventId: userNotification.params.spaceEventId,
+          });
+          break;
+        case UserNotificationTemplateName.spaceEventPermissionRequested:
+          email = new SpaceEventPermissionRequestedEmail(this.i18n, {
+            language: language as Language,
+            name: userNotification.user.name,
+            spaceId: userNotification.params.spaceId,
           });
           break;
         // TODO. support other templates
         default:
           break;
       }
-      await this.addJob({
-        userNotificationId: userNotification.id,
-        to: userNotification.user.email,
-        email,
-      })
-        .then(async (res) => {
-          if (typeof res === 'string') {
+
+      if (email) {
+        await this.addJob({
+          userNotificationId: userNotification.id,
+          to: userNotification.user.email,
+          email,
+        })
+          .then(async () => {
             await this.updateUserNotificationToQueued(
               userNotification.id,
               email,
             );
-          }
-        })
-        .catch((error) => {
-          this.logger.error(error.message, error);
-          throw error;
-        });
+          })
+          .catch((error) => {
+            this.logger.error(error.message, error);
+            throw error;
+          });
+      } else {
+        throw new Error(
+          `There is no email template with name: ${userNotification.templateName}`,
+        );
+      }
     } catch (error) {
       await this.updateUserNotificationToNoticeFailed(
         userNotification.id,
@@ -186,18 +218,66 @@ export class NotificationHandlerService
     }
   }
 
+  async findEndsAtReachedSpaceEvents() {
+    return await this.spaceEventService.findAll({
+      statuses: [SpaceEventStatus.running],
+      endsBefore: new Date(),
+      page: 1,
+      limit: this.fetchCount,
+    });
+  }
+
   async run() {
+    await this.handleSpaceEvents();
+    await this.handlePendingNotifications();
+  }
+
+  async handlePendingNotifications() {
     const queryRunner: QueryRunner = this.dataSource.createQueryRunner();
 
-    await queryRunner.startTransaction();
-
     try {
+      await queryRunner.startTransaction();
       const userNotifications =
         await this.findPendingExternalUserNotifications();
 
       for (const userNotification of userNotifications) {
         await this.enqueue(userNotification);
       }
+      await queryRunner.commitTransaction();
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  // check endsAt reached space events
+  async handleSpaceEvents() {
+    const queryRunner: QueryRunner = this.dataSource.createQueryRunner();
+    try {
+      await queryRunner.startTransaction();
+
+      const endsAtReachedSpaceEvents =
+        await this.findEndsAtReachedSpaceEvents();
+
+      endsAtReachedSpaceEvents?.data?.map(async (spaceEvent) => {
+        try {
+          await this.spaceEventService.updateToClosed(spaceEvent.id);
+          await this.userNotificationService.create({
+            userId: spaceEvent.organizerId,
+            target: UserNotificationTarget.eventOrgnaizer,
+            type: UserNotificationType.external,
+            templateName: UserNotificationTemplateName.spaceEventClosed,
+            params: {},
+          });
+        } catch (error) {
+          this.logger.error(
+            `Failed to add close spaceEvent: ${spaceEvent.id}`,
+            error,
+          );
+          throw error;
+        }
+      });
       await queryRunner.commitTransaction();
     } catch (error) {
       await queryRunner.rollbackTransaction();
