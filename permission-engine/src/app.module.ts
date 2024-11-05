@@ -35,6 +35,8 @@ import { MockupService } from './lib/mockup/mockup.service';
 import { MockupModule } from './lib/mockup/mockup.module';
 import { SpaceApprovedRuleModule } from './api/space-approved-rule/space-approved-rule.module';
 import { TopicModule } from './api/topic/topic.module';
+import { I18nModule, I18nJsonLoader } from 'nestjs-i18n';
+import path from 'path';
 
 @Module({
   imports: [
@@ -79,6 +81,14 @@ import { TopicModule } from './api/topic/topic.module';
         host: process.env.REDIS_HOST,
         port: Number(process.env.REDIS_PORT),
       },
+    }),
+    I18nModule.forRoot({
+      fallbackLanguage: 'en',
+      loaderOptions: {
+        path: path.join(__dirname, '/lib/i18n/'),
+        watch: false,
+      },
+      loader: I18nJsonLoader,
     }),
     NotificationHandlerModule,
     PermissionHandlerModule,

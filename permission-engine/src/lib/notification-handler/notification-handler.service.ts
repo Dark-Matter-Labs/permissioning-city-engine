@@ -9,6 +9,7 @@ import {
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import {
+  Language,
   NotificationHandlerJobData,
   UserNotificationTemplateName,
 } from 'src/lib/type';
@@ -22,6 +23,8 @@ import { UserNotification } from 'src/database/entity/user-notification.entity';
 import { RedisService } from '@liaoliaots/nestjs-redis';
 import Redis from 'ioredis';
 import { v4 as uuidv4 } from 'uuid';
+import { I18nService } from 'nestjs-i18n';
+import { countryCodeToLanguage } from 'src/lib/util/locale';
 
 @Injectable()
 export class NotificationHandlerService
@@ -44,6 +47,7 @@ export class NotificationHandlerService
     private readonly dataSource: DataSource,
     @Inject(forwardRef(() => UserNotificationService))
     private readonly userNotificationService: UserNotificationService,
+    private readonly i18n: I18nService,
     private readonly redisService: RedisService,
     private readonly logger: Logger,
   ) {
@@ -145,14 +149,19 @@ export class NotificationHandlerService
   async enqueue(userNotification: UserNotification) {
     try {
       let email: EmailTemplate;
+      const country = userNotification?.user?.country;
+      const language = !!country ? countryCodeToLanguage(country) : Language.en;
+
       switch (userNotification.templateName) {
         case UserNotificationTemplateName.welcome:
-          email = new WelcomeEmail({
+          email = new WelcomeEmail(this.i18n, {
+            language: language as Language,
             name: userNotification.user.name,
           });
           break;
         case UserNotificationTemplateName.spaceEventPermissionRequested:
           email = new SpaceEventPermissionRequestedEmail({
+            language: language as Language,
             name: userNotification.user.name,
             space: userNotification.params.space,
           });
@@ -161,18 +170,14 @@ export class NotificationHandlerService
         default:
           break;
       }
+
       await this.addJob({
         userNotificationId: userNotification.id,
         to: userNotification.user.email,
         email,
       })
-        .then(async (res) => {
-          if (typeof res === 'string') {
-            await this.updateUserNotificationToQueued(
-              userNotification.id,
-              email,
-            );
-          }
+        .then(async () => {
+          await this.updateUserNotificationToQueued(userNotification.id, email);
         })
         .catch((error) => {
           this.logger.error(error.message, error);

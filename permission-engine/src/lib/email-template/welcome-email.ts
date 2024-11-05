@@ -1,105 +1,70 @@
+import { I18nService } from 'nestjs-i18n';
 import { Language } from '../type';
-import { EmailTemplate } from './email-template.interface';
+import { Injectable } from '@nestjs/common';
+import { Email } from './email';
 
-export class WelcomeEmail implements EmailTemplate {
+@Injectable()
+export class WelcomeEmail extends Email {
+  language: Language;
   name: string;
   subject: string;
   html: string;
   text: string;
+  howToGuideLink: string;
+  platformName: string;
 
-  constructor(option: { name: string }) {
+  constructor(
+    private readonly i18n: I18nService,
+    option: { language: Language; name: string },
+  ) {
+    super(option);
     this.name = option.name;
+    this.howToGuideLink = 'https://engine.permissioning.city/how-to-guide';
+    this.platformName = this.i18n.translate('dictionary.platform.name', {
+      lang: this.language,
+    });
+
     this.subjectPart();
     this.htmlPart();
     this.textPart();
 
-    return this;
+    return this.build();
   }
 
-  subjectPart(language: Language = Language.en) {
-    switch (language) {
-      case Language.en:
-        this.subject = `[Permissioning The City] Welcome, ${this.name}`;
-        break;
-      case Language.ko:
-        this.subject = `[Permissioning The City] ${this.name}님 환영합니다`;
-        break;
-      default:
-        this.subjectPart(Language.en);
-        break;
-    }
+  subjectPart() {
+    this.subject = this.i18n.translate('email.welcome.subject', {
+      lang: this.language,
+      args: { name: this.name, platformName: this.platformName },
+    });
+
     return this.subject;
   }
 
-  htmlPart(language: Language = Language.en) {
-    switch (language) {
-      case Language.en:
-        this.html = `
-          <html>
-            <body>
-              <h1>
-                Welcome, ${this.name}!
-              </h1>
-              <p>
-                We're excited to have you on board at <strong>Permissioning The City</strong>.
-              </p>
-              <p>
-                You can now start exploring the platform and enjoy all the features we offer.
-              </p>
-              <p>
-                If you have any questions, feel free to <a href='mailto:support@permissioning.city'>contact us</a>.
-              </p>
-              <br>
-              <p>
-                Best regards,<br>The Permissioning The City Team
-              </p>
-            </body>
-          </html>
-        `;
-        break;
-      case Language.ko:
-        this.html = `
-          <html>
-            <body>
-              <h1>
-                ${this.name}님 환영합니다!
-              </h1>
-              <p>
-                We're excited to have you on board at <strong>Permissioning The City</strong>.
-              </p>
-              <p>
-                You can now start exploring the platform and enjoy all the features we offer.
-              </p>
-              <p>
-                If you have any questions, feel free to <a href='mailto:support@permissioning.city'>contact us</a>.
-              </p>
-              <br>
-              <p>
-                Best regards,<br>The Permissioning The City Team
-              </p>
-            </body>
-          </html>
-        `;
-        break;
-      default:
-        this.htmlPart(Language.en);
-        break;
-    }
+  htmlPart() {
+    const html = this.i18n.translate('email.welcome.html', {
+      lang: this.language,
+      args: {
+        name: this.name,
+        platformName: this.platformName,
+        howToGuideLink: this.howToGuideLink,
+      },
+    });
+
+    this.html = this.decorateHtmlPart(html);
+
     return this.html;
   }
 
-  textPart(language: Language = Language.en) {
-    switch (language) {
-      case Language.en:
-        this.text = `Welcome, ${this.name}!\n\nWe're excited to have you on board at Permissioning The City. You can now start exploring the platform and enjoy all the features we offer.\n\nIf you have any questions, feel free to contact us at support@permissioning.city.\n\nBest regards,\nThe Permissioning The City Team`;
-        break;
-      case Language.ko:
-        this.text = `${this.name}님 환영합니다!\n\nWe're excited to have you on board at Permissioning The City. You can now start exploring the platform and enjoy all the features we offer.\n\nIf you have any questions, feel free to contact us at support@permissioning.city.\n\nBest regards,\nThe Permissioning The City Team`;
-        break;
-      default:
-        this.textPart(Language.en);
-        break;
-    }
+  textPart() {
+    this.text = this.i18n.translate('email.welcome.text', {
+      lang: this.language,
+      args: {
+        name: this.name,
+        platformName: this.platformName,
+        howToGuideLink: this.howToGuideLink,
+      },
+    });
+
     return this.text;
   }
 }

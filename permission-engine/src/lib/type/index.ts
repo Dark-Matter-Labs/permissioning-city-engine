@@ -321,8 +321,8 @@ export type IpLocationInfo = {
 };
 
 export enum Language {
-  en = 'EN',
-  ko = 'KO',
+  en = 'en',
+  ko = 'ko',
 }
 
 export enum PermissionRequestTarget {

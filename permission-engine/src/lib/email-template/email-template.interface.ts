@@ -1,10 +1,11 @@
 import { Language } from '../type';
 
 export interface EmailTemplate {
+  language: Language;
   subject: string;
   html: string;
   text: string;
-  subjectPart(language: Language): string;
-  htmlPart(language: Language): string;
-  textPart(language: Language): string;
+  subjectPart(): string;
+  htmlPart(): string;
+  textPart(): string;
 }

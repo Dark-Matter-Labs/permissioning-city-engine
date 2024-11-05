@@ -1,0 +1,7 @@
+{
+  "welcome": {
+    "subject": "Hello {name}",
+    "text": "Welcome to {platformName}! We are excited to have you on board. Our platform helps streamline the way spaces are booked and managed. Start exploring with our {howToGuideLink} to make the most of your experience.",
+    "html": "<h1>Welcome to {platformName}!</h1><p>We are excited to have you on board. Our platform helps streamline the way spaces are booked and managed.</p><p>Start exploring with our <a href='{howToGuideLink}'>how-to guide</a> to make the most of your experience.</p>"
+  }
+}

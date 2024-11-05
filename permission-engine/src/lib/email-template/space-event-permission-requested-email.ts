@@ -5,13 +5,14 @@ import { Language } from '../type';
 // TODO. set template content
 // TODO. support translation
 export class SpaceEventPermissionRequestedEmail implements EmailTemplate {
+  language: Language;
   name: string;
   space: Space;
   subject: string;
   html: string;
   text: string;
 
-  constructor(option: { name: string; space: Space }) {
+  constructor(option: { language: Language; name: string; space: Space }) {
     this.name = option.name;
     this.space = option.space;
     this.subjectPart();

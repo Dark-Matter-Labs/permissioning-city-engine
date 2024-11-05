@@ -13,7 +13,7 @@ export class NotificationHandlerProcessor {
   ) {}
 
   @Process({ concurrency: 1 })
-  async handleNotificationProcess(job: Job<any>): Promise<string> {
+  async handleNotificationProcess(job: Job<any>) {
     this.logger.log('Handling notification:', job.data);
     if (process.env.ENGINE_MODE !== 'daemon') {
       return;
