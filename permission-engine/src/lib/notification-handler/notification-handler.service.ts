@@ -11,7 +11,10 @@ import { Queue } from 'bull';
 import {
   Language,
   NotificationHandlerJobData,
+  SpaceEventStatus,
+  UserNotificationTarget,
   UserNotificationTemplateName,
+  UserNotificationType,
 } from 'src/lib/type';
 import { ConfigService } from '@nestjs/config';
 import { Logger } from '../logger/logger.service';
@@ -25,6 +28,7 @@ import Redis from 'ioredis';
 import { v4 as uuidv4 } from 'uuid';
 import { I18nService } from 'nestjs-i18n';
 import { countryCodeToLanguage } from 'src/lib/util/locale';
+import { SpaceEventService } from 'src/api/space-event/space-event.service';
 
 @Injectable()
 export class NotificationHandlerService
@@ -47,6 +51,7 @@ export class NotificationHandlerService
     private readonly dataSource: DataSource,
     @Inject(forwardRef(() => UserNotificationService))
     private readonly userNotificationService: UserNotificationService,
+    private readonly spaceEventService: SpaceEventService,
     private readonly i18n: I18nService,
     private readonly redisService: RedisService,
     private readonly logger: Logger,
@@ -191,18 +196,66 @@ export class NotificationHandlerService
     }
   }
 
+  async findEndsAtReachedSpaceEvents() {
+    return await this.spaceEventService.findAll({
+      statuses: [SpaceEventStatus.running],
+      endsBefore: new Date(),
+      page: 1,
+      limit: this.fetchCount,
+    });
+  }
+
   async run() {
+    await this.handleSpaceEvents();
+    await this.handlePendingNotifications();
+  }
+
+  async handlePendingNotifications() {
     const queryRunner: QueryRunner = this.dataSource.createQueryRunner();
 
-    await queryRunner.startTransaction();
-
     try {
+      await queryRunner.startTransaction();
       const userNotifications =
         await this.findPendingExternalUserNotifications();
 
       for (const userNotification of userNotifications) {
         await this.enqueue(userNotification);
       }
+      await queryRunner.commitTransaction();
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  // check endsAt reached space events
+  async handleSpaceEvents() {
+    const queryRunner: QueryRunner = this.dataSource.createQueryRunner();
+    try {
+      await queryRunner.startTransaction();
+
+      const endsAtReachedSpaceEvents =
+        await this.findEndsAtReachedSpaceEvents();
+
+      endsAtReachedSpaceEvents?.data?.map(async (spaceEvent) => {
+        try {
+          await this.spaceEventService.updateToClosed(spaceEvent.id);
+          await this.userNotificationService.create({
+            userId: spaceEvent.organizerId,
+            target: UserNotificationTarget.eventOrgnaizer,
+            type: UserNotificationType.external,
+            templateName: UserNotificationTemplateName.spaceEventClosed,
+            params: {},
+          });
+        } catch (error) {
+          this.logger.error(
+            `Failed to add close spaceEvent: ${spaceEvent.id}`,
+            error,
+          );
+          throw error;
+        }
+      });
       await queryRunner.commitTransaction();
     } catch (error) {
       await queryRunner.rollbackTransaction();
