@@ -19,9 +19,13 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Logger } from '../logger/logger.service';
 import { UserNotificationService } from 'src/api/user-notification/user-notification.service';
-import { EmailTemplate, WelcomeEmail } from '../email-template';
+import {
+  EmailTemplate,
+  SpaceEventPermissionRequestCreatedEmail,
+  SpaceEventPermissionRequestedEmail,
+  WelcomeEmail,
+} from '../email-template';
 import { DataSource, QueryRunner } from 'typeorm';
-import { SpaceEventPermissionRequestedEmail } from '../email-template/space-event-permission-requested-email';
 import { UserNotification } from 'src/database/entity/user-notification.entity';
 import { RedisService } from '@liaoliaots/nestjs-redis';
 import Redis from 'ioredis';
@@ -153,7 +157,7 @@ export class NotificationHandlerService
 
   async enqueue(userNotification: UserNotification) {
     try {
-      let email: EmailTemplate;
+      let email: EmailTemplate | null = null;
       const country = userNotification?.user?.country;
       const language = !!country ? countryCodeToLanguage(country) : Language.en;
 
@@ -164,11 +168,20 @@ export class NotificationHandlerService
             name: userNotification.user.name,
           });
           break;
-        case UserNotificationTemplateName.spaceEventPermissionRequested:
-          email = new SpaceEventPermissionRequestedEmail({
+        case UserNotificationTemplateName.spaceEventPermissionRequestCreated:
+          email = new SpaceEventPermissionRequestCreatedEmail(this.i18n, {
             language: language as Language,
             name: userNotification.user.name,
-            space: userNotification.params.space,
+            spaceName: userNotification.params.spaceName,
+            timeoutAt: userNotification.params.timeoutAt,
+            spaceEventId: userNotification.params.spaceEventId,
+          });
+          break;
+        case UserNotificationTemplateName.spaceEventPermissionRequested:
+          email = new SpaceEventPermissionRequestedEmail(this.i18n, {
+            language: language as Language,
+            name: userNotification.user.name,
+            spaceId: userNotification.params.spaceId,
           });
           break;
         // TODO. support other templates
@@ -176,18 +189,27 @@ export class NotificationHandlerService
           break;
       }
 
-      await this.addJob({
-        userNotificationId: userNotification.id,
-        to: userNotification.user.email,
-        email,
-      })
-        .then(async () => {
-          await this.updateUserNotificationToQueued(userNotification.id, email);
+      if (email) {
+        await this.addJob({
+          userNotificationId: userNotification.id,
+          to: userNotification.user.email,
+          email,
         })
-        .catch((error) => {
-          this.logger.error(error.message, error);
-          throw error;
-        });
+          .then(async () => {
+            await this.updateUserNotificationToQueued(
+              userNotification.id,
+              email,
+            );
+          })
+          .catch((error) => {
+            this.logger.error(error.message, error);
+            throw error;
+          });
+      } else {
+        throw new Error(
+          `There is no email template with name: ${userNotification.templateName}`,
+        );
+      }
     } catch (error) {
       await this.updateUserNotificationToNoticeFailed(
         userNotification.id,

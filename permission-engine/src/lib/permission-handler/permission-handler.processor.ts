@@ -377,20 +377,15 @@ export class PermissionHandlerProcessor {
       await this.userNotificationService
         .create({
           userId: permissionRequest.spaceEvent.organizerId,
-          target: UserNotificationTarget.general,
+          target: UserNotificationTarget.eventOrgnaizer,
           type: UserNotificationType.external,
           templateName:
-            UserNotificationTemplateName.spaceEventPermissionRequested,
+            UserNotificationTemplateName.spaceEventPermissionRequestCreated,
           params: {
             permissionRequestId,
-            spaceRuleId: permissionRequest.spaceRule.id,
-            spaceRuleName: permissionRequest.spaceRule.name,
+            spaceName: permissionRequest.space.name,
+            timeoutAt: timeoutAt,
             spaceEventId: permissionRequest.spaceEvent.id,
-            spaceEventName: permissionRequest.spaceEvent.name,
-            spaceEventStartsAt: permissionRequest.spaceEvent.startsAt,
-            spaceEventDuration: permissionRequest.spaceEvent.duration,
-            spaceEventRuleId: permissionRequest.spaceEventRule.id,
-            spaceEventRuleName: permissionRequest.spaceEventRule.name,
           },
         })
         .catch((error) => {
@@ -420,22 +415,14 @@ export class PermissionHandlerProcessor {
           await this.userNotificationService
             .create({
               userId: spacePermissioner.userId,
-              target: UserNotificationTarget.general,
+              target: UserNotificationTarget.permissioner,
               type: UserNotificationType.external,
               templateName:
                 UserNotificationTemplateName.spaceEventPermissionRequested,
               params: {
                 permissionRequestId,
-                spaceRuleId: permissionRequest.spaceRule.id,
-                spaceRuleName: permissionRequest.spaceRule.name,
-                spaceEventId: permissionRequest.spaceEvent.id,
-                spaceEventName: permissionRequest.spaceEvent.name,
-                spaceEventStartsAt: permissionRequest.spaceEvent.startsAt,
-                spaceEventDuration: permissionRequest.spaceEvent.duration,
-                spaceEventRuleId: permissionRequest.spaceEventRule.id,
-                spaceEventRuleName: permissionRequest.spaceEventRule.name,
+                spaceId: permissionRequest.spaceId,
                 permissionResponseId: permissionResponse.id,
-                permissionResponseTimeoutAt: permissionResponse.timeoutAt,
               },
             })
             .catch((error) => {
