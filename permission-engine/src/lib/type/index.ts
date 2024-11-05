@@ -238,6 +238,13 @@ export enum UserNotificationTemplateName {
    */
   spaceEventStarted = 'space-event-started',
   /**
+   * <Event is closed>
+   * Inform the event organizer when the event is closed
+   *  Tell them what to do next: event complete process
+   * Provide a link to space/event dashboard
+   */
+  spaceEventClosed = 'space-event-closed',
+  /**
    * <Event is completed>
    * Inform the event organizer and space permissioners when the event is completed
    * Show event completion result
