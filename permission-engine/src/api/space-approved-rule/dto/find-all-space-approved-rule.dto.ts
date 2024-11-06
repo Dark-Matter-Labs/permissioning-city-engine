@@ -37,7 +37,7 @@ export class FindAllSpaceApprovedRuleDto extends PaginationDto {
   @IsOptional()
   @IsString()
   @ApiPropertyOptional({
-    description: 'SpaceApprovedRule sort by',
+    description: `SpaceApprovedRule sort by: ${[SpaceApprovedRuleSortBy.popularity, SpaceApprovedRuleSortBy.timeAsc, SpaceApprovedRuleSortBy.timeDesc].join('|')}`,
     type: 'string',
   })
   sortBy?: SpaceApprovedRuleSortBy = SpaceApprovedRuleSortBy.timeDesc;

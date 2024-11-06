@@ -31,8 +31,8 @@ export enum SpaceEventStatus {
 
 export enum SpaceApprovedRuleSortBy {
   popularity = 'popularity',
-  timeAsc = 'timeAsc',
-  timeDesc = 'timeDesc',
+  timeAsc = 'time-asc',
+  timeDesc = 'time-desc',
 }
 
 /**
