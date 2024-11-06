@@ -41,6 +41,12 @@ export class SpaceApprovedRule {
   @ApiProperty({ description: 'Is space approved rule active' })
   isActive: boolean;
 
+  @Column({ default: 0 })
+  @ApiProperty({
+    description: 'How many times the rule was utilized in the space',
+  })
+  utilizationCount: number;
+
   @CreateDateColumn()
   @ApiProperty({ description: 'Created timestamp' })
   createdAt: Date;

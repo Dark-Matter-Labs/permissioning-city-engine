@@ -10,6 +10,7 @@ import { SpaceApprovedRule } from 'src/database/entity/space-approved-rule.entit
 import { Rule } from 'src/database/entity/rule.entity';
 import { SpacePermissioner } from 'src/database/entity/space-permissioner.entity';
 import { SpaceService } from '../space/space.service';
+import { SpaceApprovedRuleSortBy } from 'src/lib/type';
 
 @Injectable()
 export class SpaceApprovedRuleService {
@@ -24,12 +25,13 @@ export class SpaceApprovedRuleService {
   async findAll(
     findAllSpaceApprovedRuleDto: FindAllSpaceApprovedRuleDto,
   ): Promise<{ data: Rule[]; total: number }> {
-    const { page, limit, spaceId, ruleId, isActive } =
+    const { page, limit, spaceId, ruleId, isActive, sortBy } =
       findAllSpaceApprovedRuleDto;
 
     const where = [];
     const params: any[] = [(page - 1) * limit, limit];
     let paramIndex: number = params.length;
+    let orderByClause = '';
 
     if (spaceId != null) {
       paramIndex++;
@@ -49,6 +51,22 @@ export class SpaceApprovedRuleService {
       params.push(isActive);
     }
 
+    if (sortBy != null) {
+      switch (sortBy) {
+        case SpaceApprovedRuleSortBy.popularity:
+          orderByClause = `ORDER BY sar.utilization_count DESC`;
+          break;
+        case SpaceApprovedRuleSortBy.timeAsc:
+          orderByClause = `ORDER BY sar.created_at ASC`;
+          break;
+        case SpaceApprovedRuleSortBy.timeDesc:
+          orderByClause = `ORDER BY sar.created_at DESC`;
+          break;
+        default:
+          break;
+      }
+    }
+
     const query = `
       WITH filtered_data AS (
         SELECT (
@@ -61,6 +79,7 @@ export class SpaceApprovedRuleService {
           r.is_active,
           r.created_at,
           r.updated_at,
+          sar.utilization_count,
           ARRAY_AGG(rb)
         ) FROM
          space_approved_rule sar,
@@ -75,7 +94,8 @@ export class SpaceApprovedRuleService {
           rrb.rule_block_id = rb.id
         ${where.length > 0 ? ' AND ' : ''}
         ${where.join(' AND ')}
-        GROUP BY r.id
+        GROUP BY r.id, sar.utilization_count, sar.created_at
+        ${orderByClause}
       )
       SELECT COUNT(*) AS total, json_agg(filtered_data) AS data
       FROM filtered_data
@@ -101,7 +121,8 @@ export class SpaceApprovedRuleService {
           isActive: item.row.f7,
           createdAt: item.row.f8,
           updatedAt: item.row.f9,
-          ruleBlocks: item.row.f10,
+          utilizationCount: item.row.f10,
+          ruleBlocks: item.row.f11,
         };
       });
     }

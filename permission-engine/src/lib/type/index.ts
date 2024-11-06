@@ -29,6 +29,12 @@ export enum SpaceEventStatus {
   completeWithIssue = 'complete_with_issue', // completed by the event organizer with issue
 }
 
+export enum SpaceApprovedRuleSortBy {
+  popularity = 'popularity',
+  timeAsc = 'timeAsc',
+  timeDesc = 'timeDesc',
+}
+
 /**
  * <RuleBlock.content divider rules>
  * Array divider: ';'
