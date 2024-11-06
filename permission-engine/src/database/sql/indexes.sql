@@ -6,6 +6,7 @@ CREATE INDEX IF NOT EXISTS user_idx_city ON "user" (country, region, city)
 WHERE is_active = true;
 CREATE INDEX IF NOT EXISTS user_idx_district ON "user" (country, region, city, district)
 WHERE is_active = true;
+
 -- space
 CREATE INDEX IF NOT EXISTS space_idx_owner_id ON "space" (owner_id)
 WHERE is_active = true;
@@ -34,3 +35,7 @@ CREATE INDEX IF NOT EXISTS rule_block_idx_type_hash ON "rule_block" (hash);
 
 -- topic
 CREATE UNIQUE INDEX IF NOT EXISTS topic_idx_name_country_region_city ON "topic" (name, country, region, city);
+
+-- space_approved_rule
+CREATE INDEX IF NOT EXISTS space_approved_rule_idx_space_id ON "space_approved_rule" (space_id);
+CREATE INDEX IF NOT EXISTS space_approved_rule_idx_rule_id ON "space_approved_rule" (rule_id);
