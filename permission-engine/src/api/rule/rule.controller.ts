@@ -83,31 +83,44 @@ export class RuleController {
   async findOneById(@Req() req, @Param('id') id: string): Promise<Rule> {
     const user = await this.userService.findOneByEmail(req.user.email);
     const rule = await this.ruleService.findOneById(id);
-    const spaces = await this.spaceService.findByRuleId(id);
-    const spaceEvents = await this.spaceEventService.findAll({
-      ruleId: id,
-    });
+
+    if (!rule) {
+      throw new BadRequestException(`There is no rule with id: ${id}`);
+    }
+
+    const publicRuleBlocks = rule.ruleBlocks.filter(
+      (ruleBlock) => ruleBlock.isPublic === true,
+    );
+    const spaces = (await this.spaceService.findAllByRuleId(id))?.data ?? [];
+    const spaceEvents =
+      (
+        await this.spaceEventService.findAll(
+          {
+            ruleId: id,
+          },
+          false,
+        )
+      )?.data ?? [];
     const spacePermissioners: SpacePermissioner[] = [];
 
-    for (const space of spaces.data) {
+    for (const space of spaces) {
       await this.spacePermissionerService
         .findAllBySpaceId(space.id, { isActive: true }, false)
         .then((res) => {
-          spacePermissioners.push(...res.data);
+          if (res.data) {
+            spacePermissioners.push(...res.data);
+          }
         });
     }
 
     if (
       [
         user.id,
-        ...spaces.data.map((item) => item.ownerId),
-        ...spaceEvents.data.map((item) => item.organizerId),
+        ...spaces.map((item) => item.ownerId),
+        ...spaceEvents.map((item) => item.organizerId),
         ...spacePermissioners.map((item) => item.userId),
       ].includes(rule.authorId) === false
     ) {
-      const publicRuleBlocks = rule.ruleBlocks.filter(
-        (ruleBlock) => ruleBlock.isPublic === true,
-      );
       rule.ruleBlocks = publicRuleBlocks;
     }
 

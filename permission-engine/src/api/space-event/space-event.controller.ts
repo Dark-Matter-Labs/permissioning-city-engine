@@ -50,11 +50,13 @@ export class SpaceEventController {
       limit,
       organizerId,
       spaceId,
+      ruleId,
       externalServiceId,
       permissionRequestId,
       statuses,
       topicIds,
       startsAfter,
+      endsBefore,
       name,
     } = query;
 
@@ -63,11 +65,13 @@ export class SpaceEventController {
       limit,
       organizerId,
       spaceId,
+      ruleId,
       externalServiceId,
       permissionRequestId,
       statuses,
       topicIds,
       startsAfter,
+      endsBefore,
       name,
     });
   }

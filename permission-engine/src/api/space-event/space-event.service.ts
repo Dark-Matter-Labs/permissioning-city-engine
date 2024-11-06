@@ -49,41 +49,41 @@ export class SpaceEventService {
       isPagination === true ? [(page - 1) * limit, limit] : [];
     let paramIndex: number = params.length;
 
-    where.push(`is_active = true`);
+    where.push(`space_event.is_active = true`);
 
     if (organizerId != null) {
       paramIndex++;
-      where.push(`organizer_id = $${paramIndex}`);
+      where.push(`space_event.organizer_id = $${paramIndex}`);
       params.push(organizerId);
     }
 
     if (spaceId != null) {
       paramIndex++;
-      where.push(`space_id = $${paramIndex}`);
+      where.push(`space_event.space_id = $${paramIndex}`);
       params.push(spaceId);
     }
 
     if (ruleId != null) {
       paramIndex++;
-      where.push(`rule_id = $${paramIndex}`);
+      where.push(`space_event.rule_id = $${paramIndex}`);
       params.push(ruleId);
     }
 
     if (externalServiceId != null) {
       paramIndex++;
-      where.push(`external_service_id = $${paramIndex}`);
+      where.push(`space_event.external_service_id = $${paramIndex}`);
       params.push(externalServiceId);
     }
 
     if (permissionRequestId != null) {
       paramIndex++;
-      where.push(`permission_request_id = $${paramIndex}`);
+      where.push(`space_event.permission_request_id = $${paramIndex}`);
       params.push(permissionRequestId);
     }
 
     if (statuses != null) {
       paramIndex++;
-      where.push(`status = ANY($${paramIndex})`);
+      where.push(`space_event.status = ANY($${paramIndex})`);
       params.push(statuses);
     }
 
@@ -97,19 +97,19 @@ export class SpaceEventService {
 
     if (startsAfter != null) {
       paramIndex++;
-      where.push(`starts_at >= $${paramIndex}`);
+      where.push(`space_event.starts_at >= $${paramIndex}`);
       params.push(startsAfter);
     }
 
     if (endsBefore != null) {
       paramIndex++;
-      where.push(`ends_at <= $${paramIndex}`);
+      where.push(`space_event.ends_at <= $${paramIndex}`);
       params.push(endsBefore);
     }
 
     if (name != null) {
       paramIndex++;
-      where.push(`name LIKE $${paramIndex}`);
+      where.push(`space_event.name LIKE $${paramIndex}`);
       params.push(`%${name}%`);
     }
     const whereClause = where.length > 0 ? 'WHERE' : '';
