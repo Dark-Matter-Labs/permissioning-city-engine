@@ -2,13 +2,9 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindManyOptions, FindOptionsWhere, In, Repository } from 'typeorm';
 import { Rule } from '../../database/entity/rule.entity';
+import { CreateRuleDto, FindAllRuleDto, UpdateRuleDto } from './dto';
 import {
-  CreateRuleDto,
-  FindAllMatchedRuleDto,
-  FindAllRuleDto,
-  UpdateRuleDto,
-} from './dto';
-import {
+  NoiseLevel,
   RuleBlockContentDivider,
   RuleBlockType,
   RuleTarget,
@@ -19,6 +15,7 @@ import { Space } from 'src/database/entity/space.entity';
 import * as Util from 'src/lib/util/util';
 import { v4 as uuidv4 } from 'uuid';
 import { Logger } from 'src/lib/logger/logger.service';
+import { FindAllMatchedRuleDto } from '../space/dto';
 
 @Injectable()
 export class RuleService {
@@ -79,10 +76,12 @@ export class RuleService {
 
     if (isPublicOnly === true) {
       result = result.map((rule) => {
-        const publicRuleBlocks = rule.ruleBlocks.filter(
-          (ruleBlock) => ruleBlock.isPublic === true,
-        );
-        rule.ruleBlocks = publicRuleBlocks;
+        if (rule.ruleBlocks) {
+          const publicRuleBlocks = rule?.ruleBlocks?.filter(
+            (ruleBlock) => ruleBlock.isPublic === true,
+          );
+          rule.ruleBlocks = publicRuleBlocks;
+        }
 
         return rule;
       });
@@ -95,13 +94,14 @@ export class RuleService {
   }
 
   async findAllMatched(
-    spaceId: string,
     findAllMatchedRuleDto: FindAllMatchedRuleDto,
   ): Promise<{ data: Rule[]; total: number }> {
     const {
       page,
       limit,
+      spaceId,
       spaceEventAccess,
+      spaceEventNoiseLevel,
       spaceEventExpectedAttendeeCount,
       spaceEventRequireEquipments,
       spaceEventExceptions,
@@ -118,6 +118,30 @@ export class RuleService {
         `(rb.type = 'space_event:access' AND rb.content = $${paramIndex})`,
       );
       params.push(spaceEventAccess);
+    }
+
+    if (spaceEventNoiseLevel != null) {
+      paramIndex++;
+      where.push(
+        `(rb.type = 'space_event:noise_level' AND rb.content = ANY($${paramIndex}))`,
+      );
+      switch (spaceEventNoiseLevel) {
+        case NoiseLevel.high:
+          params.push([NoiseLevel.high]);
+          break;
+        case NoiseLevel.medium:
+          params.push([NoiseLevel.medium, NoiseLevel.high]);
+          break;
+        case NoiseLevel.low:
+          params.push([NoiseLevel.low, NoiseLevel.medium, NoiseLevel.high]);
+          break;
+
+        default:
+          throw new BadRequestException(
+            `spaceEventNoiseLevel should be one of: ${[NoiseLevel.low, NoiseLevel.medium, NoiseLevel.high].join('|')}`,
+          );
+          break;
+      }
     }
 
     if (spaceEventExpectedAttendeeCount != null) {
