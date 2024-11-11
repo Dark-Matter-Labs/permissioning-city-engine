@@ -67,6 +67,7 @@ export enum RuleBlockType {
   spaceEventAccess = 'space_event:access', // content: {SpaceEventAccessType}
   spaceEventExpectedAttendeeCount = 'space_event:expected_attendee_count', // number
   spaceEventNoiseLevel = 'space_event:noise_level', // {NoiseLevel}
+  // required per spacePrePermissionCheck ruleBlock in space rule -> when permission requested
   spaceEventPrePermissionCheckAnswer = 'space_event:pre_permission_check_answer', // {spaceRuleBlockHash}^{answer in boolean}
 }
 
