@@ -12,7 +12,9 @@ import {
   RuleBlockType,
 } from 'src/lib/type';
 import {
+  CancelPermissionRequestDto,
   CreatePermissionRequestDto,
+  DropPermissionRequestDto,
   FindAllPermissionRequestByTimeoutDto,
   FindAllPermissionRequestDto,
 } from './dto';
@@ -367,9 +369,11 @@ export class PermissionRequestService {
 
   async updateToResolveCancelled(
     id: string,
+    cancelPermissionRequestDto: CancelPermissionRequestDto,
   ): Promise<{ data: { result: boolean } }> {
     const updateResult = await this.permissionRequestRepository.update(id, {
       resolveStatus: PermissionRequestResolveStatus.resolveCancelled,
+      resolveDetails: cancelPermissionRequestDto.resolveDetails,
       updatedAt: new Date(),
     });
 
@@ -431,9 +435,11 @@ export class PermissionRequestService {
   // only for review_approved* status
   async updateToResolveDropped(
     id: string,
+    dropPermissionRequestDto: DropPermissionRequestDto,
   ): Promise<{ data: { result: boolean } }> {
     const updateResult = await this.permissionRequestRepository.update(id, {
       resolveStatus: PermissionRequestResolveStatus.resolveDropped,
+      resolveDetails: dropPermissionRequestDto.resolveDetails,
       updatedAt: new Date(),
     });
 

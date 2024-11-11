@@ -12,9 +12,11 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import {
+  CancelPermissionRequestDto,
   CreateSpaceEventPermissionRequestDto,
   CreateSpaceEventRulePreApprovePermissionRequestDto,
   CreateSpaceRuleChangePermissionRequestDto,
+  DropPermissionRequestDto,
 } from './dto';
 import { PermissionRequestService } from './permission-request.service';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -148,7 +150,11 @@ export class PermissionRequestController {
   @Put(':id/cancel')
   @ApiOperation({ summary: 'Cancel PermissionRequest' })
   @UseGuards(JwtAuthGuard)
-  async cancel(@Req() req, @Param('id') id: string) {
+  async cancel(
+    @Req() req,
+    @Param('id') id: string,
+    @Body() cancelPermissionRequestDto: CancelPermissionRequestDto,
+  ) {
     const user = await this.userService.findOneByEmail(req.user.email);
     const permissionRequest =
       await this.permissionRequestService.findOneById(id);
@@ -157,7 +163,10 @@ export class PermissionRequestController {
       throw new ForbiddenException();
     }
 
-    return this.permissionRequestService.updateToResolveCancelled(id);
+    return this.permissionRequestService.updateToResolveCancelled(
+      id,
+      cancelPermissionRequestDto,
+    );
   }
 
   @Put(':id/accept')
@@ -196,7 +205,11 @@ export class PermissionRequestController {
   @Put(':id/drop')
   @ApiOperation({ summary: 'Drop approved PermissionRequest review result' })
   @UseGuards(JwtAuthGuard)
-  async drop(@Req() req, @Param('id') id: string) {
+  async drop(
+    @Req() req,
+    @Param('id') id: string,
+    @Body() dropPermissionRequestDto: DropPermissionRequestDto,
+  ) {
     const user = await this.userService.findOneByEmail(req.user.email);
     const permissionRequest =
       await this.permissionRequestService.findOneById(id);
@@ -214,6 +227,9 @@ export class PermissionRequestController {
       throw new ForbiddenException('Cannot drop unapproved permissionRequest.');
     }
 
-    return this.permissionRequestService.updateToResolveDropped(id);
+    return this.permissionRequestService.updateToResolveDropped(
+      id,
+      dropPermissionRequestDto,
+    );
   }
 }
