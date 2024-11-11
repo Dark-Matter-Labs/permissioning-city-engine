@@ -17,7 +17,9 @@ import {
   CreateSpaceEventDto,
   UpdateSpaceEventDto,
   FindAllSpaceEventDto,
+  CompleteWithIssueSpaceEventDto,
   CompleteSpaceEventDto,
+  CompleteWithIssueResolvedSpaceEventDto,
 } from './dto';
 import { SpaceEventService } from './space-event.service';
 import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -29,6 +31,8 @@ import { S3Service } from 'src/lib/s3/s3.service';
 import { SpaceEventImageService } from '../space-event-image/space-event-image.service';
 import { Logger } from 'src/lib/logger/logger.service';
 import { Express } from 'express';
+import { SpacePermissionerService } from '../space-permissioner/space-permissioner.service';
+import { SpaceEventStatus } from 'src/lib/type';
 
 @ApiTags('event')
 @Controller('api/v1/event')
@@ -37,6 +41,7 @@ export class SpaceEventController {
     private readonly spaceEventService: SpaceEventService,
     private readonly spaceEventImageService: SpaceEventImageService,
     private readonly spaceService: SpaceService,
+    private readonly spacePermissionerService: SpacePermissionerService,
     private readonly userService: UserService,
     private readonly s3Service: S3Service,
     private readonly logger: Logger,
@@ -259,7 +264,7 @@ export class SpaceEventController {
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Complete SpaceEvent' })
   @ApiConsumes('multipart/form-data')
-  @ApiBody({ type: CompleteSpaceEventDto })
+  @ApiBody({ type: CompleteWithIssueSpaceEventDto })
   @UseInterceptors(
     FileFieldsInterceptor([{ name: 'images', maxCount: 5 }], {
       fileFilter(req, file, cb) {
@@ -348,6 +353,228 @@ export class SpaceEventController {
       id,
       completeSpaceEventDto,
     );
+
+    return result;
+  }
+
+  @Post(':id/complete-with-issue')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Raise issue for completing SpaceEvent' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({ type: CompleteWithIssueSpaceEventDto })
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: 'images', maxCount: 5 }], {
+      fileFilter(req, file, cb) {
+        if (
+          ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'].includes(
+            file.mimetype,
+          ) === false
+        ) {
+          cb(new BadRequestException('file must be an image'), false);
+        } else {
+          cb(null, true);
+        }
+      },
+    }),
+  )
+  async completeWithIssue(
+    @Req() req,
+    @Param('id') id: string,
+    @UploadedFiles() uploadedFiles: { images: Express.MulterS3.File[] },
+    @Body() completeWithIssueSpaceEventDto: CompleteWithIssueSpaceEventDto,
+  ) {
+    const user = await this.userService.findOneByEmail(req.user.email);
+    const spaceEvent = await this.spaceEventService.findOneById(id);
+    const { images } = uploadedFiles;
+
+    if (spaceEvent.organizerId !== user.id) {
+      throw new ForbiddenException();
+    }
+
+    const result = {
+      addedSpaceEventImageIds: [],
+      spaceEventUpdate: null,
+    };
+    const newImages = images ?? [];
+    const incompletePostEventCheckRuleBlockIds =
+      completeWithIssueSpaceEventDto.incompletePostEventCheckRuleBlockIds ?? [];
+    const completePostEventCheckRuleBlockIds =
+      completeWithIssueSpaceEventDto.completePostEventCheckRuleBlockIds ?? [];
+    const { details } = completeWithIssueSpaceEventDto;
+
+    if (newImages.length > 5) {
+      throw new ForbiddenException('Up to 5 images are allowed');
+    }
+
+    for (const s3File of newImages) {
+      try {
+        const id = s3File.key.split('_')[0];
+        const spaceEventImage = await this.spaceEventImageService.create({
+          id,
+          spaceEventId: spaceEvent.id,
+          link: s3File.location,
+        });
+
+        result.addedSpaceEventImageIds.push(spaceEventImage.id);
+      } catch (error) {
+        this.logger.error('Failed to create spaceEventImage', error);
+      }
+    }
+
+    // TODO. create SpaceHistory record with completeWithIssueSpaceEventDto data
+    // TODO. if there is completeWithIssueSpaceEventDto.details: issue reported to space -> recored as `issue_report` type to SpaceHistory -> notification sent to PG
+    const postEventCheckList =
+      await this.spaceService.findPostEventCheckRuleBlocks(spaceEvent.spaceId);
+
+    if (
+      postEventCheckList
+        .map((item) => item.id)
+        .sort()
+        .join() !==
+      [
+        ...completePostEventCheckRuleBlockIds,
+        ...incompletePostEventCheckRuleBlockIds,
+      ]
+        .sort()
+        .join()
+    ) {
+      throw new BadRequestException('Post event check list does not match');
+    }
+
+    if (incompletePostEventCheckRuleBlockIds.length > 0) {
+      if (details == null) {
+        throw new BadRequestException('Please provide details');
+      }
+    }
+
+    result.spaceEventUpdate =
+      await this.spaceEventService.updateToCompleteWithIssue(
+        id,
+        completeWithIssueSpaceEventDto,
+      );
+
+    return result;
+  }
+
+  @Post(':id/complete-with-issue/resolve')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Raise issue for completing SpaceEvent' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({ type: CompleteWithIssueResolvedSpaceEventDto })
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: 'images', maxCount: 5 }], {
+      fileFilter(req, file, cb) {
+        if (
+          ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'].includes(
+            file.mimetype,
+          ) === false
+        ) {
+          cb(new BadRequestException('file must be an image'), false);
+        } else {
+          cb(null, true);
+        }
+      },
+    }),
+  )
+  async completeWithIssueResolved(
+    @Req() req,
+    @Param('id') id: string,
+    @UploadedFiles() uploadedFiles: { images: Express.MulterS3.File[] },
+    @Body()
+    completeWithIssueResolvedSpaceEventDto: CompleteWithIssueResolvedSpaceEventDto,
+  ) {
+    const user = await this.userService.findOneByEmail(req.user.email);
+    const spaceEvent = await this.spaceEventService.findOneById(id);
+    const spacePermissioners =
+      (
+        await this.spacePermissionerService.findAllBySpaceId(
+          spaceEvent.spaceId,
+          { isActive: true },
+          false,
+        )
+      )?.data ?? [];
+    const { images } = uploadedFiles;
+
+    if (
+      [
+        spaceEvent.organizerId,
+        ...spacePermissioners.map((item) => item.userId),
+      ].includes(user.id)
+    ) {
+      throw new ForbiddenException();
+    }
+
+    if (
+      [SpaceEventStatus.completeWithIssue].includes(spaceEvent.status) === false
+    ) {
+      throw new ForbiddenException(
+        `Cannot resolve issue for ${spaceEvent.status} SpaceEvent.`,
+      );
+    }
+
+    const result = {
+      addedSpaceEventImageIds: [],
+      spaceEventUpdate: null,
+    };
+    const newImages = images ?? [];
+    const incompletePostEventCheckRuleBlockIds =
+      completeWithIssueResolvedSpaceEventDto.incompletePostEventCheckRuleBlockIds ??
+      [];
+    const completePostEventCheckRuleBlockIds =
+      completeWithIssueResolvedSpaceEventDto.completePostEventCheckRuleBlockIds ??
+      [];
+    const { details } = completeWithIssueResolvedSpaceEventDto;
+
+    if (newImages.length > 5) {
+      throw new ForbiddenException('Up to 5 images are allowed');
+    }
+
+    for (const s3File of newImages) {
+      try {
+        const id = s3File.key.split('_')[0];
+        const spaceEventImage = await this.spaceEventImageService.create({
+          id,
+          spaceEventId: spaceEvent.id,
+          link: s3File.location,
+        });
+
+        result.addedSpaceEventImageIds.push(spaceEventImage.id);
+      } catch (error) {
+        this.logger.error('Failed to create spaceEventImage', error);
+      }
+    }
+
+    // TODO. create SpaceHistory record with completeWithIssueResolvedSpaceEventDto data
+    // TODO. if there is completeWithIssueResolvedSpaceEventDto.details: issue reported to space -> recored as `issue_report` type to SpaceHistory -> notification sent to PG
+    const postEventCheckList =
+      await this.spaceService.findPostEventCheckRuleBlocks(spaceEvent.spaceId);
+
+    if (
+      postEventCheckList
+        .map((item) => item.id)
+        .sort()
+        .join() !==
+      [
+        ...completePostEventCheckRuleBlockIds,
+        ...incompletePostEventCheckRuleBlockIds,
+      ]
+        .sort()
+        .join()
+    ) {
+      throw new BadRequestException('Post event check list does not match');
+    }
+
+    if (incompletePostEventCheckRuleBlockIds.length > 0) {
+      if (details == null) {
+        throw new BadRequestException('Please provide details');
+      }
+    }
+
+    result.spaceEventUpdate =
+      await this.spaceEventService.updateToCompleteWithIssueResolved(
+        id,
+        completeWithIssueResolvedSpaceEventDto,
+      );
 
     return result;
   }

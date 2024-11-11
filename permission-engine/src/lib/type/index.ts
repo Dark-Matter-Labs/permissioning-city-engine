@@ -27,6 +27,7 @@ export enum SpaceEventStatus {
   closed = 'closed', // closed by daemon after ends_at
   complete = 'complete', // completed by the event organizer
   completeWithIssue = 'complete_with_issue', // completed by the event organizer with issue
+  completeWithIssueResolved = 'complete_with_issue_resolved', // event issue resolved
 }
 
 export enum SpaceApprovedRuleSortBy {

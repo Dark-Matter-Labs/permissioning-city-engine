@@ -5,6 +5,8 @@ import {
 } from '@nestjs/common';
 import {
   CompleteSpaceEventDto,
+  CompleteWithIssueResolvedSpaceEventDto,
+  CompleteWithIssueSpaceEventDto,
   CreateSpaceEventDto,
   UpdateSpaceEventDto,
 } from './dto';
@@ -468,6 +470,85 @@ export class SpaceEventService {
 
     if (completeSpaceEventDto.details != null) {
       dto.details = completeSpaceEventDto.details;
+      dto.status = SpaceEventStatus.completeWithIssue;
+    }
+
+    const updateResult = await this.spaceEventRepository.update(id, dto);
+
+    return {
+      data: {
+        result: updateResult.affected === 1,
+      },
+    };
+  }
+
+  async updateToCompleteWithIssue(
+    id: string,
+    completeWithIssueSpaceEventDto: CompleteWithIssueSpaceEventDto,
+  ): Promise<{ data: { result: boolean } }> {
+    const spaceEvent = await this.spaceEventRepository.findOneBy({ id });
+    const dto: Partial<SpaceEvent> = {
+      status: SpaceEventStatus.completeWithIssue,
+      updatedAt: new Date(),
+    };
+
+    if (
+      [
+        SpaceEventStatus.permissionGranted,
+        SpaceEventStatus.running,
+        SpaceEventStatus.closed,
+        SpaceEventStatus.complete,
+      ].includes(spaceEvent.status) === false
+    ) {
+      throw new ForbiddenException(
+        `Cannot complete ${spaceEvent.status} SpaceEvent.`,
+      );
+    }
+
+    const start = dayjs(new Date(spaceEvent.startsAt));
+    if (start > dayjs()) {
+      throw new ForbiddenException('Can complete after SpaceEvent starts.');
+    }
+
+    if (completeWithIssueSpaceEventDto.details != null) {
+      dto.details = completeWithIssueSpaceEventDto.details;
+      dto.status = SpaceEventStatus.completeWithIssue;
+    }
+
+    const updateResult = await this.spaceEventRepository.update(id, dto);
+
+    return {
+      data: {
+        result: updateResult.affected === 1,
+      },
+    };
+  }
+
+  async updateToCompleteWithIssueResolved(
+    id: string,
+    completeWithIssueResolvedSpaceEventDto: CompleteWithIssueResolvedSpaceEventDto,
+  ): Promise<{ data: { result: boolean } }> {
+    const spaceEvent = await this.spaceEventRepository.findOneBy({ id });
+    const dto: Partial<SpaceEvent> = {
+      status: SpaceEventStatus.completeWithIssue,
+      updatedAt: new Date(),
+    };
+
+    if (
+      [SpaceEventStatus.completeWithIssue].includes(spaceEvent.status) === false
+    ) {
+      throw new ForbiddenException(
+        `Cannot complete ${spaceEvent.status} SpaceEvent.`,
+      );
+    }
+
+    const start = dayjs(new Date(spaceEvent.startsAt));
+    if (start > dayjs()) {
+      throw new ForbiddenException('Can complete after SpaceEvent starts.');
+    }
+
+    if (completeWithIssueResolvedSpaceEventDto.details != null) {
+      dto.details = completeWithIssueResolvedSpaceEventDto.details;
       dto.status = SpaceEventStatus.completeWithIssue;
     }
 
