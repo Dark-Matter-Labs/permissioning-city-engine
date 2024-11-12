@@ -16,7 +16,7 @@ import { Rule } from '../../database/entity/rule.entity';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateRuleDto } from './dto/create-rule.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-import { FindAllMatchedRuleDto, ForkRuleDto, UpdateRuleDto } from './dto';
+import { ForkRuleDto, UpdateRuleDto } from './dto';
 import { FindAllRuleDto } from './dto';
 import { UserService } from '../user/user.service';
 import { SpaceEventService } from '../space-event/space-event.service';
@@ -38,7 +38,7 @@ export class RuleController {
   @Get()
   @ApiOperation({ summary: 'Get all rules' })
   findAll(@Query() query: FindAllRuleDto) {
-    const { page, limit, target, authorId, parentRuleId, hash } = query;
+    const { page, limit, target, authorId, parentRuleId, hash, ids } = query;
 
     return this.ruleService.findAll({
       page,
@@ -47,33 +47,7 @@ export class RuleController {
       authorId,
       parentRuleId,
       hash,
-    });
-  }
-
-  @Get('match/:spaceId')
-  @ApiOperation({
-    summary: 'Get matching rule templates by spaceId and condition',
-  })
-  findAllMatched(
-    @Param('spaceId') spaceId: string,
-    @Query() query: FindAllMatchedRuleDto,
-  ) {
-    const {
-      page,
-      limit,
-      spaceEventAccess,
-      spaceEventRequireEquipments,
-      spaceEventExpectedAttendeeCount,
-      spaceEventExceptions,
-    } = query;
-
-    return this.ruleService.findAllMatched(spaceId, {
-      page,
-      limit,
-      spaceEventAccess,
-      spaceEventRequireEquipments,
-      spaceEventExpectedAttendeeCount,
-      spaceEventExceptions,
+      ids,
     });
   }
 
@@ -83,31 +57,44 @@ export class RuleController {
   async findOneById(@Req() req, @Param('id') id: string): Promise<Rule> {
     const user = await this.userService.findOneByEmail(req.user.email);
     const rule = await this.ruleService.findOneById(id);
-    const spaces = await this.spaceService.findByRuleId(id);
-    const spaceEvents = await this.spaceEventService.findAll({
-      ruleId: id,
-    });
+
+    if (!rule) {
+      throw new BadRequestException(`There is no rule with id: ${id}`);
+    }
+
+    const publicRuleBlocks = rule.ruleBlocks.filter(
+      (ruleBlock) => ruleBlock.isPublic === true,
+    );
+    const spaces = (await this.spaceService.findAllByRuleId(id))?.data ?? [];
+    const spaceEvents =
+      (
+        await this.spaceEventService.findAll(
+          {
+            ruleId: id,
+          },
+          false,
+        )
+      )?.data ?? [];
     const spacePermissioners: SpacePermissioner[] = [];
 
-    for (const space of spaces.data) {
+    for (const space of spaces) {
       await this.spacePermissionerService
         .findAllBySpaceId(space.id, { isActive: true }, false)
         .then((res) => {
-          spacePermissioners.push(...res.data);
+          if (res.data) {
+            spacePermissioners.push(...res.data);
+          }
         });
     }
 
     if (
       [
         user.id,
-        ...spaces.data.map((item) => item.ownerId),
-        ...spaceEvents.data.map((item) => item.organizerId),
+        ...spaces.map((item) => item.ownerId),
+        ...spaceEvents.map((item) => item.organizerId),
         ...spacePermissioners.map((item) => item.userId),
       ].includes(rule.authorId) === false
     ) {
-      const publicRuleBlocks = rule.ruleBlocks.filter(
-        (ruleBlock) => ruleBlock.isPublic === true,
-      );
       rule.ruleBlocks = publicRuleBlocks;
     }
 

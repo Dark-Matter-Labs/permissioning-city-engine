@@ -1,10 +1,25 @@
-import { IsOptional, IsString, IsArray, Matches } from 'class-validator';
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsOptional,
+  IsString,
+  IsArray,
+  Matches,
+  IsNotEmpty,
+  IsUUID,
+} from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PaginationDto } from 'src/lib/dto';
 import { Transform } from 'class-transformer';
-import { SpaceEventAccessType } from 'src/lib/type';
+import { NoiseLevel, SpaceEventAccessType } from 'src/lib/type';
 
 export class FindAllMatchedRuleDto extends PaginationDto {
+  @IsNotEmpty()
+  @IsUUID()
+  @ApiProperty({
+    description: 'spaceId in uuid',
+    type: String,
+  })
+  spaceId: string;
+
   @IsOptional()
   @IsString()
   @ApiPropertyOptional({
@@ -37,6 +52,13 @@ export class FindAllMatchedRuleDto extends PaginationDto {
       'RuleBlock content(number) with spaceEventExpectedAttendeeCount type',
   })
   spaceEventExpectedAttendeeCount?: number;
+
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({
+    description: 'RuleBlock content(string) with spaceEventNoiseLevel type',
+  })
+  spaceEventNoiseLevel?: NoiseLevel;
 
   @IsOptional()
   @Transform(({ value }) => (Array.isArray(value) ? value : value.split(',')))

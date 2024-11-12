@@ -79,8 +79,8 @@ export class PermissionRequest {
   permissionCode: string;
 
   @Column()
-  @ApiProperty({ description: 'PermissionRequest responseSummary' })
-  responseSummary: string;
+  @ApiProperty({ description: 'PermissionRequest resolveDetails' })
+  resolveDetails: string;
 
   @CreateDateColumn()
   @ApiProperty({ description: 'Created timestamp' })

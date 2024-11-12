@@ -35,7 +35,7 @@ export class SpaceApprovedRuleController {
   @Get()
   @ApiOperation({ summary: 'Get all SpaceApprovedRules by spaceId' })
   findAll(@Query() query: FindAllSpaceApprovedRuleDto) {
-    const { page, limit, spaceId, ruleId, isActive } = query;
+    const { page, limit, spaceId, ruleId, isActive, sortBy } = query;
 
     return this.spaceApprovedRuleService.findAll({
       page,
@@ -43,6 +43,7 @@ export class SpaceApprovedRuleController {
       spaceId,
       ruleId,
       isActive,
+      sortBy,
     });
   }
 

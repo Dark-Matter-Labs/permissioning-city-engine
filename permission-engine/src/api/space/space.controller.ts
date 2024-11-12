@@ -18,7 +18,11 @@ import { Space } from '../../database/entity/space.entity';
 import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateSpaceDto } from './dto/create-space.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-import { FindSpaceAvailabilityDto, UpdateSpaceDto } from './dto';
+import {
+  FindAllMatchedRuleDto,
+  FindSpaceAvailabilityDto,
+  UpdateSpaceDto,
+} from './dto';
 import { UserService } from '../user/user.service';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { SpaceImageService } from '../space-image/space-image.service';
@@ -46,6 +50,34 @@ export class SpaceController {
     private readonly spaceImageService: SpaceImageService,
     private readonly logger: Logger,
   ) {}
+
+  @Get('matched-rule')
+  @ApiOperation({
+    summary: 'Get matching rule templates by spaceId and condition',
+  })
+  findAllMatched(@Query() query: FindAllMatchedRuleDto) {
+    const {
+      page,
+      limit,
+      spaceId,
+      spaceEventAccess,
+      spaceEventNoiseLevel,
+      spaceEventRequireEquipments,
+      spaceEventExpectedAttendeeCount,
+      spaceEventExceptions,
+    } = query;
+
+    return this.ruleService.findAllMatched({
+      page,
+      limit,
+      spaceId,
+      spaceEventAccess,
+      spaceEventNoiseLevel,
+      spaceEventRequireEquipments,
+      spaceEventExpectedAttendeeCount,
+      spaceEventExceptions,
+    });
+  }
 
   @Get()
   @ApiOperation({ summary: 'Get all spaces' })
@@ -95,6 +127,7 @@ export class SpaceController {
       (
         await this.ruleService.findAll(
           { ids: spaceEvents.map((item) => item.ruleId) },
+          false,
           false,
         )
       )?.data ?? [];

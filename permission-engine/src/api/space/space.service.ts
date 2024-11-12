@@ -64,7 +64,7 @@ export class SpaceService {
     return this.spaceRepository.findOneBy({ name });
   }
 
-  async findByRuleId(
+  async findAllByRuleId(
     ruleId: string,
   ): Promise<{ data: Space[]; total: number }> {
     const [data, total] = await this.spaceRepository.findAndCount({

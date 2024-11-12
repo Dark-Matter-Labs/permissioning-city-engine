@@ -27,6 +27,13 @@ export enum SpaceEventStatus {
   closed = 'closed', // closed by daemon after ends_at
   complete = 'complete', // completed by the event organizer
   completeWithIssue = 'complete_with_issue', // completed by the event organizer with issue
+  completeWithIssueResolved = 'complete_with_issue_resolved', // event issue resolved
+}
+
+export enum SpaceApprovedRuleSortBy {
+  popularity = 'popularity',
+  timeAsc = 'time-asc',
+  timeDesc = 'time-desc',
 }
 
 /**
@@ -61,6 +68,7 @@ export enum RuleBlockType {
   spaceEventAccess = 'space_event:access', // content: {SpaceEventAccessType}
   spaceEventExpectedAttendeeCount = 'space_event:expected_attendee_count', // number
   spaceEventNoiseLevel = 'space_event:noise_level', // {NoiseLevel}
+  // required per spacePrePermissionCheck ruleBlock in space rule -> when permission requested
   spaceEventPrePermissionCheckAnswer = 'space_event:pre_permission_check_answer', // {spaceRuleBlockHash}^{answer in boolean}
 }
 
