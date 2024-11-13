@@ -2,12 +2,14 @@ import { Injectable } from '@nestjs/common';
 import {
   CreateSpaceEquipmentDto,
   FindAllSpaceEquipmentDto,
+  FindAllSpaceFacilityDto,
   UpdateSpaceEquipmentDto,
 } from './dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { SpaceEquipment } from 'src/database/entity/space-equipment.entity';
+import { SpaceEquipmentType } from 'src/lib/type';
 
 @Injectable()
 export class SpaceEquipmentService {
@@ -16,7 +18,7 @@ export class SpaceEquipmentService {
     private spaceEquipmentRepository: Repository<SpaceEquipment>,
   ) {}
 
-  async findAll(
+  async findAllEquipment(
     findAllSpaceEquipmentDto: FindAllSpaceEquipmentDto,
   ): Promise<{ data: SpaceEquipment[]; total: number }> {
     const { page, limit, spaceId, types, isActive } = findAllSpaceEquipmentDto;
@@ -24,6 +26,10 @@ export class SpaceEquipmentService {
     const where = [];
     const params: any[] = [(page - 1) * limit, limit];
     let paramIndex: number = params.length;
+
+    paramIndex++;
+    where.push(`type != $${paramIndex}`);
+    params.push(SpaceEquipmentType.facility);
 
     if (spaceId != null) {
       paramIndex++;
@@ -43,7 +49,6 @@ export class SpaceEquipmentService {
       params.push(types);
     }
 
-    const whereClause = where.length > 0 ? 'WHERE' : '';
     const query = `
       WITH filtered_data AS (
         SELECT (
@@ -57,7 +62,82 @@ export class SpaceEquipmentService {
           created_at,
           updated_at
         ) FROM space_equipment
-        ${whereClause} ${where.join(' AND ')}
+        WHERE 
+          ${where.join(' AND ')}
+      )
+      SELECT COUNT(*) AS total, json_agg(filtered_data) AS data
+      FROM filtered_data
+      LIMIT $2 OFFSET $1;
+    `;
+
+    const [{ data, total }] = await this.spaceEquipmentRepository.query(
+      query,
+      params,
+    );
+
+    let result = [];
+
+    if (data != null) {
+      result = data.map((item) => {
+        return {
+          id: item.row.f1,
+          spaceId: item.row.f2,
+          name: item.row.f3,
+          type: item.row.f4,
+          quantity: item.row.f5,
+          details: item.row.f6,
+          isActive: item.row.f7,
+          createdAt: item.row.f8,
+          updatedAt: item.row.f9,
+        };
+      });
+    }
+    return {
+      data: result,
+      total: parseInt(total),
+    };
+  }
+
+  async findAllFacility(
+    findAllSpaceFacilityDto: FindAllSpaceFacilityDto,
+  ): Promise<{ data: SpaceEquipment[]; total: number }> {
+    const { page, limit, spaceId, isActive } = findAllSpaceFacilityDto;
+
+    const where = [];
+    const params: any[] = [(page - 1) * limit, limit];
+    let paramIndex: number = params.length;
+
+    paramIndex++;
+    where.push(`type = $${paramIndex}`);
+    params.push(SpaceEquipmentType.facility);
+
+    if (spaceId != null) {
+      paramIndex++;
+      where.push(`space_id = $${paramIndex}`);
+      params.push(spaceId);
+    }
+
+    if (isActive != null) {
+      paramIndex++;
+      where.push(`is_active = $${paramIndex}`);
+      params.push(isActive);
+    }
+
+    const query = `
+      WITH filtered_data AS (
+        SELECT (
+          id,
+          space_id,
+          name,
+          type,
+          quantity,
+          details,
+          is_active,
+          created_at,
+          updated_at
+        ) FROM space_equipment
+        WHERE 
+          ${where.join(' AND ')}
       )
       SELECT COUNT(*) AS total, json_agg(filtered_data) AS data
       FROM filtered_data

@@ -14,6 +14,7 @@ import {
 import {
   CreateSpaceEquipmentDto,
   FindAllSpaceEquipmentDto,
+  FindAllSpaceFacilityDto,
   UpdateSpaceEquipmentDto,
 } from './dto';
 import { SpaceEquipmentService } from './space-equipment.service';
@@ -34,15 +35,28 @@ export class SpaceEquipmentController {
   ) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get all SpaceEquipments' })
-  findAll(@Query() query: FindAllSpaceEquipmentDto) {
+  @ApiOperation({ summary: 'Get all Space equipments' })
+  findAllEquipment(@Query() query: FindAllSpaceEquipmentDto) {
     const { page, limit, spaceId, types, isActive } = query;
 
-    return this.spaceEquipmentService.findAll({
+    return this.spaceEquipmentService.findAllEquipment({
       page,
       limit,
       spaceId,
       types,
+      isActive,
+    });
+  }
+
+  @Get('facility')
+  @ApiOperation({ summary: 'Get all Space facilities' })
+  findAllFacility(@Query() query: FindAllSpaceFacilityDto) {
+    const { page, limit, spaceId, isActive } = query;
+
+    return this.spaceEquipmentService.findAllFacility({
+      page,
+      limit,
+      spaceId,
       isActive,
     });
   }
