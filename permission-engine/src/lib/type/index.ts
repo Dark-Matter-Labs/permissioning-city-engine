@@ -198,6 +198,9 @@ export enum SpaceEventAccessType {
 }
 
 export enum SpaceEquipmentType {
+  //Facilitiy
+  facility = 'facility',
+  //Non Facilitiy
   general = 'general',
   audio = 'audio',
   video = 'video',
@@ -207,9 +210,8 @@ export enum SpaceEquipmentType {
   sports = 'sports',
   kitchen = 'kitchen',
   craft = 'craft',
-  safty = 'safty',
+  safety = 'safety',
   computer = 'computer',
-  facility = 'facility',
 }
 
 export type SpaceAvailability = {
@@ -295,11 +297,21 @@ export enum UserNotificationTemplateName {
    */
   spaceEventPermissionRequested = 'space-event-permission-requested',
   /**
+   * <Permission for a space rule change request created>
+   * Inform the permission requester when rule change permission request is created for the space
+   */
+  spaceRuleChangePermissionRequestCreated = 'space-rule-change-permission-request-created',
+  /**
    * <Permission for a space rule change requested>
    * Inform the space permissioners when rule change permission request is created for the space
    * Provide a link to space permissioner dashboard that would show the form UI for making permission response
    */
   spaceRuleChangePermissionRequested = 'space-rule-change-permission-requested',
+  /**
+   * <Permission for a space rule change request Created>
+   * Inform the permission requester when rule change permission request is created for the space
+   */
+  spaceEventRulePreApprovePermissionRequestCreated = 'space-event-rule-pre-approve-permission-request-created',
   /**
    * <Permission for a space rule change requested>
    * Inform the space permissioners when rule change permission request is created for the space
@@ -307,21 +319,91 @@ export enum UserNotificationTemplateName {
    */
   spaceEventRulePreApprovePermissionRequested = 'space-event-rule-pre-approve-permission-requested',
   /**
-   * <Permission request review is complete>
-   * Inform the permission requester(event organizer) and space permissioners when permission request review result is made
+   * <Review for space event permission request is complete and approved>
+   * Inform the permission requester(event organizer) when permission request review result is made and approved
    * Show permission response result summary
    * Tell the event organizer what to do
    * Provide a link to event dashboard for the event organizer to resolve the permission request
    */
-  permissionRequestReviewed = 'permission-request-reviewed',
+  spaceEventPermissionRequestApproved = 'space-event-permission-request-approved',
   /**
-   * <Permission request is resolved>
-   * Inform the permission requester(rule change proposer or event organizer) and space permissioners when permission request is resolved by the event organizer
+   * <Review for space event permission request is complete and rejected>
+   * Inform the permission requester(event organizer) when permission request review result is made and rejected
+   * Show permission response result summary
+   * Tell the event organizer what to do
+   * Provide a link to event dashboard for the event organizer to resolve the permission request
+   */
+  spaceEventPermissionRequestRejected = 'space-event-permission-request-rejected',
+  /**
+   * <Review for space event permission request is complete>
+   * Inform the space permissioners when permission request review result is made
+   * Show permission response result summary
+   */
+  spaceEventPermissionRequestReviewCompleted = 'space-event-permission-request-review-completed',
+  /**
+   * <Review for space rule change permission request is complete and approved>
+   * Inform the permission requester(rule change proposer) when permission request review result is made and approved
+   * Show permission response result summary
+   * Tell the rule change proposer what to do
+   */
+  spaceRuleChangePermissionRequestApproved = 'space-rule-change-permission-request-approved',
+  /**
+   * <Review for space rule change permission request is complete and rejected>
+   * Inform the permission requester(rule change proposer) when permission request review result is made and rejected
+   * Show permission response result summary
+   * Tell the rule change proposer what to do
+   */
+  spaceRuleChangePermissionRequestRejected = 'space-rule-change-permission-request-rejected',
+  /**
+   * <Review for space rule change permission request is complete>
+   * Inform the space permissioners when permission request review result is made
+   * Show permission response result summary
+   */
+  spaceRuleChangePermissionRequestReviewCompleted = 'space-rule-change-permission-request-review-completed',
+  /**
+   * <Review for space event rule pre approval permission request is complete and approved>
+   * Inform the permission requester(space event rule pre approval proposer) when permission request review result is made and approved
+   * Show permission response result summary
+   * Tell the space event rule pre approval proposer what to do
+   */
+  spaceEventPreApprovePermissionRequestApproved = 'space-event-pre-approve-permission-request-approved',
+  /**
+   * <Review for space event rule pre approval permission request is complete and rejected>
+   * Inform the permission requester(space event rule pre approval proposer) when permission request review result is made and rejected
+   * Show permission response result summary
+   * Tell the space event rule pre approval proposer what to do
+   */
+  spaceEventPreApprovePermissionRequestRejected = 'space-event-pre-approve-permission-request-rejected',
+  /**
+   * <Review for space event rule pre approval permission request is complete>
+   * Inform the space permissioners when permission request review result is made
+   * Show permission response result summary
+   */
+  spaceEventPreApprovePermissionRequestReviewCompleted = 'space-event-pre-approve-permission-request-review-completed',
+  /**
+   * <Permission request for space event is resolved to accepted>
+   * Inform the permission requester(event organizer) and space permissioners when permission request is resolved by the event organizer to be accepted
    * Show resolve result summary
    * Provide the permission code for the event organizer <-> no permissio ncode for rule change proposer
    * Provide a link to external booking service that the event organizer can paste the permission code and proceed with booking
    */
-  permissionRequestResolved = 'permission-request-resolved',
+  spaceEventPermissionRequestResolveAccepted = 'space-event-permission-request-resolve-accepted',
+  /**
+   * <Permission request for space event is resolved to dropped>
+   * Inform the permission requester(event organizer) and space permissioners when permission request is resolved by the event organizer to be dropped
+   * Show resolve result summary
+   * Provide the permission code for the event organizer <-> no permissio ncode for rule change proposer
+   * Provide a link to external booking service that the event organizer can paste the permission code and proceed with booking
+   */
+  spaceEventPermissionRequestResolveDropped = 'space-event-permission-request-resolve-dropped',
+  /**
+   * <Permission request for space event is resolved to cancelled>
+   * Inform the permission requester(event organizer) and space permissioners when permission request is resolved by the event organizer to be cancelled
+   * Show resolve result summary
+   * Provide the permission code for the event organizer <-> no permissio ncode for rule change proposer
+   * Provide a link to external booking service that the event organizer can paste the permission code and proceed with booking
+   */
+  spaceEventPermissionRequestResolveCancelled = 'space-event-permission-request-resolve-cancelled',
   /**
    * <Space is created>
    * Inform the space owner when space is created
