@@ -27,7 +27,7 @@ export enum SpaceEventStatus {
   closed = 'closed', // closed by daemon after ends_at
   complete = 'complete', // completed by the event organizer
   completeWithIssue = 'complete_with_issue', // completed by the event organizer with issue
-  completeWithIssueResolved = 'complete_with_issue_resolved', // event issue resolved
+  completeWithIssueResolved = 'complete_with_issue_resolved', // issue raised by the event organizer was resolved
 }
 
 export enum SpaceApprovedRuleSortBy {
@@ -43,33 +43,138 @@ export enum SpaceApprovedRuleSortBy {
  * Time unit divider: '-'
  */
 export enum RuleBlockType {
-  // space
+  /**
+   * Space: rule blocks for space rules
+   * [Required] required rule block type
+   * [Optional] optional rule block type
+   * [PrePermissionCheck] need to consent on this rule blocks for auto permission
+   * [Private] only visible to space permissioners and approved event organizers & not going to be inherited to child rules
+   * [PostEventCheck] check list for event completion
+   */
+  /**
+   * [Optional] General descriptive rule block for space rule
+   * content: string
+   */
   spaceGeneral = 'space:general',
+  /**
+   * [Optional] Excluded topics in the space
+   * content: {topicId}
+   */
+  spaceExcludedTopic = 'space:excluded_topic',
+  /**
+   * [Optional] Public guide: visible to everyone
+   * content: string
+   */
+  spaceGuide = 'space:guide',
+  /**
+   * [Private] [Optional] Private guide: only visible to space permissioners and approved event organizers
+   * content: string
+   */
+  spacePrivateGuide = 'space:private_guide',
+  /**
+   * [Required] Consent method for space permissioners
+   * content: /^(under|over|is):(100|[1-9]?[0-9]):(yes|no)$/
+   */
   spaceConsentMethod = 'space:consent_method',
-  spaceConsentTimeout = 'space:consent_timeout', // content: {number}{d|h}
-  spaceAccess = 'space:access', // content: array of {SpaceEventAccessType};{SpaceEventAccessType}; ...
-  spaceMaxAttendee = 'space:max_attendee', // content: number
-  spaceMaxNoiseLevel = 'space:max_noise_level', // content: {NoiseLevel}
-  spaceAvailability = 'space:availability', // content: {mon|tue|wed|thu|fri|sat|sun}-{00:00}-{24:00};{mon|tue|wed|thu|fri|sat|sun}-{00:00}-{24:00}; ...
-  spaceAvailabilityUnit = 'space:availability_unit', // content: {number}{d|h|m}
-  spaceAvailabilityBuffer = 'space:availability_buffer', // content: {number}{d|h|m}
-  spacePrePermissionCheck = 'space:pre_permission_check', // content: {boolean question}^{default answer in boolean} -> ask boolean questions for event organizers before permission request
-  spacePostEventCheck = 'space:post_event_check', // content: boolean question for post event check
-  // spaceEvent
-  // optional
+  /**
+   * [Required] Consent timeout for space permissioners
+   * content: {number}{d|h}
+   */
+  spaceConsentTimeout = 'space:consent_timeout',
+  /**
+   * [PostEventCheck] [Optional] Post event boolean question for event organizers
+   * content: string
+   */
+  spacePostEventCheck = 'space:post_event_check',
+  /**
+   * [PrePermissionCheck] [Optional] Custom pre permission check rules made by space permissioners to ask boolean question: event organizers need to agree on this for auto permission
+   * content: string
+   */
+  spacePrePermissionCheck = 'space:pre_permission_check',
+  /**
+   * [PrePermissionCheck] [Required] Allowed event access types
+   * content: array of {SpaceEventAccessType};{SpaceEventAccessType}; ...
+   */
+  spaceAllowedEventAccessType = 'space:allowed_event_access_type',
+  /**
+   * [PrePermissionCheck] [Required] Max Attendee limit
+   * content: number
+   */
+  spaceMaxAttendee = 'space:max_attendee',
+  /**
+   * [PrePermissionCheck] [Required] Max noise level
+   * content: {NoiseLevel}
+   */
+  spaceMaxNoiseLevel = 'space:max_noise_level',
+  /**
+   * [PrePermissionCheck] [Required] Availability description
+   * content: {mon|tue|wed|thu|fri|sat|sun}-{00:00}-{24:00};{mon|tue|wed|thu|fri|sat|sun}-{00:00}-{24:00}; ...
+   */
+  spaceAvailability = 'space:availability',
+  /**
+   * [PrePermissionCheck] [Required] Availability buffer between events
+   * content: {number}{d|h|m}
+   */
+  spaceAvailabilityBuffer = 'space:availability_buffer',
+  /**
+   * [PrePermissionCheck] [Required] Availability unit
+   * content: {number}{d|h|m}
+   */
+  spaceAvailabilityUnit = 'space:availability_unit',
+  // TODO. implement max availability unit count
+  /**
+   * [PrePermissionCheck] [Required] Max allowed availability unit count
+   * content: number
+   */
+  spaceMaxAvailabilityUnitCount = 'space:max_availability_unit_count',
+  /**
+   * [PrePermissionCheck] [Required] Cancellation deadline for events
+   * content: {number}{d|h|m}
+   */
+  spaceCancelDeadline = 'space:cancel_deadline',
+
+  /**
+   * SpaceEvent: rule blocks for event rules
+   * [Required] required rule block type
+   * [Optional] optional rule block type
+   * [Private] only visible to space permissioners and approved event organizers & not going to be inherited to child rules
+   */
+  /**
+   * [Optional] General descriptive rule block for event rule
+   * content: string
+   */
   spaceEventGeneral = 'space_event:general',
-  spaceEventRequireEquipment = 'space_event:require_equipment', // content: {spaceEquipmentId}^{quantity}
-  spaceEventException = 'space_event:exception', // content: {spaceRuleBlockHash}^{desiredValue}^{reason}
-  spaceEventBenefit = 'space_event:benefit', // content: expected benefit
-  spaceEventRisk = 'space_event:risk', // content: expected risk
-  spaceEventSelfRiskAssesment = 'space_event:self_risk_assesment', // content: description on self risk assesment
-  spaceEventInsurance = 'space_event:insurance', // content: file download path: s3
-  // required
-  spaceEventAccess = 'space_event:access', // content: {SpaceEventAccessType}
-  spaceEventExpectedAttendeeCount = 'space_event:expected_attendee_count', // number
-  spaceEventNoiseLevel = 'space_event:noise_level', // {NoiseLevel}
-  // required per spacePrePermissionCheck ruleBlock in space rule -> when permission requested
-  spaceEventPrePermissionCheckAnswer = 'space_event:pre_permission_check_answer', // {spaceRuleBlockHash}^{answer in boolean}
+  /**
+   * [Optional] Expected benefit
+   * content: string
+   */
+  spaceEventBenefit = 'space_event:benefit',
+  /**
+   * [Optional] Expected risk
+   * content: string
+   */
+  spaceEventRisk = 'space_event:risk',
+  /**
+   * [Optional] Description on self risk assesment
+   * content: string
+   */
+  spaceEventSelfRiskAssesment = 'space_event:self_risk_assesment',
+  /**
+   * [Optional] Exception against a space rule block
+   * content: {spaceRuleBlockHash}^{desiredValue}^{reason}
+   * [Policy] No exception === agree
+   */
+  spaceEventException = 'space_event:exception',
+  /**
+   * [Optional] [Private] space equipment requirement for event
+   * content: {spaceEquipmentId}^{quantity}
+   */
+  spaceEventRequireEquipment = 'space_event:require_equipment',
+  /**
+   * [Optional] [Private] Insurance file for event
+   * content: file download path: s3
+   */
+  spaceEventInsurance = 'space_event:insurance',
 }
 
 export enum RuleBlockContentDivider {
