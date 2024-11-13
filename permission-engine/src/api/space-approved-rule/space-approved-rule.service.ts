@@ -25,7 +25,7 @@ export class SpaceApprovedRuleService {
   async findAll(
     findAllSpaceApprovedRuleDto: FindAllSpaceApprovedRuleDto,
   ): Promise<{ data: Rule[]; total: number }> {
-    const { page, limit, spaceId, ruleId, isActive, sortBy } =
+    const { page, limit, spaceId, ruleId, topicIds, isActive, sortBy } =
       findAllSpaceApprovedRuleDto;
 
     const where = [];
@@ -49,6 +49,12 @@ export class SpaceApprovedRuleService {
       paramIndex++;
       where.push(`sar.is_active = $${paramIndex}`);
       params.push(isActive);
+    }
+
+    if (topicIds != null) {
+      paramIndex++;
+      where.push(`rt.topic_id = ANY($${paramIndex})`);
+      params.push(topicIds);
     }
 
     if (sortBy != null) {
@@ -84,10 +90,13 @@ export class SpaceApprovedRuleService {
         ) FROM
          space_approved_rule sar,
          rule r,
+         rule_topic rt,
          rule_rule_block rrb,
          rule_block rb
         WHERE
           sar.rule_id = r.id
+        AND
+          r.id = rt.rule_id
         AND
           r.id = rrb.rule_id
         AND
