@@ -9,7 +9,7 @@ import {
   RuleBlockType,
   SpaceEventAccessType,
 } from 'src/lib/type';
-import * as Util from 'src/lib/util/util';
+import * as Util from 'src/lib/util';
 import { Logger } from 'src/lib/logger/logger.service';
 import { v4 as uuidv4 } from 'uuid';
 import BigNumber from 'bignumber.js';
@@ -95,6 +95,8 @@ export class RuleBlockService {
 
     switch (type) {
       case RuleBlockType.spaceGeneral:
+      case RuleBlockType.spaceGuide:
+      case RuleBlockType.spacePrivateGuide:
       case RuleBlockType.spacePostEventCheck:
       case RuleBlockType.spaceEventGeneral:
       case RuleBlockType.spaceEventBenefit:
@@ -102,7 +104,6 @@ export class RuleBlockService {
       case RuleBlockType.spaceEventSelfRiskAssesment:
         break;
       case RuleBlockType.spaceMaxNoiseLevel:
-      case RuleBlockType.spaceEventNoiseLevel:
         this.validateNoiseLevel(trimmedContent);
         break;
       case RuleBlockType.spaceConsentMethod:
@@ -111,8 +112,8 @@ export class RuleBlockService {
       case RuleBlockType.spaceConsentTimeout:
         this.validateSpaceConsentTimeout(trimmedContent);
         break;
-      case RuleBlockType.spaceAccess:
-        this.validateSpaceAccess(trimmedContent);
+      case RuleBlockType.spaceAllowedEventAccessType:
+        this.validateSpaceAllowedEventAccessType(trimmedContent);
         break;
       case RuleBlockType.spaceMaxAttendee:
         this.validateSpaceMaxAttendee(trimmedContent);
@@ -129,23 +130,14 @@ export class RuleBlockService {
       case RuleBlockType.spacePrePermissionCheck:
         this.validateSpacePrePermissionCheck(trimmedContent);
         break;
-      case RuleBlockType.spaceEventAccess:
-        this.validateSpaceEventAccess(trimmedContent);
-        break;
       case RuleBlockType.spaceEventRequireEquipment:
         await this.validateSpaceEventRequireEquipment(trimmedContent);
-        break;
-      case RuleBlockType.spaceEventExpectedAttendeeCount:
-        this.validateSpaceEventExpectedAttendeeCount(trimmedContent);
         break;
       case RuleBlockType.spaceEventException:
         await this.validateSpaceEventException(trimmedContent);
         break;
       case RuleBlockType.spaceEventInsurance:
         this.validateSpaceEventInsurance(files);
-        break;
-      case RuleBlockType.spaceEventPrePermissionCheckAnswer:
-        await this.validateSpaceEventPrePermissionCheckAnswer(trimmedContent);
         break;
 
       default:
@@ -160,7 +152,14 @@ export class RuleBlockService {
       content: trimmedContent,
       name: trimmedName,
       hash,
-      isPublic: type === RuleBlockType.spaceEventInsurance ? false : true,
+      isPublic:
+        [
+          RuleBlockType.spaceEventInsurance,
+          RuleBlockType.spaceEventRequireEquipment,
+          RuleBlockType.spacePrivateGuide,
+        ].includes(type) === true
+          ? false
+          : true,
     });
 
     return this.ruleBlockRepository.save(newRuleBlock);
@@ -194,7 +193,7 @@ export class RuleBlockService {
     }
   }
 
-  private validateSpaceAccess(content: string) {
+  private validateSpaceAllowedEventAccessType(content: string) {
     const accessTypes = content.split(RuleBlockContentDivider.array);
     accessTypes.forEach((item) => {
       this.validateSpaceEventAccess(item);
@@ -342,22 +341,16 @@ export class RuleBlockService {
     }
   }
 
-  private async validateSpaceEventExpectedAttendeeCount(content: string) {
-    if (content !== parseInt(content).toString(10)) {
-      throw new BadRequestException(`Content must be an integer`);
-    }
-  }
-
   private async validateSpaceEventException(content: string) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [spaceRuleBlockHash, desiredValue, _reason] = content.split(
       RuleBlockContentDivider.type,
     );
-    const spaceRuleBlocks =
+    const [spaceRuleBlock] =
       (await this.findAll({ hash: spaceRuleBlockHash, page: 1, limit: 1 }))
         ?.data ?? [];
 
-    if (spaceRuleBlocks.length === 0) {
+    if (!spaceRuleBlock) {
       throw new BadRequestException(
         `There is no space ruleBlock with hash: ${spaceRuleBlockHash}`,
       );
@@ -366,15 +359,26 @@ export class RuleBlockService {
         `content must be in format: {spaceRuleBlockHash}${RuleBlockContentDivider.type}{desiredValue}${RuleBlockContentDivider.type}{reason}`,
       );
     } else {
-      const { type, content } = spaceRuleBlocks[0];
+      const { type, content } = spaceRuleBlock;
 
-      if (type === RuleBlockType.spaceAccess) {
-        this.validateSpaceEventAccess(desiredValue);
+      if (type === RuleBlockType.spaceAllowedEventAccessType) {
+        this.validateSpaceAllowedEventAccessType(desiredValue);
 
-        if (
-          content.split(RuleBlockContentDivider.array).includes(desiredValue)
-        ) {
-          throw new BadRequestException(`${desiredValue} is already allowed`);
+        const allowedEventAccessTypes = content.split(
+          RuleBlockContentDivider.array,
+        );
+
+        while (allowedEventAccessTypes.length > 0) {
+          const eventAccessType = allowedEventAccessTypes.pop();
+          if (
+            desiredValue
+              .split(RuleBlockContentDivider.array)
+              .includes(eventAccessType) === true
+          ) {
+            throw new BadRequestException(
+              `${eventAccessType} is already allowed`,
+            );
+          }
         }
       } else if (type === RuleBlockType.spaceMaxAttendee) {
         this.validateSpaceMaxAttendee(desiredValue);
@@ -388,6 +392,12 @@ export class RuleBlockService {
         this.validateSpaceAvailabilityUnit(desiredValue);
       } else if (type === RuleBlockType.spaceAvailabilityBuffer) {
         this.validateSpaceAvailabilityBuffer(desiredValue);
+      } else if (type === RuleBlockType.spacePrePermissionCheck) {
+        if (desiredValue !== 'false') {
+          throw new BadRequestException(
+            `desiredValue must be false in this case: ${desiredValue} given`,
+          );
+        }
       } else if (type === RuleBlockType.spacePostEventCheck) {
       } else if (type === RuleBlockType.spaceGeneral) {
       } else {
@@ -401,41 +411,6 @@ export class RuleBlockService {
   private validateSpaceEventInsurance(files: Express.Multer.File[]) {
     if (files.length === 0) {
       throw new BadRequestException('Should provide file for insurance');
-    }
-  }
-
-  private async validateSpaceEventPrePermissionCheckAnswer(content: string) {
-    const dividedContent = content?.split(RuleBlockContentDivider.type) ?? [];
-    const [spaceRuleBlockHash, answer] = dividedContent;
-
-    if (dividedContent.length !== 2) {
-      throw new BadRequestException(
-        `Content must be in format: {spaceRuleBlockHash}^{true|false}`,
-      );
-    }
-
-    const spaceRuleBlocks =
-      (await this.findAll({ hash: spaceRuleBlockHash, page: 1, limit: 1 }))
-        ?.data ?? [];
-
-    if (spaceRuleBlocks.length === 0) {
-      throw new BadRequestException(
-        `There is no space ruleBlock with id: ${spaceRuleBlockHash}`,
-      );
-    }
-
-    if (
-      spaceRuleBlocks.find(
-        (item) => item.type !== RuleBlockType.spacePrePermissionCheck,
-      )
-    ) {
-      throw new BadRequestException(
-        `The space ruleBlock is not ${RuleBlockType.spacePrePermissionCheck} type`,
-      );
-    }
-
-    if (['true', 'false'].includes(answer) === false) {
-      throw new BadRequestException('Answer must be boolean');
     }
   }
 
