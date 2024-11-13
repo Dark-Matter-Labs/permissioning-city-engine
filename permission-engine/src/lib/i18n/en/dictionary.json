@@ -1,5 +1,17 @@
 {
   "platform": {
     "name": "Permissioning the City"
+  },
+  "agent": {
+    "spaceOwner": "Space Owner",
+    "communityReviewer": "Community Reviewer",
+    "eventOrganizer": "Event Organizer",
+    "author": "Author"
+  },
+  "dashboard": {
+    "space": "Space Dashboard",
+    "community": "Community Dashboard",
+    "spaceEvent": "Event Dashboard",
+    "rule": "Rule Dashboard"
   }
 }

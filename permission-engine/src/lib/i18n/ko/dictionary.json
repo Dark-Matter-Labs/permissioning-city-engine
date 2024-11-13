@@ -1,5 +1,17 @@
 {
   "platform": {
     "name": "퍼미셔닝 시티"
+  },
+  "agent": {
+    "spaceOwner": "공간 소유자",
+    "communityReviewer": "커뮤니티 리뷰어",
+    "eventOrganizer": "활동가",
+    "author": "작성자"
+  },
+  "dashboard": {
+    "space": "공간 대시보드",
+    "community": "커뮤니티 대시보드",
+    "spaceEvent": "활동 대시보드",
+    "rule": "규칙 대시보드"
   }
 }
