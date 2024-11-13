@@ -3,7 +3,6 @@ import dayjs, { ManipulateType } from 'dayjs';
 import { Process, Processor } from '@nestjs/bull';
 import { Job } from 'bull';
 import {
-  NoiseLevel,
   PermissionProcessType,
   PermissionRequestResolveStatus,
   PermissionRequestStatus,
@@ -25,8 +24,8 @@ import { SpaceService } from 'src/api/space/space.service';
 import { SpaceEventService } from 'src/api/space-event/space-event.service';
 import { SpaceApprovedRuleService } from 'src/api/space-approved-rule/space-approved-rule.service';
 import { RuleBlockService } from 'src/api/rule-block/rule-block.service';
-import { isInAvailabilities, formatTime } from 'src/lib/util/util';
-import { RuleBlock } from 'src/database/entity/rule-block.entity';
+import { isInAvailabilities, formatTime } from 'src/lib/util';
+import { TopicService } from 'src/api/topic/topic.service';
 
 @Processor('permission-handler')
 export class PermissionHandlerProcessor {
@@ -40,6 +39,7 @@ export class PermissionHandlerProcessor {
     private readonly permissionRequestService: PermissionRequestService,
     private readonly ruleService: RuleService,
     private readonly ruleBlockService: RuleBlockService,
+    private readonly topicService: TopicService,
     private readonly logger: Logger,
   ) {}
 
@@ -164,12 +164,20 @@ export class PermissionHandlerProcessor {
     } else {
       // check topics
       const { spaceTopics } = space;
-      const spaceDesiredTopics = spaceTopics.filter(
-        (item) => item.isDesired === true,
-      );
-      const spaceForbiddenTopics = spaceTopics.filter(
-        (item) => item.isDesired === false,
-      );
+      const spaceDesiredTopics = spaceTopics;
+      const spaceForbiddenTopicIds =
+        spaceRule.ruleBlocks
+          .filter((item) => item.type === RuleBlockType.spaceExcludedTopic)
+          ?.map((item) => item.content) ?? [];
+      const spaceForbiddenTopics =
+        spaceForbiddenTopicIds.length > 0
+          ? ((
+              await this.topicService.findAll(
+                { ids: spaceForbiddenTopicIds },
+                false,
+              )
+            )?.data ?? [])
+          : [];
       const {
         topics: spaceEventTopics,
         startsAt,
@@ -190,9 +198,7 @@ export class PermissionHandlerProcessor {
       // check forbidden topics
       for (const spaceEventTopic of spaceEventTopics) {
         if (
-          spaceForbiddenTopics.find(
-            (item) => item.topicId === spaceEventTopic.id,
-          )
+          spaceForbiddenTopics.find((item) => item.id === spaceEventTopic.id)
         ) {
           isAutoApproval = false; // TODO. force rejection?
           break;
