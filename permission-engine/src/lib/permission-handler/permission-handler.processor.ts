@@ -3,7 +3,6 @@ import dayjs, { ManipulateType } from 'dayjs';
 import { Process, Processor } from '@nestjs/bull';
 import { Job } from 'bull';
 import {
-  NoiseLevel,
   PermissionProcessType,
   PermissionRequestResolveStatus,
   PermissionRequestStatus,
@@ -25,8 +24,8 @@ import { SpaceService } from 'src/api/space/space.service';
 import { SpaceEventService } from 'src/api/space-event/space-event.service';
 import { SpaceApprovedRuleService } from 'src/api/space-approved-rule/space-approved-rule.service';
 import { RuleBlockService } from 'src/api/rule-block/rule-block.service';
-import { isInAvailabilities, formatTime } from 'src/lib/util/util';
-import { RuleBlock } from 'src/database/entity/rule-block.entity';
+import { isInAvailabilities, formatTime } from 'src/lib/util';
+import { TopicService } from 'src/api/topic/topic.service';
 
 @Processor('permission-handler')
 export class PermissionHandlerProcessor {
@@ -40,6 +39,7 @@ export class PermissionHandlerProcessor {
     private readonly permissionRequestService: PermissionRequestService,
     private readonly ruleService: RuleService,
     private readonly ruleBlockService: RuleBlockService,
+    private readonly topicService: TopicService,
     private readonly logger: Logger,
   ) {}
 
@@ -164,12 +164,20 @@ export class PermissionHandlerProcessor {
     } else {
       // check topics
       const { spaceTopics } = space;
-      const spaceDesiredTopics = spaceTopics.filter(
-        (item) => item.isDesired === true,
-      );
-      const spaceForbiddenTopics = spaceTopics.filter(
-        (item) => item.isDesired === false,
-      );
+      const spaceDesiredTopics = spaceTopics;
+      const spaceForbiddenTopicIds =
+        spaceRule.ruleBlocks
+          .filter((item) => item.type === RuleBlockType.spaceExcludedTopic)
+          ?.map((item) => item.content) ?? [];
+      const spaceForbiddenTopics =
+        spaceForbiddenTopicIds.length > 0
+          ? ((
+              await this.topicService.findAll(
+                { ids: spaceForbiddenTopicIds },
+                false,
+              )
+            )?.data ?? [])
+          : [];
       const {
         topics: spaceEventTopics,
         startsAt,
@@ -190,9 +198,7 @@ export class PermissionHandlerProcessor {
       // check forbidden topics
       for (const spaceEventTopic of spaceEventTopics) {
         if (
-          spaceForbiddenTopics.find(
-            (item) => item.topicId === spaceEventTopic.id,
-          )
+          spaceForbiddenTopics.find((item) => item.id === spaceEventTopic.id)
         ) {
           isAutoApproval = false; // TODO. force rejection?
           break;
@@ -201,12 +207,15 @@ export class PermissionHandlerProcessor {
 
       // check ruleBlock collisions
       // if ruleBlock collision exists, add to spaceEventRule.ruleBlocks as spaceEventException type and save
+      const spaceMaxAvailabilityUnitCountRuleBlock = spaceRuleBlocks.find(
+        (item) => item.type === RuleBlockType.spaceMaxAvailabilityUnitCount,
+      );
       for (const spaceRuleBlock of spaceRuleBlocks) {
-        const { id, type, hash, content } = spaceRuleBlock;
+        const { type, hash, content } = spaceRuleBlock;
         const spaceEventExceptionRuleBlock = spaceEventRuleBlocks.find(
           (item) =>
             item.type === RuleBlockType.spaceEventException &&
-            item.content.startsWith(hash),
+            item.content.split(RuleBlockContentDivider.type)[0] === hash,
         );
 
         // skip if already exception raised
@@ -215,70 +224,10 @@ export class PermissionHandlerProcessor {
         }
 
         let isInAutoApprovalRange: boolean = false;
-        let spaceEventRuleBlock: RuleBlock | null = null;
         let desiredValue: any = null;
-
-        // find spaceEventRuleBlock
-        switch (type) {
-          case RuleBlockType.spaceAccess:
-            spaceEventRuleBlock = spaceEventRuleBlocks.find(
-              (item) => item.type === RuleBlockType.spaceEventAccess,
-            );
-            break;
-          case RuleBlockType.spaceMaxAttendee:
-            spaceEventRuleBlock = spaceEventRuleBlocks.find(
-              (item) =>
-                item.type === RuleBlockType.spaceEventExpectedAttendeeCount,
-            );
-            break;
-          case RuleBlockType.spaceMaxNoiseLevel:
-            spaceEventRuleBlock = spaceEventRuleBlocks.find(
-              (item) => item.type === RuleBlockType.spaceEventNoiseLevel,
-            );
-            break;
-          case RuleBlockType.spacePrePermissionCheck:
-            spaceEventRuleBlock = spaceEventRuleBlocks.find(
-              (item) =>
-                item.type ===
-                  RuleBlockType.spaceEventPrePermissionCheckAnswer &&
-                item.content.startsWith(hash),
-            );
-            break;
-          default:
-            break;
-        }
 
         // check if in auto approval range
         switch (type) {
-          case RuleBlockType.spaceAccess:
-            isInAutoApprovalRange = !!content
-              .split(RuleBlockContentDivider.array)
-              .find((item) => item === spaceEventRuleBlock.content);
-            desiredValue = spaceEventRuleBlock.content;
-            break;
-          case RuleBlockType.spaceMaxAttendee:
-            isInAutoApprovalRange = new BigNumber(
-              spaceEventRuleBlock.content,
-            ).lte(content);
-            desiredValue = spaceEventRuleBlock.content;
-            break;
-          case RuleBlockType.spaceMaxNoiseLevel:
-            const noiseLevelTypes = [
-              NoiseLevel.low,
-              NoiseLevel.medium,
-              NoiseLevel.high,
-            ];
-
-            isInAutoApprovalRange =
-              noiseLevelTypes.indexOf(content as NoiseLevel) >=
-                noiseLevelTypes.indexOf(
-                  spaceEventRuleBlock.content as NoiseLevel,
-                ) &&
-              noiseLevelTypes.indexOf(
-                spaceEventRuleBlock.content as NoiseLevel,
-              ) >= 0;
-            desiredValue = spaceEventRuleBlock.content;
-            break;
           case RuleBlockType.spaceAvailability: // check with spaceEvent.startsAt, spaceEvent.endsAt
             isInAutoApprovalRange = isInAvailabilities(
               content.split(RuleBlockContentDivider.array),
@@ -294,30 +243,29 @@ export class PermissionHandlerProcessor {
               ].join(RuleBlockContentDivider.time),
             ];
             break;
-          case RuleBlockType.spaceAvailabilityUnit: // check with spaceEvent.duration
-            const spaceEventUnitAmount = parseInt(duration.slice(0, -1), 10);
-            const spaceEventUnitType = duration.slice(-1);
+          case RuleBlockType.spaceAvailabilityUnit:
+            const spaceEventDurationAmount = parseInt(
+              duration.slice(0, -1),
+              10,
+            );
+            const spaceEventDurationType = duration.slice(-1);
             const spaceUnitAmount = parseInt(content.slice(0, -1), 10);
             const spaceUnitType = content.slice(-1);
-            isInAutoApprovalRange =
-              dayjs().add(spaceUnitAmount, spaceUnitType as ManipulateType) >=
-              dayjs().add(
-                spaceEventUnitAmount,
-                spaceEventUnitType as ManipulateType,
-              );
-            desiredValue = duration;
-            break;
-          case RuleBlockType.spacePrePermissionCheck:
-            const [spaceRuleBlockId, answer] =
-              spaceEventRuleBlock.content.split(RuleBlockContentDivider.type);
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const [_question, defaultAnswer] = content.split(
-              RuleBlockContentDivider.type,
+            const spaceMaxAvailabilityUnitCount = parseInt(
+              spaceMaxAvailabilityUnitCountRuleBlock.content,
             );
             isInAutoApprovalRange =
-              id === spaceRuleBlockId &&
-              answer.toLowerCase() === defaultAnswer.toLowerCase();
-            desiredValue = answer;
+              dayjs().add(
+                new BigNumber(spaceUnitAmount)
+                  .times(spaceMaxAvailabilityUnitCount)
+                  .toNumber(),
+                spaceUnitType as ManipulateType,
+              ) >=
+              dayjs().add(
+                spaceEventDurationAmount,
+                spaceEventDurationType as ManipulateType,
+              );
+            desiredValue = duration;
             break;
           default:
             continue;
@@ -457,7 +405,8 @@ export class PermissionHandlerProcessor {
           userId: permissionRequest.spaceEvent.organizerId,
           target: UserNotificationTarget.eventOrgnaizer,
           type: UserNotificationType.external,
-          templateName: UserNotificationTemplateName.permissionRequestResolved,
+          templateName:
+            UserNotificationTemplateName.spaceEventPermissionRequestApproved,
           params: {
             permissionRequestId,
             spaceRuleId: permissionRequest.spaceRule.id,
@@ -490,7 +439,7 @@ export class PermissionHandlerProcessor {
               target: UserNotificationTarget.permissioner,
               type: UserNotificationType.external,
               templateName:
-                UserNotificationTemplateName.permissionRequestResolved,
+                UserNotificationTemplateName.spaceEventPermissionRequestReviewCompleted,
               params: {
                 permissionRequestId,
                 spaceRuleId: permissionRequest.spaceRule.id,
@@ -892,6 +841,7 @@ export class PermissionHandlerProcessor {
       let conditions = [];
       let excitements = [];
       let worries = [];
+      let templateName: UserNotificationTemplateName;
 
       reviewedResponses.forEach((permissionResponse) => {
         conditions = [...conditions, ...permissionResponse.conditions];
@@ -905,6 +855,8 @@ export class PermissionHandlerProcessor {
         if (isConsent === true) {
           permissionRequestResolveStatus =
             PermissionRequestResolveStatus.resolveAccepted;
+          templateName =
+            UserNotificationTemplateName.spaceRuleChangePermissionRequestApproved;
           await this.permissionRequestService.updateToResolveAccepted(
             permissionRequest.id,
             true,
@@ -915,6 +867,8 @@ export class PermissionHandlerProcessor {
         } else {
           permissionRequestResolveStatus =
             PermissionRequestResolveStatus.resolveRejected;
+          templateName =
+            UserNotificationTemplateName.spaceRuleChangePermissionRequestRejected;
           await this.permissionRequestService.updateToResolveRejected(
             permissionRequest.id,
             true,
@@ -927,6 +881,8 @@ export class PermissionHandlerProcessor {
         if (isConsent === true) {
           permissionRequestResolveStatus =
             PermissionRequestResolveStatus.resolveAccepted;
+          templateName =
+            UserNotificationTemplateName.spaceEventPreApprovePermissionRequestApproved;
           await this.permissionRequestService.updateToResolveAccepted(
             permissionRequest.id,
             true,
@@ -938,6 +894,8 @@ export class PermissionHandlerProcessor {
         } else {
           permissionRequestResolveStatus =
             PermissionRequestResolveStatus.resolveRejected;
+          templateName =
+            UserNotificationTemplateName.spaceEventPreApprovePermissionRequestRejected;
           await this.permissionRequestService.updateToResolveRejected(
             permissionRequest.id,
             true,
@@ -947,6 +905,8 @@ export class PermissionHandlerProcessor {
         if (isConsent === false) {
           permissionRequestResolveStatus =
             PermissionRequestResolveStatus.resolveRejected;
+          templateName =
+            UserNotificationTemplateName.spaceEventPermissionRequestRejected;
           await this.permissionRequestService.updateToResolveRejected(
             permissionRequest.id,
             true,
@@ -963,10 +923,7 @@ export class PermissionHandlerProcessor {
             userId: permissionRequest.userId,
             target: UserNotificationTarget.general,
             type: UserNotificationType.external,
-            templateName:
-              permissionRequestResolveStatus !== null
-                ? UserNotificationTemplateName.permissionRequestResolved
-                : UserNotificationTemplateName.permissionRequestReviewed,
+            templateName,
             params: {
               permissionRequestId: permissionRequest.id,
               permissionRequestStatus,
@@ -989,10 +946,7 @@ export class PermissionHandlerProcessor {
                 userId: spacePermissioner.userId,
                 target: UserNotificationTarget.general,
                 type: UserNotificationType.external,
-                templateName:
-                  permissionRequestResolveStatus !== null
-                    ? UserNotificationTemplateName.permissionRequestResolved
-                    : UserNotificationTemplateName.permissionRequestReviewed,
+                templateName, // TODO. assign right template for permissioners
                 params: {
                   permissionRequestId: permissionRequest.id,
                   permissionRequestStatus,
@@ -1066,7 +1020,10 @@ export class PermissionHandlerProcessor {
       worries = [...worries, ...permissionResponse.worries];
     });
 
+    let templateName: UserNotificationTemplateName;
     if (resolveStatus === PermissionRequestResolveStatus.resolveAccepted) {
+      templateName =
+        UserNotificationTemplateName.spaceEventPermissionRequestResolveAccepted;
       await this.spaceEventService.updateToPermissionGranted(spaceEventId);
     } else if (
       [
@@ -1074,7 +1031,28 @@ export class PermissionHandlerProcessor {
         PermissionRequestResolveStatus.resolveDropped,
       ].includes(resolveStatus) === true
     ) {
-      await this.spaceEventService.updateToCancelled(spaceEventId);
+    }
+
+    switch (resolveStatus) {
+      case PermissionRequestResolveStatus.resolveAccepted:
+        templateName =
+          UserNotificationTemplateName.spaceEventPermissionRequestResolveAccepted;
+        await this.spaceEventService.updateToPermissionGranted(spaceEventId);
+        break;
+      case PermissionRequestResolveStatus.resolveCancelled:
+        templateName =
+          UserNotificationTemplateName.spaceEventPermissionRequestResolveCancelled;
+        await this.spaceEventService.updateToCancelled(spaceEventId);
+
+        break;
+      case PermissionRequestResolveStatus.resolveDropped:
+        templateName =
+          UserNotificationTemplateName.spaceEventPermissionRequestResolveDropped;
+        await this.spaceEventService.updateToCancelled(spaceEventId);
+
+        break;
+      default:
+        break;
     }
 
     // insert userNotifications
@@ -1085,7 +1063,7 @@ export class PermissionHandlerProcessor {
           userId: permissionRequest.userId,
           target: UserNotificationTarget.general,
           type: UserNotificationType.external,
-          templateName: UserNotificationTemplateName.permissionRequestResolved,
+          templateName,
           params: {
             permissionRequestId: permissionRequest.id,
             permissionRequestStatus: status,
@@ -1108,8 +1086,7 @@ export class PermissionHandlerProcessor {
               userId: spacePermissioner.userId,
               target: UserNotificationTarget.general,
               type: UserNotificationType.external,
-              templateName:
-                UserNotificationTemplateName.permissionRequestResolved,
+              templateName, // TODO. assign appropriate template for permissioners
               params: {
                 permissionRequestId: permissionRequest.id,
                 permissionRequestStatus: status,

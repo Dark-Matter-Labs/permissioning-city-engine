@@ -18,7 +18,7 @@ import {
   SpaceEventAccessType,
 } from 'src/lib/type';
 import { v4 as uuidv4 } from 'uuid';
-import { hash } from '../util/util';
+import { hash } from '../util';
 
 function getNextWeekDate(
   day: 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun',
@@ -140,13 +140,13 @@ const createSpaceRuleBlockDtos: Partial<CreateRuleBlockDto>[] = [
   {
     id: uuidv4(),
     name: 'test Space Allowed Access Types [space1,space3]',
-    type: RuleBlockType.spaceAccess,
+    type: RuleBlockType.spaceAllowedEventAccessType,
     content: `${SpaceEventAccessType.publicFree};${SpaceEventAccessType.publicPaid}`,
   },
   {
     id: uuidv4(),
     name: 'test Space Allowed Access Types [space2,space4]',
-    type: RuleBlockType.spaceAccess,
+    type: RuleBlockType.spaceAllowedEventAccessType,
     content: `${SpaceEventAccessType.privateFree};${SpaceEventAccessType.privatePaid}`,
   },
   {
@@ -380,95 +380,8 @@ const createSpaceEquipmentDtos: Partial<CreateSpaceEquipmentDto>[] = [
 const createSpaceEventRuleBlockDtos: Partial<CreateRuleBlockDto>[] = [
   {
     id: uuidv4(),
-    name: 'test Event Access Control [event1]',
-    type: RuleBlockType.spaceEventAccess,
-    content: SpaceEventAccessType.publicFree,
-  },
-  {
-    id: uuidv4(),
-    name: 'test Event Access Control [event2]',
-    type: RuleBlockType.spaceEventAccess,
-    content: SpaceEventAccessType.publicPaid,
-  },
-  {
-    id: uuidv4(),
-    name: 'test Event Access Control [event3]',
-    type: RuleBlockType.spaceEventAccess,
-    content: SpaceEventAccessType.privateFree,
-  },
-  {
-    id: uuidv4(),
-    name: 'test Event Access Control [event4]',
-    type: RuleBlockType.spaceEventAccess,
-    content: SpaceEventAccessType.privatePaid,
-  },
-  {
-    id: uuidv4(),
-    name: 'test Event Noise Level Control [event1]',
-    type: RuleBlockType.spaceEventNoiseLevel,
-    content: 'low',
-  },
-  {
-    id: uuidv4(),
-    name: 'test Event Noise Level Control [event2]',
-    type: RuleBlockType.spaceEventNoiseLevel,
-    content: 'low',
-  },
-  {
-    id: uuidv4(),
-    name: 'test Event Noise Level Control [event3]',
-    type: RuleBlockType.spaceEventNoiseLevel,
-    content: 'low',
-  },
-  {
-    id: uuidv4(),
-    name: 'test Event Noise Level Control [event4]',
-    type: RuleBlockType.spaceEventNoiseLevel,
-    content: 'low',
-  },
-  {
-    id: uuidv4(),
-    name: 'test Food Service [event1, event3]',
-    type: RuleBlockType.spaceEventPrePermissionCheckAnswer,
-    content: `${hash(
-      [
-        createSpaceRuleBlockDtos.find((item) => item.name.includes('food'))
-          .type,
-        createSpaceRuleBlockDtos.find((item) => item.name.includes('food'))
-          .content,
-      ].join(RuleBlockContentDivider.type),
-    )}^true`,
-  },
-  {
-    id: uuidv4(),
-    name: 'test Food Service [event2, event4]',
-    type: RuleBlockType.spaceEventPrePermissionCheckAnswer,
-    content: `${hash(
-      [
-        createSpaceRuleBlockDtos.find((item) => item.name.includes('food'))
-          .type,
-        createSpaceRuleBlockDtos.find((item) => item.name.includes('food'))
-          .content,
-      ].join(RuleBlockContentDivider.type),
-    )}^true`,
-  },
-  {
-    id: uuidv4(),
-    name: 'test Alcholic drink Service [event1, event3]',
-    type: RuleBlockType.spaceEventPrePermissionCheckAnswer,
-    content: `${hash(
-      [
-        createSpaceRuleBlockDtos.find((item) => item.name.includes('alcholic'))
-          .type,
-        createSpaceRuleBlockDtos.find((item) => item.name.includes('alcholic'))
-          .content,
-      ].join(RuleBlockContentDivider.type),
-    )}^true`,
-  },
-  {
-    id: uuidv4(),
     name: 'test Alcholic drink Service [event2, event4]',
-    type: RuleBlockType.spaceEventPrePermissionCheckAnswer,
+    type: RuleBlockType.spaceEventException,
     content: `${hash(
       [
         createSpaceRuleBlockDtos.find((item) => item.name.includes('alcholic'))
@@ -476,7 +389,7 @@ const createSpaceEventRuleBlockDtos: Partial<CreateRuleBlockDto>[] = [
         createSpaceRuleBlockDtos.find((item) => item.name.includes('alcholic'))
           .content,
       ].join(RuleBlockContentDivider.type),
-    )}^false`,
+    )}^false^It is a bartender's show`,
   },
   {
     id: uuidv4(),
@@ -492,18 +405,6 @@ const createSpaceEventRuleBlockDtos: Partial<CreateRuleBlockDto>[] = [
     ],
     content:
       'https://permissioning-the-city.s3.ap-northeast-2.amazonaws.com/70047e97-406c-467b-ba3d-a26186406ddf_Correlation+between+density+of+Monochamus+spp.+with+Bursaphelenchus+xylophilus+and+distance+from+pine+wilt+disease+affected+area+interface.pdf',
-  },
-  {
-    id: uuidv4(),
-    name: 'test Event Expected Attendee Count [event1, event2]',
-    type: RuleBlockType.spaceEventExpectedAttendeeCount,
-    content: '50', // Maximum attendees allowed
-  },
-  {
-    id: uuidv4(),
-    name: 'test Event Expected Attendee Count [event3, event4]',
-    type: RuleBlockType.spaceEventExpectedAttendeeCount,
-    content: '10', // Maximum attendees allowed
   },
   {
     id: uuidv4(),

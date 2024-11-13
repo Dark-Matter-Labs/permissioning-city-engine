@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsNotEmpty, IsUUID } from 'class-validator';
+import { IsNotEmpty, IsUUID } from 'class-validator';
 
 export class CreateSpaceTopicDto {
   @IsNotEmpty()
@@ -17,11 +17,4 @@ export class CreateSpaceTopicDto {
     required: true,
   })
   topicId: string;
-
-  @IsBoolean()
-  @ApiProperty({
-    description: 'Is this topic desired by the space',
-    required: true,
-  })
-  isDesired: boolean;
 }

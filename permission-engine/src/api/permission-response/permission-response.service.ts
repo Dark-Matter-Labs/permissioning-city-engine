@@ -4,6 +4,7 @@ import {
   CreatePermissionResponseDto,
   FindAllPermissionResponseDto,
   RejectPermissionResponseDto,
+  UpdatePermissionResponseDto,
 } from './dto';
 import { PermissionResponse } from 'src/database/entity/permission-response.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -120,7 +121,6 @@ export class PermissionResponseService {
     return this.permissionResponseRepository.save(permissionResponse);
   }
 
-  // TODO. add permission-handler logic
   async updateToApproved(
     id: string,
     approvePermissionResponseDto: ApprovePermissionResponseDto,
@@ -165,6 +165,23 @@ export class PermissionResponseService {
   async updateToTimeout(id: string): Promise<{ data: { result: boolean } }> {
     const updateResult = await this.permissionResponseRepository.update(id, {
       status: PermissionResponseStatus.timeout,
+      updatedAt: new Date(),
+    });
+
+    return {
+      data: {
+        result: updateResult.affected === 1,
+      },
+    };
+  }
+
+  async updateToAbstention(
+    id: string,
+    updatePermissionResponseDto: UpdatePermissionResponseDto,
+  ): Promise<{ data: { result: boolean } }> {
+    const updateResult = await this.permissionResponseRepository.update(id, {
+      ...updatePermissionResponseDto,
+      status: PermissionResponseStatus.abstention,
       updatedAt: new Date(),
     });
 

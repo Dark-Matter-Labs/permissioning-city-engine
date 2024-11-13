@@ -1,6 +1,6 @@
-// src/app.module.ts
-import { Module, OnModuleInit } from '@nestjs/common';
+import path from 'path';
 import Redis from 'ioredis';
+import { Module, OnModuleInit } from '@nestjs/common';
 import { RedisService } from '@liaoliaots/nestjs-redis';
 import { BullModule } from '@nestjs/bull';
 import { AppService } from './app.service';
@@ -36,7 +36,11 @@ import { MockupModule } from './lib/mockup/mockup.module';
 import { SpaceApprovedRuleModule } from './api/space-approved-rule/space-approved-rule.module';
 import { TopicModule } from './api/topic/topic.module';
 import { I18nModule, I18nJsonLoader } from 'nestjs-i18n';
-import path from 'path';
+import { WsNotificationGateway } from './lib/ws-notification/ws-notification.gateway';
+import { UserService } from './api/user/user.service';
+import { UserNotification } from './database/entity/user-notification.entity';
+import { User } from './database/entity/user.entity';
+import { UserNotificationService } from './api/user-notification/user-notification.service';
 
 @Module({
   imports: [
@@ -68,6 +72,7 @@ import path from 'path';
         namingStrategy: new SnakeNamingStrategy(),
       }),
     }),
+    TypeOrmModule.forFeature([User, UserNotification]),
     RedisModule.forRoot({
       config: {
         host: process.env.REDIS_HOST,
@@ -109,7 +114,13 @@ import path from 'path';
     MockupModule,
   ],
   controllers: [AppController],
-  providers: [AppService, Logger],
+  providers: [
+    AppService,
+    Logger,
+    WsNotificationGateway,
+    UserService,
+    UserNotificationService,
+  ],
 })
 export class AppModule implements OnModuleInit {
   private readonly redis: Redis | null;

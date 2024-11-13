@@ -31,6 +31,8 @@ import { SpaceApprovedRule } from 'src/database/entity/space-approved-rule.entit
 import { SpaceApprovedRuleService } from 'src/api/space-approved-rule/space-approved-rule.service';
 import { SpaceTopic } from 'src/database/entity/space-topic.entity';
 import { SpaceTopicService } from 'src/api/space-topic/space-topic.service';
+import { Topic } from 'src/database/entity/topic.entity';
+import { TopicService } from 'src/api/topic/topic.service';
 
 @Global()
 @Module({
@@ -51,6 +53,7 @@ import { SpaceTopicService } from 'src/api/space-topic/space-topic.service';
       SpaceTopic,
       Rule,
       RuleBlock,
+      Topic,
     ]),
     forwardRef(() => PermissionRequestModule),
     BullModule.registerQueue({
@@ -73,6 +76,7 @@ import { SpaceTopicService } from 'src/api/space-topic/space-topic.service';
     SpaceTopicService,
     RuleService,
     RuleBlockService,
+    TopicService,
   ],
   exports: [PermissionHandlerService, BullModule],
 })

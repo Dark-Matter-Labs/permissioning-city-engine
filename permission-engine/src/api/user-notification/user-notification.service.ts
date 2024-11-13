@@ -40,12 +40,11 @@ export class UserNotificationService {
     };
   }
 
-  async findPendingExternal(limit: number = 100): Promise<UserNotification[]> {
+  async findAllPending(limit: number = 100): Promise<UserNotification[]> {
     return await this.userNotificationRepository.find({
       where: [
         {
           status: UserNotificationStatus.pending,
-          type: UserNotificationType.external,
         },
         {
           status: UserNotificationStatus.queued,
@@ -98,15 +97,27 @@ export class UserNotificationService {
     };
   }
 
-  async updateToQueued(
+  async updateContent(
     id: string,
     email: EmailTemplate,
   ): Promise<{ data: { result: boolean } }> {
     const updateResult = await this.userNotificationRepository.update(id, {
-      status: UserNotificationStatus.queued,
       subjectPart: email?.subject ?? '',
       textPart: email?.text ?? '',
       htmlPart: email?.html ?? '',
+      updatedAt: new Date(),
+    });
+
+    return {
+      data: {
+        result: updateResult.affected === 1,
+      },
+    };
+  }
+
+  async updateToQueued(id: string): Promise<{ data: { result: boolean } }> {
+    const updateResult = await this.userNotificationRepository.update(id, {
+      status: UserNotificationStatus.queued,
       updatedAt: new Date(),
     });
 

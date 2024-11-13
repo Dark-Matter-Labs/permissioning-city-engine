@@ -79,7 +79,7 @@ export class TopicService {
 
     if (spaceId != null) {
       paramIndex++;
-      where.push(`t.space_id = $${paramIndex}`);
+      where.push(`st.space_id = $${paramIndex}`);
       params.push(spaceId);
     }
 
@@ -87,16 +87,16 @@ export class TopicService {
       WITH filtered_data AS (
         SELECT (
             t.id,
-            t.authorId,
+            t.author_id,
             t.name,
             t.icon,
             t.country,
             t.region,
             t.city,
             t.details,
-            t.isActive,
-            t.createdAt,
-            t.updatedAt
+            t.is_active,
+            t.created_at,
+            t.updated_at
         ) FROM topic t, space_topic st
         WHERE t.id = st.topic_id AND ${where.join(' AND ')}
         GROUP BY t.id
@@ -142,7 +142,7 @@ export class TopicService {
 
     if (spaceEventId != null) {
       paramIndex++;
-      where.push(`t.space_event_id = $${paramIndex}`);
+      where.push(`set.space_event_id = $${paramIndex}`);
       params.push(spaceEventId);
     }
 
@@ -150,16 +150,16 @@ export class TopicService {
       WITH filtered_data AS (
         SELECT (
             t.id,
-            t.authorId,
+            t.author_id,
             t.name,
             t.icon,
             t.country,
             t.region,
             t.city,
             t.details,
-            t.isActive,
-            t.createdAt,
-            t.updatedAt
+            t.is_active,
+            t.created_at,
+            t.updated_at
         ) FROM topic t, space_event_topic set
         WHERE t.id = set.topic_id AND ${where.join(' AND ')}
         GROUP BY t.id
@@ -205,7 +205,7 @@ export class TopicService {
 
     if (ruleId != null) {
       paramIndex++;
-      where.push(`t.rule_id = $${paramIndex}`);
+      where.push(`rt.rule_id = $${paramIndex}`);
       params.push(ruleId);
     }
 
@@ -213,16 +213,16 @@ export class TopicService {
       WITH filtered_data AS (
         SELECT (
             t.id,
-            t.authorId,
+            t.author_id,
             t.name,
             t.icon,
             t.country,
             t.region,
             t.city,
             t.details,
-            t.isActive,
-            t.createdAt,
-            t.updatedAt
+            t.is_active,
+            t.created_at,
+            t.updated_at
         ) FROM topic t, rule_topic rt
         WHERE t.id = rt.topic_id AND ${where.join(' AND ')}
         GROUP BY t.id

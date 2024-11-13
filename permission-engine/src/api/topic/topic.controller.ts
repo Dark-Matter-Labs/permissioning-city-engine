@@ -38,7 +38,7 @@ export class TopicController {
     return this.topicService.findAllBySpaceEventId(spaceEventId);
   }
 
-  @Get('Rule/:ruleId')
+  @Get('rule/:ruleId')
   @ApiOperation({ summary: 'Get all topics' })
   findAllByRuleId(@Param('ruleId') ruleId: string) {
     return this.topicService.findAllByRuleId(ruleId);

@@ -1,4 +1,5 @@
 import {
+  IsArray,
   IsBoolean,
   IsNotEmpty,
   IsOptional,
@@ -8,6 +9,7 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PaginationDto } from 'src/lib/dto';
 import { SpaceApprovedRuleSortBy } from 'src/lib/type';
+import { Transform } from 'class-transformer';
 
 export class FindAllSpaceApprovedRuleDto extends PaginationDto {
   @IsNotEmpty()
@@ -33,6 +35,15 @@ export class FindAllSpaceApprovedRuleDto extends PaginationDto {
     type: 'boolean',
   })
   isActive?: boolean;
+
+  @IsOptional()
+  @Transform(({ value }) => (Array.isArray(value) ? value : value.split(',')))
+  @IsArray()
+  @IsUUID('4', { each: true })
+  @ApiPropertyOptional({
+    description: 'SpaceApprovedRule topic ids in uuid',
+  })
+  topicIds?: string[];
 
   @IsOptional()
   @IsString()

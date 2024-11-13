@@ -1,4 +1,5 @@
 import * as crypto from 'crypto';
+import * as cheerio from 'cheerio';
 import { RuleBlockContentDivider } from '../type';
 
 export const hash = (str: string) => {
@@ -232,4 +233,12 @@ export const isInAvailabilities = (
   }
 
   return false;
+};
+
+export const selectHtmlElement = (html: string, selector: string): string => {
+  const $ = cheerio.load(html);
+
+  const selectedElement = $(selector).html();
+
+  return selectedElement;
 };

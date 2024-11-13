@@ -6,6 +6,7 @@ import compression from 'compression';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
+import { RedisIoAdapter } from './lib/redis/redis-io-adapter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -40,6 +41,11 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
+
+  const redisIoAdapter = new RedisIoAdapter(app);
+  await redisIoAdapter.connectToRedis();
+
+  app.useWebSocketAdapter(redisIoAdapter);
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Permissioning Engine API')

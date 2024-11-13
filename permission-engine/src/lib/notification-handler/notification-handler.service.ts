@@ -33,6 +33,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { I18nService } from 'nestjs-i18n';
 import { countryCodeToLanguage } from 'src/lib/util/locale';
 import { SpaceEventService } from 'src/api/space-event/space-event.service';
+import { WsNotificationGateway } from 'src/lib/ws-notification/ws-notification.gateway';
+import { selectHtmlElement } from '../util';
 
 @Injectable()
 export class NotificationHandlerService
@@ -58,6 +60,7 @@ export class NotificationHandlerService
     private readonly spaceEventService: SpaceEventService,
     private readonly i18n: I18nService,
     private readonly redisService: RedisService,
+    private readonly wsNotificationGateway: WsNotificationGateway,
     private readonly logger: Logger,
   ) {
     const engineMode = this.configService.get('ENGINE_MODE');
@@ -138,14 +141,16 @@ export class NotificationHandlerService
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  async findPendingExternalUserNotifications() {
-    return await this.userNotificationService.findPendingExternal(
-      this.fetchCount,
-    );
+  async findPendingUserNotifications() {
+    return await this.userNotificationService.findAllPending(this.fetchCount);
   }
 
-  async updateUserNotificationToQueued(id: string, email: EmailTemplate) {
-    return await this.userNotificationService.updateToQueued(id, email);
+  async updateUserNotificationContent(id: string, email: EmailTemplate) {
+    return await this.userNotificationService.updateContent(id, email);
+  }
+
+  async updateUserNotificationToQueued(id: string) {
+    return await this.userNotificationService.updateToQueued(id);
   }
 
   async updateUserNotificationToNoticeFailed(id: string, errorMessage: string) {
@@ -184,27 +189,178 @@ export class NotificationHandlerService
             spaceId: userNotification.params.spaceId,
           });
           break;
+        // case UserNotificationTemplateName.spaceRuleChangePermissionRequestCreated:
+        //   email = new SpaceRuleChangePermissionRequestCreatedEmail(this.i18n, {
+        //     language: language as Language,
+        //     name: userNotification.user.name,
+        //     spaceName: userNotification.params.spaceName,
+        //     timeoutAt: userNotification.params.timeoutAt,
+        //     spaceEventId: userNotification.params.spaceEventId,
+        //   });
+        //   break;
+        // case UserNotificationTemplateName.spaceRuleChangePermissionRequested:
+        //   email = new SpaceRuleChangePermissionRequestedEmail(this.i18n, {
+        //     language: language as Language,
+        //     name: userNotification.user.name,
+        //     spaceId: userNotification.params.spaceId,
+        //   });
+        //   break;
+        // case UserNotificationTemplateName.spaceEventRulePreApprovePermissionRequested:
+        //   email = new SpaceEventRulePreApprovePermissionRequestedEmail(
+        //     this.i18n,
+        //     {
+        //       language: language as Language,
+        //       name: userNotification.user.name,
+        //       spaceId: userNotification.params.spaceId,
+        //     },
+        //   );
+        //   break;
+        // case UserNotificationTemplateName.spaceEventPermissionRequestApproved:
+        //   email = new SpaceEventPermissionRequestApprovedEmail(this.i18n, {
+        //     language: language as Language,
+        //     name: userNotification.user.name,
+        //     spaceId: userNotification.params.spaceId,
+        //   });
+        //   break;
+        // case UserNotificationTemplateName.spaceEventPermissionRequestRejected:
+        //   email = new SpaceEventPermissionRequestRejectedEmail(this.i18n, {
+        //     language: language as Language,
+        //     name: userNotification.user.name,
+        //     spaceId: userNotification.params.spaceId,
+        //   });
+        //   break;
+        // case UserNotificationTemplateName.spaceEventPermissionRequestReviewCompleted:
+        //   email = new SpaceEventPermissionRequestReviewCompletedEmail(
+        //     this.i18n,
+        //     {
+        //       language: language as Language,
+        //       name: userNotification.user.name,
+        //       spaceId: userNotification.params.spaceId,
+        //     },
+        //   );
+        //   break;
+        // case UserNotificationTemplateName.permissionRequestResolved:
+        //   email = new PermissionRequestResolvedEmail(this.i18n, {
+        //     language: language as Language,
+        //     name: userNotification.user.name,
+        //     spaceId: userNotification.params.spaceId,
+        //   });
+        //   break;
+        // case UserNotificationTemplateName.spaceCreated:
+        //   email = new SpaceCreatedEmail(this.i18n, {
+        //     language: language as Language,
+        //     name: userNotification.user.name,
+        //     spaceId: userNotification.params.spaceId,
+        //   });
+        //   break;
+        // case UserNotificationTemplateName.spaceUpdated:
+        //   email = new SpaceUpdatedEmail(this.i18n, {
+        //     language: language as Language,
+        //     name: userNotification.user.name,
+        //     spaceId: userNotification.params.spaceId,
+        //   });
+        //   break;
+        // case UserNotificationTemplateName.spaceEventCreated:
+        //   email = new SpaceEventCreatedEmail(this.i18n, {
+        //     language: language as Language,
+        //     name: userNotification.user.name,
+        //     spaceId: userNotification.params.spaceId,
+        //   });
+        //   break;
+        // case UserNotificationTemplateName.spaceEventStarted:
+        //   email = new SpaceEventStartedEmail(this.i18n, {
+        //     language: language as Language,
+        //     name: userNotification.user.name,
+        //     spaceId: userNotification.params.spaceId,
+        //   });
+        //   break;
+        // case UserNotificationTemplateName.spaceEventClosed:
+        //   email = new SpaceEventClosedEmail(this.i18n, {
+        //     language: language as Language,
+        //     name: userNotification.user.name,
+        //     spaceId: userNotification.params.spaceId,
+        //   });
+        //   break;
+        // case UserNotificationTemplateName.spaceEventCompleted:
+        //   email = new SpaceEventCompletedEmail(this.i18n, {
+        //     language: language as Language,
+        //     name: userNotification.user.name,
+        //     spaceId: userNotification.params.spaceId,
+        //   });
+        //   break;
+        // case UserNotificationTemplateName.spaceEventCompletedWithIssue:
+        //   email = new SpaceEventCompletedWithIssueEmail(this.i18n, {
+        //     language: language as Language,
+        //     name: userNotification.user.name,
+        //     spaceId: userNotification.params.spaceId,
+        //   });
+        //   break;
+        // case UserNotificationTemplateName.spaceEventIssueResolved:
+        //   email = new SpaceEventIssueResolvedEmail(this.i18n, {
+        //     language: language as Language,
+        //     name: userNotification.user.name,
+        //     spaceId: userNotification.params.spaceId,
+        //   });
+        //   break;
+        // case UserNotificationTemplateName.spaceIssueRaised:
+        //   email = new SpaceIssueRaisedEmail(this.i18n, {
+        //     language: language as Language,
+        //     name: userNotification.user.name,
+        //     spaceId: userNotification.params.spaceId,
+        //   });
+        //   break;
+        // case UserNotificationTemplateName.spaceIssueResolved:
+        //   email = new SpaceIssueResolvedEmail(this.i18n, {
+        //     language: language as Language,
+        //     name: userNotification.user.name,
+        //     spaceId: userNotification.params.spaceId,
+        //   });
+        //   break;
+        // case UserNotificationTemplateName.ruleCreated:
+        //   email = new RuleCreatedEmail(this.i18n, {
+        //     language: language as Language,
+        //     name: userNotification.user.name,
+        //     spaceId: userNotification.params.spaceId,
+        //   });
+        //   break;
+        // case UserNotificationTemplateName.ruleAssigned:
+        //   email = new RuleAssignedEmail(this.i18n, {
+        //     language: language as Language,
+        //     name: userNotification.user.name,
+        //     spaceId: userNotification.params.spaceId,
+        //   });
+        //   break;
         // TODO. support other templates
         default:
           break;
       }
 
       if (email) {
-        await this.addJob({
-          userNotificationId: userNotification.id,
-          to: userNotification.user.email,
-          email,
-        })
-          .then(async () => {
-            await this.updateUserNotificationToQueued(
-              userNotification.id,
-              email,
-            );
+        // internal & external -> notify via web socket
+        await this.updateUserNotificationToQueued(userNotification.id);
+        this.notifyUser(
+          userNotification.userId,
+          JSON.stringify({
+            ...email,
+            html: selectHtmlElement(email.html, '.content'),
+          }),
+        );
+
+        // add send email job if type is external
+        if (userNotification.type === UserNotificationType.external) {
+          await this.addJob({
+            userNotificationId: userNotification.id,
+            to: userNotification.user.email,
+            email,
           })
-          .catch((error) => {
-            this.logger.error(error.message, error);
-            throw error;
-          });
+            .then(async () => {
+              await this.updateUserNotificationToQueued(userNotification.id);
+            })
+            .catch((error) => {
+              this.logger.error(error.message, error);
+              throw error;
+            });
+        }
       } else {
         throw new Error(
           `There is no email template with name: ${userNotification.templateName}`,
@@ -237,8 +393,7 @@ export class NotificationHandlerService
 
     try {
       await queryRunner.startTransaction();
-      const userNotifications =
-        await this.findPendingExternalUserNotifications();
+      const userNotifications = await this.findPendingUserNotifications();
 
       for (const userNotification of userNotifications) {
         await this.enqueue(userNotification);
@@ -284,5 +439,9 @@ export class NotificationHandlerService
     } finally {
       await queryRunner.release();
     }
+  }
+
+  notifyUser(userId: string, message: string) {
+    this.wsNotificationGateway.sendNotificationToUser(userId, message);
   }
 }

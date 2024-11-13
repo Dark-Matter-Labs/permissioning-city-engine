@@ -35,7 +35,7 @@ import {
 } from 'src/lib/type';
 import { RuleService } from '../rule/rule.service';
 import { SpaceEventService } from '../space-event/space-event.service';
-import { getTimeIntervals } from '../../lib/util/util';
+import { getTimeIntervals } from '../../lib/util';
 import { TopicService } from '../topic/topic.service';
 
 @ApiTags('space')
@@ -56,25 +56,12 @@ export class SpaceController {
     summary: 'Get matching rule templates by spaceId and condition',
   })
   findAllMatched(@Query() query: FindAllMatchedRuleDto) {
-    const {
-      page,
-      limit,
-      spaceId,
-      spaceEventAccess,
-      spaceEventNoiseLevel,
-      spaceEventRequireEquipments,
-      spaceEventExpectedAttendeeCount,
-      spaceEventExceptions,
-    } = query;
+    const { page, limit, spaceId, spaceEventExceptions } = query;
 
     return this.ruleService.findAllMatched({
       page,
       limit,
       spaceId,
-      spaceEventAccess,
-      spaceEventNoiseLevel,
-      spaceEventRequireEquipments,
-      spaceEventExpectedAttendeeCount,
       spaceEventExceptions,
     });
   }

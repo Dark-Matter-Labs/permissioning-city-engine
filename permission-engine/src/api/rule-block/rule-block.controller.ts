@@ -19,7 +19,7 @@ import { RuleBlockService } from './rule-block.service';
 import { UserService } from '../user/user.service';
 import { Logger } from 'src/lib/logger/logger.service';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
-import { RuleBlockType } from 'src/lib/type';
+import { RuleBlockContentDivider, RuleBlockType } from 'src/lib/type';
 import { SpaceEquipmentService } from '../space-equipment/space-equipment.service';
 
 @ApiTags('rule')
@@ -88,7 +88,7 @@ export class RuleBlockController {
     const user = await this.userService.findOneByEmail(req.user.email);
     const { files } = uploadedFiles;
     // will take the first file only
-    const file = files[0];
+    const file = files?.[0];
 
     if (file) {
       createRuleBlockDto.id = file.key.split('_')[0];
@@ -97,7 +97,9 @@ export class RuleBlockController {
     }
 
     if (type === RuleBlockType.spaceEventRequireEquipment) {
-      const [spaceEquipmentId, quantity] = content;
+      const [spaceEquipmentId, quantity] = content.split(
+        RuleBlockContentDivider.type,
+      );
 
       const spaceEquipment =
         await this.spaceEquipmentService.findOneById(spaceEquipmentId);
