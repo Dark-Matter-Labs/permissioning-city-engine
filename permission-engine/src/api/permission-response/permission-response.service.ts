@@ -121,7 +121,6 @@ export class PermissionResponseService {
     return this.permissionResponseRepository.save(permissionResponse);
   }
 
-  // TODO. add permission-handler logic
   async updateToApproved(
     id: string,
     approvePermissionResponseDto: ApprovePermissionResponseDto,
