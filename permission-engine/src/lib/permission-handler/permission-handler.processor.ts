@@ -208,11 +208,11 @@ export class PermissionHandlerProcessor {
       // check ruleBlock collisions
       // if ruleBlock collision exists, add to spaceEventRule.ruleBlocks as spaceEventException type and save
       for (const spaceRuleBlock of spaceRuleBlocks) {
-        const { id, type, hash, content } = spaceRuleBlock;
+        const { type, hash, content } = spaceRuleBlock;
         const spaceEventExceptionRuleBlock = spaceEventRuleBlocks.find(
           (item) =>
             item.type === RuleBlockType.spaceEventException &&
-            item.content.startsWith(hash),
+            item.content.split(RuleBlockContentDivider.type)[0] === hash,
         );
 
         // skip if already exception raised
@@ -221,70 +221,10 @@ export class PermissionHandlerProcessor {
         }
 
         let isInAutoApprovalRange: boolean = false;
-        let spaceEventRuleBlock: RuleBlock | null = null;
         let desiredValue: any = null;
-
-        // find spaceEventRuleBlock
-        switch (type) {
-          case RuleBlockType.spaceAccess:
-            spaceEventRuleBlock = spaceEventRuleBlocks.find(
-              (item) => item.type === RuleBlockType.spaceEventAccess,
-            );
-            break;
-          case RuleBlockType.spaceMaxAttendee:
-            spaceEventRuleBlock = spaceEventRuleBlocks.find(
-              (item) =>
-                item.type === RuleBlockType.spaceEventExpectedAttendeeCount,
-            );
-            break;
-          case RuleBlockType.spaceMaxNoiseLevel:
-            spaceEventRuleBlock = spaceEventRuleBlocks.find(
-              (item) => item.type === RuleBlockType.spaceEventNoiseLevel,
-            );
-            break;
-          case RuleBlockType.spacePrePermissionCheck:
-            spaceEventRuleBlock = spaceEventRuleBlocks.find(
-              (item) =>
-                item.type ===
-                  RuleBlockType.spaceEventPrePermissionCheckAnswer &&
-                item.content.startsWith(hash),
-            );
-            break;
-          default:
-            break;
-        }
 
         // check if in auto approval range
         switch (type) {
-          case RuleBlockType.spaceAccess:
-            isInAutoApprovalRange = !!content
-              .split(RuleBlockContentDivider.array)
-              .find((item) => item === spaceEventRuleBlock.content);
-            desiredValue = spaceEventRuleBlock.content;
-            break;
-          case RuleBlockType.spaceMaxAttendee:
-            isInAutoApprovalRange = new BigNumber(
-              spaceEventRuleBlock.content,
-            ).lte(content);
-            desiredValue = spaceEventRuleBlock.content;
-            break;
-          case RuleBlockType.spaceMaxNoiseLevel:
-            const noiseLevelTypes = [
-              NoiseLevel.low,
-              NoiseLevel.medium,
-              NoiseLevel.high,
-            ];
-
-            isInAutoApprovalRange =
-              noiseLevelTypes.indexOf(content as NoiseLevel) >=
-                noiseLevelTypes.indexOf(
-                  spaceEventRuleBlock.content as NoiseLevel,
-                ) &&
-              noiseLevelTypes.indexOf(
-                spaceEventRuleBlock.content as NoiseLevel,
-              ) >= 0;
-            desiredValue = spaceEventRuleBlock.content;
-            break;
           case RuleBlockType.spaceAvailability: // check with spaceEvent.startsAt, spaceEvent.endsAt
             isInAutoApprovalRange = isInAvailabilities(
               content.split(RuleBlockContentDivider.array),
@@ -313,18 +253,7 @@ export class PermissionHandlerProcessor {
               );
             desiredValue = duration;
             break;
-          case RuleBlockType.spacePrePermissionCheck:
-            const [spaceRuleBlockId, answer] =
-              spaceEventRuleBlock.content.split(RuleBlockContentDivider.type);
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const [_question, defaultAnswer] = content.split(
-              RuleBlockContentDivider.type,
-            );
-            isInAutoApprovalRange =
-              id === spaceRuleBlockId &&
-              answer.toLowerCase() === defaultAnswer.toLowerCase();
-            desiredValue = answer;
-            break;
+          // TODO. spaceMaxAvailabilityUnitCount
           default:
             continue;
         }
