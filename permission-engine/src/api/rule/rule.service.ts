@@ -4,7 +4,6 @@ import { FindManyOptions, FindOptionsWhere, In, Repository } from 'typeorm';
 import { Rule } from '../../database/entity/rule.entity';
 import { CreateRuleDto, FindAllRuleDto, UpdateRuleDto } from './dto';
 import {
-  NoiseLevel,
   RuleBlockContentDivider,
   RuleBlockType,
   RuleTarget,
@@ -12,7 +11,7 @@ import {
 import { RuleBlock } from 'src/database/entity/rule-block.entity';
 import { PermissionRequest } from 'src/database/entity/permission-request.entity';
 import { Space } from 'src/database/entity/space.entity';
-import * as Util from 'src/lib/util/util';
+import * as Util from 'src/lib/util';
 import { v4 as uuidv4 } from 'uuid';
 import { Logger } from 'src/lib/logger/logger.service';
 import { FindAllMatchedRuleDto } from '../space/dto';
@@ -96,77 +95,12 @@ export class RuleService {
   async findAllMatched(
     findAllMatchedRuleDto: FindAllMatchedRuleDto,
   ): Promise<{ data: Rule[]; total: number }> {
-    const {
-      page,
-      limit,
-      spaceId,
-      spaceEventAccess,
-      spaceEventNoiseLevel,
-      spaceEventExpectedAttendeeCount,
-      spaceEventRequireEquipments,
-      spaceEventExceptions,
-      spacePrePremissionCheckAnswers,
-    } = findAllMatchedRuleDto;
+    const { page, limit, spaceId, spaceEventExceptions } =
+      findAllMatchedRuleDto;
 
     const where = [];
     const params: any[] = [(page - 1) * limit, limit, spaceId];
     let paramIndex: number = params.length;
-
-    if (spaceEventAccess != null) {
-      paramIndex++;
-      where.push(
-        `(rb.type = 'space_event:access' AND rb.content = $${paramIndex})`,
-      );
-      params.push(spaceEventAccess);
-    }
-
-    if (spaceEventNoiseLevel != null) {
-      paramIndex++;
-      where.push(
-        `(rb.type = 'space_event:noise_level' AND rb.content = ANY($${paramIndex}))`,
-      );
-      switch (spaceEventNoiseLevel) {
-        case NoiseLevel.high:
-          params.push([NoiseLevel.high]);
-          break;
-        case NoiseLevel.medium:
-          params.push([NoiseLevel.medium, NoiseLevel.high]);
-          break;
-        case NoiseLevel.low:
-          params.push([NoiseLevel.low, NoiseLevel.medium, NoiseLevel.high]);
-          break;
-
-        default:
-          throw new BadRequestException(
-            `spaceEventNoiseLevel should be one of: ${[NoiseLevel.low, NoiseLevel.medium, NoiseLevel.high].join('|')}`,
-          );
-          break;
-      }
-    }
-
-    if (spaceEventExpectedAttendeeCount != null) {
-      paramIndex++;
-      where.push(
-        `(rb.type = 'space_event:expected_attendee_count' AND CAST(rb.content AS INTEGER) >= $${paramIndex})`,
-      );
-      params.push(spaceEventExpectedAttendeeCount);
-    }
-
-    if (spaceEventRequireEquipments != null) {
-      spaceEventRequireEquipments.forEach((spaceEventRequireEquipment) => {
-        const [spaceEquipmentId, quantity] = spaceEventRequireEquipment.split(
-          RuleBlockContentDivider.type,
-        );
-        where.push(
-          `(rb.type = 'space_event:require_equipments' AND rb.content LIKE $${paramIndex++} AND CAST(split_part(rb.content, $${paramIndex++}, 2) AS INTEGER) >= $${paramIndex++})`,
-        );
-        params.push(
-          `${spaceEquipmentId}%`,
-          RuleBlockContentDivider.type,
-          quantity,
-        );
-      });
-    }
 
     if (spaceEventExceptions != null) {
       spaceEventExceptions.forEach((spaceEventException) => {
@@ -178,18 +112,6 @@ export class RuleService {
           `${spaceEventException.split(RuleBlockContentDivider.type)[0]}%`,
         );
       });
-    }
-
-    if (spacePrePremissionCheckAnswers != null) {
-      spacePrePremissionCheckAnswers.forEach(
-        (spacePrePremissionCheckAnswer) => {
-          paramIndex++;
-          where.push(
-            `(rb.type = 'space_event:pre_permission_check_answer' AND rb.content = $${paramIndex})`,
-          );
-          params.push(spacePrePremissionCheckAnswer);
-        },
-      );
     }
 
     function buildWhereClause(conditions = []) {
@@ -653,11 +575,11 @@ export class RuleService {
       );
     }
 
-    const spaceAccess = ruleBlocks.filter(
-      (item) => item.type === RuleBlockType.spaceAccess,
+    const spaceAllowedEventAccessType = ruleBlocks.filter(
+      (item) => item.type === RuleBlockType.spaceAllowedEventAccessType,
     );
 
-    if (spaceAccess.length !== 1) {
+    if (spaceAllowedEventAccessType.length !== 1) {
       throw new BadRequestException(
         'There should be one RuleBlock with space:access type.',
       );
@@ -709,36 +631,6 @@ export class RuleService {
   validateSpaceEventRuleBlockSet(ruleBlocks: RuleBlock[]): boolean {
     if (ruleBlocks.find((item) => item.type.startsWith('space:'))) {
       throw new BadRequestException('Target mismatch');
-    }
-
-    const spaceEventAccessBlocks = ruleBlocks.filter(
-      (item) => item.type === RuleBlockType.spaceEventAccess,
-    );
-
-    if (spaceEventAccessBlocks.length !== 1) {
-      throw new BadRequestException(
-        'There should be one RuleBlock with space_event:access type.',
-      );
-    }
-
-    const spaceEventExpectedAttendeeCountBlocks = ruleBlocks.filter(
-      (item) => item.type === RuleBlockType.spaceEventExpectedAttendeeCount,
-    );
-
-    if (spaceEventExpectedAttendeeCountBlocks.length !== 1) {
-      throw new BadRequestException(
-        'There should be one RuleBlock with space_event:expected_attendee_count type.',
-      );
-    }
-
-    const spaceEventNoiseLevelBlocks = ruleBlocks.filter(
-      (item) => item.type === RuleBlockType.spaceEventNoiseLevel,
-    );
-
-    if (spaceEventNoiseLevelBlocks.length !== 1) {
-      throw new BadRequestException(
-        'There should be one RuleBlock with space_event:noise_level type.',
-      );
     }
 
     return true;
