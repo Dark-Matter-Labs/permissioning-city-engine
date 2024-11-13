@@ -124,7 +124,7 @@ export enum RuleBlockType {
   // TODO. implement max availability unit count
   /**
    * [PrePermissionCheck] [Required] Max allowed availability unit count
-   * content: number
+   * content: integer between 1 and 60
    */
   spaceMaxAvailabilityUnitCount = 'space:max_availability_unit_count',
   /**

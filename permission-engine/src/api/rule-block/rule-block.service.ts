@@ -14,6 +14,7 @@ import { Logger } from 'src/lib/logger/logger.service';
 import { v4 as uuidv4 } from 'uuid';
 import BigNumber from 'bignumber.js';
 import { SpaceEquipmentService } from '../space-equipment/space-equipment.service';
+import { TopicService } from '../topic/topic.service';
 
 @Injectable()
 export class RuleBlockService {
@@ -21,6 +22,7 @@ export class RuleBlockService {
     @InjectRepository(RuleBlock)
     private ruleBlockRepository: Repository<RuleBlock>,
     private readonly spaceEquipmentService: SpaceEquipmentService,
+    private readonly topicService: TopicService,
     private logger: Logger,
   ) {}
 
@@ -103,6 +105,9 @@ export class RuleBlockService {
       case RuleBlockType.spaceEventRisk:
       case RuleBlockType.spaceEventSelfRiskAssesment:
         break;
+      case RuleBlockType.spaceExcludedTopic:
+        await this.validateSpaceExcludedTopic(trimmedContent);
+        break;
       case RuleBlockType.spaceMaxNoiseLevel:
         this.validateNoiseLevel(trimmedContent);
         break;
@@ -111,6 +116,9 @@ export class RuleBlockService {
         break;
       case RuleBlockType.spaceConsentTimeout:
         this.validateSpaceConsentTimeout(trimmedContent);
+        break;
+      case RuleBlockType.spaceCancelDeadline:
+        this.validateSpaceCancelDeadline(trimmedContent);
         break;
       case RuleBlockType.spaceAllowedEventAccessType:
         this.validateSpaceAllowedEventAccessType(trimmedContent);
@@ -123,6 +131,9 @@ export class RuleBlockService {
         break;
       case RuleBlockType.spaceAvailabilityUnit:
         this.validateSpaceAvailabilityUnit(trimmedContent);
+        break;
+      case RuleBlockType.spaceMaxAvailabilityUnitCount:
+        this.validateSpaceAvailabilityUnitCount(trimmedContent);
         break;
       case RuleBlockType.spaceAvailabilityBuffer:
         this.validateSpaceAvailabilityBuffer(trimmedContent);
@@ -282,6 +293,29 @@ export class RuleBlockService {
     }
   }
 
+  private validateSpaceCancelDeadline(content: string) {
+    const testRegex = /^\d+[dhm]$/;
+    if (testRegex.test(content) === false) {
+      throw new BadRequestException(
+        'Space cancel deadline must be in format: {number}{d|h|m}',
+      );
+    }
+  }
+
+  private validateSpaceAvailabilityUnitCount(content: string) {
+    const isInteger = Number.isInteger(new BigNumber(content).toNumber());
+
+    if (
+      (isInteger &&
+        new BigNumber(content).gte(1) &&
+        new BigNumber(content).lte(60)) === false
+    ) {
+      throw new BadRequestException(
+        'Space max availability unit count must be an integer between 1 and 60',
+      );
+    }
+  }
+
   private validateSpaceAvailabilityBuffer(content: string) {
     const testRegex = /^\d+[dwMyhms]$/;
 
@@ -338,6 +372,14 @@ export class RuleBlockService {
       throw new BadRequestException(
         `The given quantity exceeds the spaceEquipment quantity`,
       );
+    }
+  }
+
+  private async validateSpaceExcludedTopic(content: string) {
+    const topic = await this.topicService.findOneById(content);
+
+    if (!topic) {
+      throw new BadRequestException(`There is no topic with id: ${content}`);
     }
   }
 

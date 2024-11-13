@@ -207,6 +207,9 @@ export class PermissionHandlerProcessor {
 
       // check ruleBlock collisions
       // if ruleBlock collision exists, add to spaceEventRule.ruleBlocks as spaceEventException type and save
+      const spaceMaxAvailabilityUnitCountRuleBlock = spaceRuleBlocks.find(
+        (item) => item.type === RuleBlockType.spaceMaxAvailabilityUnitCount,
+      );
       for (const spaceRuleBlock of spaceRuleBlocks) {
         const { type, hash, content } = spaceRuleBlock;
         const spaceEventExceptionRuleBlock = spaceEventRuleBlocks.find(
@@ -240,20 +243,30 @@ export class PermissionHandlerProcessor {
               ].join(RuleBlockContentDivider.time),
             ];
             break;
-          case RuleBlockType.spaceAvailabilityUnit: // check with spaceEvent.duration
-            const spaceEventUnitAmount = parseInt(duration.slice(0, -1), 10);
-            const spaceEventUnitType = duration.slice(-1);
+          case RuleBlockType.spaceAvailabilityUnit:
+            const spaceEventDurationAmount = parseInt(
+              duration.slice(0, -1),
+              10,
+            );
+            const spaceEventDurationType = duration.slice(-1);
             const spaceUnitAmount = parseInt(content.slice(0, -1), 10);
             const spaceUnitType = content.slice(-1);
+            const spaceMaxAvailabilityUnitCount = parseInt(
+              spaceMaxAvailabilityUnitCountRuleBlock.content,
+            );
             isInAutoApprovalRange =
-              dayjs().add(spaceUnitAmount, spaceUnitType as ManipulateType) >=
               dayjs().add(
-                spaceEventUnitAmount,
-                spaceEventUnitType as ManipulateType,
+                new BigNumber(spaceUnitAmount)
+                  .times(spaceMaxAvailabilityUnitCount)
+                  .toNumber(),
+                spaceUnitType as ManipulateType,
+              ) >=
+              dayjs().add(
+                spaceEventDurationAmount,
+                spaceEventDurationType as ManipulateType,
               );
             desiredValue = duration;
             break;
-          // TODO. spaceMaxAvailabilityUnitCount
           default:
             continue;
         }
