@@ -13,17 +13,26 @@ import {
 import { SpaceEvent } from 'src/database/entity/space-event.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import dayjs from 'dayjs';
+import dayjs, { ManipulateType } from 'dayjs';
 import { FindAllSpaceEventDto } from './dto/find-all-space-event.dto';
-import { SpaceEventStatus } from 'src/lib/type';
+import {
+  PermissionRequestResolveStatus,
+  PermissionRequestStatus,
+  RuleBlockType,
+  SpaceEventStatus,
+} from 'src/lib/type';
 import { v4 as uuidv4 } from 'uuid';
 import { Logger } from 'src/lib/logger/logger.service';
+import { PermissionRequestService } from '../permission-request/permission-request.service';
+import { RuleService } from '../rule/rule.service';
 
 @Injectable()
 export class SpaceEventService {
   constructor(
     @InjectRepository(SpaceEvent)
     private spaceEventRepository: Repository<SpaceEvent>,
+    private readonly permissionRequestService: PermissionRequestService,
+    private readonly ruleService: RuleService,
     private readonly logger: Logger,
   ) {}
 
@@ -366,6 +375,7 @@ export class SpaceEventService {
   async updateToCancelled(id: string): Promise<{ data: { result: boolean } }> {
     const spaceEvent = await this.spaceEventRepository.findOneBy({ id });
 
+    // check is status cancellable
     if (
       [
         SpaceEventStatus.pending,
@@ -376,6 +386,40 @@ export class SpaceEventService {
       throw new ForbiddenException(
         `Cannot cancel ${spaceEvent.status} SpaceEvent.`,
       );
+    }
+
+    // check is not exceeded cancel deadline
+    if (
+      [SpaceEventStatus.permissionGranted].includes(spaceEvent.status) === true
+    ) {
+      const {
+        data: [permissionRequest],
+      } = await this.permissionRequestService.findAll({
+        spaceEventId: spaceEvent.id,
+        statuses: [
+          PermissionRequestStatus.reviewApproved,
+          PermissionRequestStatus.reviewApprovedWithCondition,
+        ],
+        resolveStatuses: [PermissionRequestResolveStatus.resolveAccepted],
+      });
+      const spaceRule = await this.ruleService.findOneById(
+        permissionRequest.spaceRuleId,
+      );
+      const cancelDeadlineRuleBlock = spaceRule.ruleBlocks.find(
+        (item) => item.type === RuleBlockType.spaceCancelDeadline,
+      );
+      const { startsAt } = spaceEvent;
+      const cancelDeadlineAmount = parseInt(
+        cancelDeadlineRuleBlock.content.slice(0, -1),
+        10,
+      );
+      const cancelDeadlineType = cancelDeadlineRuleBlock.content.slice(-1);
+
+      if (
+        dayjs(startsAt) <
+        dayjs().add(cancelDeadlineAmount, cancelDeadlineType as ManipulateType)
+      )
+        throw new ForbiddenException(`Cancel deadline exceeded.`);
     }
 
     const updateResult = await this.spaceEventRepository.update(id, {
@@ -469,7 +513,9 @@ export class SpaceEventService {
     }
 
     if (completeSpaceEventDto.details != null) {
-      dto.details = completeSpaceEventDto.details;
+      dto.details = [spaceEvent.details, completeSpaceEventDto.details].join(
+        '\n\n',
+      );
       dto.status = SpaceEventStatus.completeWithIssue;
     }
 
@@ -488,31 +534,24 @@ export class SpaceEventService {
   ): Promise<{ data: { result: boolean } }> {
     const spaceEvent = await this.spaceEventRepository.findOneBy({ id });
     const dto: Partial<SpaceEvent> = {
+      details: [
+        spaceEvent.details,
+        '\n[issue report]',
+        completeWithIssueSpaceEventDto.details,
+        '\n',
+      ].join('\n'),
       status: SpaceEventStatus.completeWithIssue,
       updatedAt: new Date(),
     };
 
     if (
-      [
-        SpaceEventStatus.permissionGranted,
-        SpaceEventStatus.running,
-        SpaceEventStatus.closed,
-        SpaceEventStatus.complete,
-      ].includes(spaceEvent.status) === false
+      [SpaceEventStatus.complete, SpaceEventStatus.completeWithIssue].includes(
+        spaceEvent.status,
+      ) === false
     ) {
       throw new ForbiddenException(
-        `Cannot complete ${spaceEvent.status} SpaceEvent.`,
+        `Cannot complete with issue ${spaceEvent.status} SpaceEvent.`,
       );
-    }
-
-    const start = dayjs(new Date(spaceEvent.startsAt));
-    if (start > dayjs()) {
-      throw new ForbiddenException('Can complete after SpaceEvent starts.');
-    }
-
-    if (completeWithIssueSpaceEventDto.details != null) {
-      dto.details = completeWithIssueSpaceEventDto.details;
-      dto.status = SpaceEventStatus.completeWithIssue;
     }
 
     const updateResult = await this.spaceEventRepository.update(id, dto);
@@ -530,7 +569,12 @@ export class SpaceEventService {
   ): Promise<{ data: { result: boolean } }> {
     const spaceEvent = await this.spaceEventRepository.findOneBy({ id });
     const dto: Partial<SpaceEvent> = {
-      status: SpaceEventStatus.completeWithIssue,
+      details: [
+        spaceEvent.details,
+        '\n[issue resolve]',
+        completeWithIssueResolvedSpaceEventDto.details,
+      ].join('\n'),
+      status: SpaceEventStatus.completeWithIssueResolved,
       updatedAt: new Date(),
     };
 
@@ -538,18 +582,8 @@ export class SpaceEventService {
       [SpaceEventStatus.completeWithIssue].includes(spaceEvent.status) === false
     ) {
       throw new ForbiddenException(
-        `Cannot complete ${spaceEvent.status} SpaceEvent.`,
+        `Cannot complete with issue ${spaceEvent.status} SpaceEvent.`,
       );
-    }
-
-    const start = dayjs(new Date(spaceEvent.startsAt));
-    if (start > dayjs()) {
-      throw new ForbiddenException('Can complete after SpaceEvent starts.');
-    }
-
-    if (completeWithIssueResolvedSpaceEventDto.details != null) {
-      dto.details = completeWithIssueResolvedSpaceEventDto.details;
-      dto.status = SpaceEventStatus.completeWithIssue;
     }
 
     const updateResult = await this.spaceEventRepository.update(id, dto);
