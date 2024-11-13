@@ -13,7 +13,10 @@ import {
 import { PermissionResponseService } from './permission-response.service';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-import { FindAllPermissionResponseDto } from './dto';
+import {
+  FindAllPermissionResponseDto,
+  UpdatePermissionResponseDto,
+} from './dto';
 import { UserService } from '../user/user.service';
 import { SpacePermissionerService } from '../space-permissioner/space-permissioner.service';
 import { ApprovePermissionResponseDto } from './dto/approve-permission-response.dto';
@@ -124,6 +127,40 @@ export class PermissionResponseController {
     return this.permissionResponseService.updateToRejected(
       id,
       rejectPermissionResponseDto,
+    );
+  }
+
+  @Post(':id/abstention')
+  @ApiOperation({ summary: 'PermissionResponse with abstention' })
+  @UseGuards(JwtAuthGuard)
+  async abstention(
+    @Req() req,
+    @Param('id') id: string,
+    @Body() updatePermissionResponseDto: UpdatePermissionResponseDto,
+  ) {
+    const user = await this.userService.findOneByEmail(req.user.email);
+    const permissionResponse =
+      await this.permissionResponseService.findOneById(id);
+
+    const { permissionRequest, spacePermissioner } = permissionResponse;
+
+    if (user.id !== spacePermissioner.userId) {
+      throw new ForbiddenException();
+    }
+
+    if (permissionRequest.resolveStatus != null) {
+      throw new BadRequestException(
+        'Cannot update already resolved permission request.',
+      );
+    }
+
+    if (permissionResponse.timeoutAt < new Date()) {
+      throw new BadRequestException('Cannot update after response timeout.');
+    }
+
+    return this.permissionResponseService.updateToAbstention(
+      id,
+      updatePermissionResponseDto,
     );
   }
 }
