@@ -23,6 +23,7 @@ import { SpaceEquipment } from 'src/database/entity/space-equipment.entity';
 import { SpaceEquipmentService } from '../space-equipment/space-equipment.service';
 import { SpaceTopicService } from '../space-topic/space-topic.service';
 import { SpaceTopic } from 'src/database/entity/space-topic.entity';
+import { PermissionRequestService } from '../permission-request/permission-request.service';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { SpaceTopic } from 'src/database/entity/space-topic.entity';
   controllers: [PermissionResponseController],
   providers: [
     PermissionResponseService,
+    PermissionRequestService,
     SpaceService,
     SpaceEventService,
     SpaceEquipmentService,
