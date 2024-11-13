@@ -304,7 +304,6 @@ Ref: topic_follower.topic_id > topic.id
 Table space_topic {
   space_id uuid [not null]
   topic_id uuid [not null]
-  is_desired bool [not null, default: true]
   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
   updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
 

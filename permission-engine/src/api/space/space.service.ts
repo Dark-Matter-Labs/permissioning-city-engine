@@ -175,7 +175,6 @@ export class SpaceService {
   async addTopic(
     id: string,
     topicId: string,
-    isDesired: boolean = true,
   ): Promise<{ data: { result: boolean } }> {
     let result = false;
 
@@ -190,7 +189,6 @@ export class SpaceService {
         .create({
           spaceId: id,
           topicId,
-          isDesired,
         })
         .then((res) => {
           result = !!res;

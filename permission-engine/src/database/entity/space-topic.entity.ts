@@ -26,10 +26,6 @@ export class SpaceTopic {
   @PrimaryColumn()
   topicId: string;
 
-  @Column({ default: true })
-  @ApiProperty({ description: 'Is topic desired by space' })
-  isDesired: boolean;
-
   @CreateDateColumn()
   @ApiProperty({ description: 'Created timestamp' })
   createdAt: Date;
