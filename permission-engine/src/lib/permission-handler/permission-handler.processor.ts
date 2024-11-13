@@ -392,7 +392,8 @@ export class PermissionHandlerProcessor {
           userId: permissionRequest.spaceEvent.organizerId,
           target: UserNotificationTarget.eventOrgnaizer,
           type: UserNotificationType.external,
-          templateName: UserNotificationTemplateName.permissionRequestResolved,
+          templateName:
+            UserNotificationTemplateName.spaceEventPermissionRequestApproved,
           params: {
             permissionRequestId,
             spaceRuleId: permissionRequest.spaceRule.id,
@@ -425,7 +426,7 @@ export class PermissionHandlerProcessor {
               target: UserNotificationTarget.permissioner,
               type: UserNotificationType.external,
               templateName:
-                UserNotificationTemplateName.permissionRequestResolved,
+                UserNotificationTemplateName.spaceEventPermissionRequestReviewCompleted,
               params: {
                 permissionRequestId,
                 spaceRuleId: permissionRequest.spaceRule.id,
@@ -827,6 +828,7 @@ export class PermissionHandlerProcessor {
       let conditions = [];
       let excitements = [];
       let worries = [];
+      let templateName: UserNotificationTemplateName;
 
       reviewedResponses.forEach((permissionResponse) => {
         conditions = [...conditions, ...permissionResponse.conditions];
@@ -840,6 +842,8 @@ export class PermissionHandlerProcessor {
         if (isConsent === true) {
           permissionRequestResolveStatus =
             PermissionRequestResolveStatus.resolveAccepted;
+          templateName =
+            UserNotificationTemplateName.spaceRuleChangePermissionRequestApproved;
           await this.permissionRequestService.updateToResolveAccepted(
             permissionRequest.id,
             true,
@@ -850,6 +854,8 @@ export class PermissionHandlerProcessor {
         } else {
           permissionRequestResolveStatus =
             PermissionRequestResolveStatus.resolveRejected;
+          templateName =
+            UserNotificationTemplateName.spaceRuleChangePermissionRequestRejected;
           await this.permissionRequestService.updateToResolveRejected(
             permissionRequest.id,
             true,
@@ -862,6 +868,8 @@ export class PermissionHandlerProcessor {
         if (isConsent === true) {
           permissionRequestResolveStatus =
             PermissionRequestResolveStatus.resolveAccepted;
+          templateName =
+            UserNotificationTemplateName.spaceEventPreApprovePermissionRequestApproved;
           await this.permissionRequestService.updateToResolveAccepted(
             permissionRequest.id,
             true,
@@ -873,6 +881,8 @@ export class PermissionHandlerProcessor {
         } else {
           permissionRequestResolveStatus =
             PermissionRequestResolveStatus.resolveRejected;
+          templateName =
+            UserNotificationTemplateName.spaceEventPreApprovePermissionRequestRejected;
           await this.permissionRequestService.updateToResolveRejected(
             permissionRequest.id,
             true,
@@ -882,6 +892,8 @@ export class PermissionHandlerProcessor {
         if (isConsent === false) {
           permissionRequestResolveStatus =
             PermissionRequestResolveStatus.resolveRejected;
+          templateName =
+            UserNotificationTemplateName.spaceEventPermissionRequestRejected;
           await this.permissionRequestService.updateToResolveRejected(
             permissionRequest.id,
             true,
@@ -898,10 +910,7 @@ export class PermissionHandlerProcessor {
             userId: permissionRequest.userId,
             target: UserNotificationTarget.general,
             type: UserNotificationType.external,
-            templateName:
-              permissionRequestResolveStatus !== null
-                ? UserNotificationTemplateName.permissionRequestResolved
-                : UserNotificationTemplateName.permissionRequestReviewed,
+            templateName,
             params: {
               permissionRequestId: permissionRequest.id,
               permissionRequestStatus,
@@ -924,10 +933,7 @@ export class PermissionHandlerProcessor {
                 userId: spacePermissioner.userId,
                 target: UserNotificationTarget.general,
                 type: UserNotificationType.external,
-                templateName:
-                  permissionRequestResolveStatus !== null
-                    ? UserNotificationTemplateName.permissionRequestResolved
-                    : UserNotificationTemplateName.permissionRequestReviewed,
+                templateName, // TODO. assign right template for permissioners
                 params: {
                   permissionRequestId: permissionRequest.id,
                   permissionRequestStatus,
@@ -1001,7 +1007,10 @@ export class PermissionHandlerProcessor {
       worries = [...worries, ...permissionResponse.worries];
     });
 
+    let templateName: UserNotificationTemplateName;
     if (resolveStatus === PermissionRequestResolveStatus.resolveAccepted) {
+      templateName =
+        UserNotificationTemplateName.spaceEventPermissionRequestResolveAccepted;
       await this.spaceEventService.updateToPermissionGranted(spaceEventId);
     } else if (
       [
@@ -1009,7 +1018,28 @@ export class PermissionHandlerProcessor {
         PermissionRequestResolveStatus.resolveDropped,
       ].includes(resolveStatus) === true
     ) {
-      await this.spaceEventService.updateToCancelled(spaceEventId);
+    }
+
+    switch (resolveStatus) {
+      case PermissionRequestResolveStatus.resolveAccepted:
+        templateName =
+          UserNotificationTemplateName.spaceEventPermissionRequestResolveAccepted;
+        await this.spaceEventService.updateToPermissionGranted(spaceEventId);
+        break;
+      case PermissionRequestResolveStatus.resolveCancelled:
+        templateName =
+          UserNotificationTemplateName.spaceEventPermissionRequestResolveCancelled;
+        await this.spaceEventService.updateToCancelled(spaceEventId);
+
+        break;
+      case PermissionRequestResolveStatus.resolveDropped:
+        templateName =
+          UserNotificationTemplateName.spaceEventPermissionRequestResolveDropped;
+        await this.spaceEventService.updateToCancelled(spaceEventId);
+
+        break;
+      default:
+        break;
     }
 
     // insert userNotifications
@@ -1020,7 +1050,7 @@ export class PermissionHandlerProcessor {
           userId: permissionRequest.userId,
           target: UserNotificationTarget.general,
           type: UserNotificationType.external,
-          templateName: UserNotificationTemplateName.permissionRequestResolved,
+          templateName,
           params: {
             permissionRequestId: permissionRequest.id,
             permissionRequestStatus: status,
@@ -1043,8 +1073,7 @@ export class PermissionHandlerProcessor {
               userId: spacePermissioner.userId,
               target: UserNotificationTarget.general,
               type: UserNotificationType.external,
-              templateName:
-                UserNotificationTemplateName.permissionRequestResolved,
+              templateName, // TODO. assign appropriate template for permissioners
               params: {
                 permissionRequestId: permissionRequest.id,
                 permissionRequestStatus: status,
