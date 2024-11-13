@@ -31,6 +31,8 @@ import { RuleBlock } from 'src/database/entity/rule-block.entity';
 import { RuleBlockService } from 'src/api/rule-block/rule-block.service';
 import { SpaceEquipment } from 'src/database/entity/space-equipment.entity';
 import { SpaceEquipmentService } from 'src/api/space-equipment/space-equipment.service';
+import { TopicService } from 'src/api/topic/topic.service';
+import { Topic } from 'src/database/entity/topic.entity';
 
 @Global()
 @Module({
@@ -49,6 +51,7 @@ import { SpaceEquipmentService } from 'src/api/space-equipment/space-equipment.s
       SpacePermissioner,
       SpaceEquipment,
       SpaceTopic,
+      Topic,
     ]),
     BullModule.registerQueue({
       name: 'notification-handler',
@@ -73,6 +76,7 @@ import { SpaceEquipmentService } from 'src/api/space-equipment/space-equipment.s
     RuleService,
     RuleBlockService,
     WsNotificationGateway,
+    TopicService,
   ],
   exports: [NotificationHandlerService],
 })

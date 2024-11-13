@@ -27,6 +27,8 @@ import configuration from 'src/config/configuration';
 import { PermissionHandlerModule } from 'src/lib/permission-handler/permission-handler.module';
 import { SpaceTopic } from 'src/database/entity/space-topic.entity';
 import { SpaceTopicService } from '../space-topic/space-topic.service';
+import { Topic } from 'src/database/entity/topic.entity';
+import { TopicService } from '../topic/topic.service';
 
 @Module({
   imports: [
@@ -45,6 +47,7 @@ import { SpaceTopicService } from '../space-topic/space-topic.service';
       Rule,
       SpacePermissioner,
       RuleBlock,
+      Topic,
     ]),
     PermissionHandlerModule,
   ],
@@ -62,6 +65,7 @@ import { SpaceTopicService } from '../space-topic/space-topic.service';
     RuleBlockService,
     UserNotificationService,
     PermissionHandlerService,
+    TopicService,
   ],
 })
 export class SpaceEquipmentModule {}

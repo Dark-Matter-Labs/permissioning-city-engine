@@ -24,6 +24,8 @@ import { SpaceEquipmentService } from '../space-equipment/space-equipment.servic
 import { SpaceTopicService } from '../space-topic/space-topic.service';
 import { SpaceTopic } from 'src/database/entity/space-topic.entity';
 import { PermissionRequestService } from '../permission-request/permission-request.service';
+import { TopicService } from '../topic/topic.service';
+import { Topic } from 'src/database/entity/topic.entity';
 
 @Module({
   imports: [
@@ -39,10 +41,12 @@ import { PermissionRequestService } from '../permission-request/permission-reque
       Rule,
       RuleBlock,
       SpacePermissioner,
+      Topic,
     ]),
   ],
   controllers: [PermissionResponseController],
   providers: [
+    Logger,
     PermissionResponseService,
     PermissionRequestService,
     SpaceService,
@@ -54,7 +58,7 @@ import { PermissionRequestService } from '../permission-request/permission-reque
     RuleService,
     RuleBlockService,
     SpacePermissionerService,
-    Logger,
+    TopicService,
   ],
 })
 export class PermissionResponseModule {}
