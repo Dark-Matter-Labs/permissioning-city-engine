@@ -1,15 +1,9 @@
-import {
-  BadRequestException,
-  forwardRef,
-  Inject,
-  Injectable,
-} from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import {
   PermissionProcessType,
   PermissionRequestResolveStatus,
   PermissionRequestStatus,
-  RuleBlockType,
 } from 'src/lib/type';
 import {
   CancelPermissionRequestDto,
@@ -23,7 +17,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Space } from 'src/database/entity/space.entity';
 import { SpaceEvent } from 'src/database/entity/space-event.entity';
-import { generateRandomCode } from 'src/lib/util/util';
+import { generateRandomCode } from 'src/lib/util';
 import { Logger } from 'src/lib/logger/logger.service';
 import { PermissionHandlerService } from 'src/lib/permission-handler/permission-handler.service';
 import { RuleService } from '../rule/rule.service';
@@ -46,8 +40,15 @@ export class PermissionRequestService {
   async findAll(
     findAllPermissionRequestDto: FindAllPermissionRequestDto,
   ): Promise<{ data: PermissionRequest[]; total: number }> {
-    const { page, limit, spaceEventId, spaceId, ruleId, statuses } =
-      findAllPermissionRequestDto;
+    const {
+      page,
+      limit,
+      spaceEventId,
+      spaceId,
+      ruleId,
+      statuses,
+      resolveStatuses,
+    } = findAllPermissionRequestDto;
 
     const where = [];
     const params: any[] = [(page - 1) * limit, limit];
@@ -77,6 +78,12 @@ export class PermissionRequestService {
       params.push(statuses);
     }
 
+    if (resolveStatuses != null) {
+      paramIndex++;
+      where.push(`resolve_status = ANY($${paramIndex})`);
+      params.push(resolveStatuses);
+    }
+
     const whereClause = where.length > 0 ? 'WHERE' : '';
     const query = `
       WITH filtered_data AS (
@@ -91,6 +98,7 @@ export class PermissionRequestService {
           updated_at
         FROM permission_request
         ${whereClause} ${where.join(' AND ')}
+        ORDER BY updated_at DESC
       )
       SELECT COUNT(*) AS total, json_agg(filtered_data) AS data
       FROM filtered_data
@@ -242,29 +250,6 @@ export class PermissionRequestService {
         PermissionProcessType.spaceEventRulePreApprovePermissionRequestCreated;
     }
 
-    const spaceRule = await this.ruleService.findOneById(spaceRuleId);
-    const spacePrePermissionCheckRuleBlocks = spaceRule.ruleBlocks.filter(
-      (item) => item.type === RuleBlockType.spacePrePermissionCheck,
-    );
-    const spaceEventRule = await this.ruleService.findOneById(spaceEventRuleId);
-    const spaceEventPrePermissionCheckAnswerRuleBlocks =
-      spaceEventRule.ruleBlocks.filter(
-        (item) =>
-          item.type === RuleBlockType.spaceEventPrePermissionCheckAnswer,
-      );
-
-    for (const spaceRuleBlock of spacePrePermissionCheckRuleBlocks) {
-      if (
-        !spaceEventPrePermissionCheckAnswerRuleBlocks.find((item) =>
-          item.content.startsWith(spaceRuleBlock.hash),
-        )
-      ) {
-        throw new BadRequestException(
-          `SpaceEventRule must have all answers for each prePermissionCheck ruleBlock: ${spaceRuleBlock.id}`,
-        );
-      }
-    }
-
     const permissionRequest = this.permissionRequestRepository.create({
       ...dto,
       id: uuidv4(),
@@ -371,9 +356,10 @@ export class PermissionRequestService {
     id: string,
     cancelPermissionRequestDto: CancelPermissionRequestDto,
   ): Promise<{ data: { result: boolean } }> {
+    const { resolveDetails } = cancelPermissionRequestDto;
     const updateResult = await this.permissionRequestRepository.update(id, {
       resolveStatus: PermissionRequestResolveStatus.resolveCancelled,
-      resolveDetails: cancelPermissionRequestDto.resolveDetails,
+      resolveDetails,
       updatedAt: new Date(),
     });
 
@@ -437,9 +423,10 @@ export class PermissionRequestService {
     id: string,
     dropPermissionRequestDto: DropPermissionRequestDto,
   ): Promise<{ data: { result: boolean } }> {
+    const { resolveDetails } = dropPermissionRequestDto;
     const updateResult = await this.permissionRequestRepository.update(id, {
       resolveStatus: PermissionRequestResolveStatus.resolveDropped,
-      resolveDetails: dropPermissionRequestDto.resolveDetails,
+      resolveDetails,
       updatedAt: new Date(),
     });
 

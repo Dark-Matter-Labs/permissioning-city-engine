@@ -1,6 +1,9 @@
 import { IsOptional, IsUUID, IsString, IsArray } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { PermissionRequestStatus } from 'src/lib/type';
+import {
+  PermissionRequestResolveStatus,
+  PermissionRequestStatus,
+} from 'src/lib/type';
 import { PaginationDto } from 'src/lib/dto';
 import { Transform } from 'class-transformer';
 
@@ -37,4 +40,13 @@ export class FindAllPermissionRequestDto extends PaginationDto {
     description: 'PermissionRequest statuses',
   })
   statuses?: PermissionRequestStatus[];
+
+  @IsOptional()
+  @Transform(({ value }) => (Array.isArray(value) ? value : value.split(',')))
+  @IsArray()
+  @IsString({ each: true })
+  @ApiPropertyOptional({
+    description: 'PermissionRequest resolveStatuses',
+  })
+  resolveStatuses?: PermissionRequestResolveStatus[];
 }

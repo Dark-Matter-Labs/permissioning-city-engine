@@ -41,7 +41,15 @@ export class PermissionRequestController {
   @ApiOperation({ summary: 'Get all PermissionRequests' })
   @UseGuards(JwtAuthGuard)
   findAll(@Query() query: FindAllPermissionRequestDto) {
-    const { page, limit, spaceEventId, spaceId, ruleId, statuses } = query;
+    const {
+      page,
+      limit,
+      spaceEventId,
+      spaceId,
+      ruleId,
+      statuses,
+      resolveStatuses,
+    } = query;
 
     return this.permissionRequestService.findAll({
       page,
@@ -50,6 +58,7 @@ export class PermissionRequestController {
       spaceId,
       ruleId,
       statuses,
+      resolveStatuses,
     });
   }
 
