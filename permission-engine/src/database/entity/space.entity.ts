@@ -16,6 +16,7 @@ import { SpacePermissioner } from './space-permissioner.entity';
 import { SpaceImage } from './space-image.entity';
 import { SpaceApprovedRule } from './space-approved-rule.entity';
 import { SpaceTopic } from './space-topic.entity';
+import { SpaceHistory } from './space-history.entity';
 
 @Entity()
 export class Space {
@@ -117,4 +118,7 @@ export class Space {
     (SpacePermissioner) => SpacePermissioner.space,
   )
   spacePermissioners: SpacePermissioner[];
+
+  @OneToMany(() => SpaceHistory, (spaceHistory) => spaceHistory.space)
+  spaceHistories: SpaceHistory[];
 }

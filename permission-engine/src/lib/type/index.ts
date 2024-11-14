@@ -655,3 +655,19 @@ export type SpaceEventReport = {
   spaceIssue: string;
   spaceSuggestions: string;
 };
+
+export enum SpaceHistoryType {
+  create = 'create',
+  update = 'update',
+  permissionerJoin = 'permissioner_join',
+  permissionerLeave = 'permissioner_leave',
+  permissionRequest = 'permission_request',
+  permissionRequestResolve = 'permission_request_resolve',
+  spaceEventStart = 'space_event_start',
+  spaceEventClose = 'space_event_close',
+  spaceEventComplete = 'space_event_complete',
+  spaceEventCompleteWithIssue = 'space_event_complete_with_issue',
+  spaceEventCompleteWithIssueResolve = 'space_event_complete_with_issue_resolve',
+  spaceIssue = 'space_issue',
+  spaceIssueResolve = 'space_issue_resolve',
+}

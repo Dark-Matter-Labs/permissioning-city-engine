@@ -41,6 +41,7 @@ import { UserService } from './api/user/user.service';
 import { UserNotification } from './database/entity/user-notification.entity';
 import { User } from './database/entity/user.entity';
 import { UserNotificationService } from './api/user-notification/user-notification.service';
+import { SpaceHistoryModule } from './api/space-history/space-history.module';
 
 @Module({
   imports: [
@@ -105,6 +106,7 @@ import { UserNotificationService } from './api/user-notification/user-notificati
     SpacePermissionerModule,
     SpaceEquipmentModule,
     SpaceApprovedRuleModule,
+    SpaceHistoryModule,
     SpaceModule,
     RuleBlockModule,
     RuleModule,
