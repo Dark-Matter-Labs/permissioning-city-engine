@@ -313,7 +313,7 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
 
       for (const [i, createRuleDto] of createSpaceRuleDtos.entries()) {
         spaceRules.push(
-          await this.ruleService.create(spaceRuleBlockAuthor.id, {
+          await this.ruleService.createSpaceRule(spaceRuleBlockAuthor.id, {
             ...createRuleDto,
             topicIds: [topics[i].id],
           }),
@@ -416,10 +416,13 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
 
       for (const [i, createRuleDto] of createSpaceEventRuleDtos.entries()) {
         spaceEventRules.push(
-          await this.ruleService.create(spaceEventRuleBlockAuthor.id, {
-            ...createRuleDto,
-            topicIds: [topics[i + 2].id],
-          }),
+          await this.ruleService.createSpaceEventRule(
+            spaceEventRuleBlockAuthor.id,
+            {
+              ...createRuleDto,
+              topicIds: [topics[i + 2].id],
+            },
+          ),
         );
       }
 

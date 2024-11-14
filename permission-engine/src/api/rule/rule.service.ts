@@ -35,7 +35,7 @@ export class RuleService {
     isPagination: boolean = true,
     isPublicOnly: boolean = true,
   ): Promise<{ data: Rule[]; total: number }> {
-    const { page, limit, target, authorId, parentRuleId, hash, ids } =
+    const { page, limit, target, authorId, parentRuleId, hash, ids, isActive } =
       findAllRuleDto;
 
     const where: FindOptionsWhere<Rule> = { isActive: true };
@@ -60,11 +60,19 @@ export class RuleService {
       where.id = In(ids);
     }
 
-    let queryOption: FindManyOptions<Rule> = { where };
+    if (isActive != null) {
+      where.isActive = isActive;
+    } else {
+      where.isActive = true;
+    }
+
+    let queryOption: FindManyOptions<Rule> = {
+      where,
+      relations: ['ruleBlocks'],
+    };
     if (isPagination === true) {
       queryOption = {
         ...queryOption,
-        relations: ['ruleBlocks'],
         skip: (page - 1) * limit,
         take: limit,
       };
@@ -229,27 +237,13 @@ export class RuleService {
     await this.ruleRepository.delete(id);
   }
 
-  async create(authorId: string, createRuleDto: CreateRuleDto): Promise<Rule> {
-    const { target, ruleBlockIds, topicIds } = createRuleDto;
-    const ruleBlocks = await this.ruleBlockRepository.find({
-      where: { id: In(ruleBlockIds) },
-    });
-    const hash = Util.hash(
-      ruleBlocks
-        .filter((item) => item.isPublic === true)
-        .map((item) => item.hash)
-        .sort()
-        .join(),
-    );
-
-    if (target === RuleTarget.space) {
-      this.validateSpaceRuleBlockSet(ruleBlocks);
-    } else if (target === RuleTarget.spaceEvent) {
-      this.validateSpaceEventRuleBlockSet(ruleBlocks);
-    } else {
-      throw new BadRequestException();
-    }
-
+  async create(
+    authorId: string,
+    createRuleDto: CreateRuleDto,
+    ruleBlocks: RuleBlock[],
+    hash: string,
+  ): Promise<Rule> {
+    const { topicIds } = createRuleDto;
     const rule = this.ruleRepository.create({
       ...createRuleDto,
       id: uuidv4(),
@@ -271,6 +265,70 @@ export class RuleService {
     }
 
     return rule;
+  }
+
+  async createSpaceRule(
+    authorId: string,
+    createRuleDto: CreateRuleDto,
+  ): Promise<Rule> {
+    const { target, ruleBlockIds } = createRuleDto;
+
+    if (target !== RuleTarget.space) {
+      throw new BadRequestException();
+    }
+
+    if (!ruleBlockIds) {
+      throw new BadRequestException(
+        `Need to contain at least 1 item in ruleBlockIds`,
+      );
+    }
+
+    const ruleBlocks = await this.ruleBlockRepository.find({
+      where: { id: In(ruleBlockIds) },
+    });
+    const hash = this.generateRuleHash(ruleBlocks.map((item) => item.hash));
+
+    this.validateSpaceRuleBlockSet(ruleBlocks);
+
+    return await this.create(authorId, createRuleDto, ruleBlocks, hash);
+  }
+
+  async createSpaceEventRule(
+    authorId: string,
+    createRuleDto: CreateRuleDto,
+  ): Promise<Rule> {
+    const { target, ruleBlockIds } = createRuleDto;
+    const emptyHash: string = Util.hash('');
+    let ruleBlocks: RuleBlock[] = [];
+    let hash: string = emptyHash;
+
+    if (target !== RuleTarget.spaceEvent) {
+      throw new BadRequestException();
+    }
+
+    if (ruleBlockIds) {
+      ruleBlocks = await this.ruleBlockRepository.find({
+        where: { id: In(ruleBlockIds) },
+      });
+      hash = this.generateRuleHash(ruleBlocks.map((item) => item.hash));
+    }
+
+    // prevent duplicate empty rule creation
+    if (hash === emptyHash) {
+      const emptySpaceEventRule = (
+        await this.findAll({ hash, isActive: true }, false, false)
+      )?.data?.[0];
+
+      if (emptySpaceEventRule) {
+        return emptySpaceEventRule;
+      }
+    }
+
+    if (ruleBlocks.length > 0) {
+      this.validateSpaceEventRuleBlockSet(ruleBlocks);
+    }
+
+    return await this.create(authorId, createRuleDto, ruleBlocks, hash);
   }
 
   async fork(
@@ -634,5 +692,9 @@ export class RuleService {
     }
 
     return true;
+  }
+
+  generateRuleHash(ruleBlockHashs: string[]) {
+    return Util.hash(ruleBlockHashs.sort().join());
   }
 }

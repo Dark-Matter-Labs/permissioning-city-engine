@@ -23,6 +23,7 @@ import { SpaceEventService } from '../space-event/space-event.service';
 import { SpacePermissionerService } from '../space-permissioner/space-permissioner.service';
 import { SpaceService } from '../space/space.service';
 import { SpacePermissioner } from 'src/database/entity/space-permissioner.entity';
+import { RuleTarget } from 'src/lib/type';
 
 @ApiTags('rule')
 @Controller('api/v1/rule')
@@ -110,7 +111,13 @@ export class RuleController {
   ): Promise<Rule> {
     const user = await this.userService.findOneByEmail(req.user.email);
 
-    return this.ruleService.create(user.id, createRuleDto);
+    const { target } = createRuleDto;
+    if ([RuleTarget.space, RuleTarget.spaceEvent].includes(target) === false) {
+      throw new BadRequestException(`Unsupported rule target: ${target}`);
+    }
+    return target === RuleTarget.space
+      ? this.ruleService.createSpaceRule(user.id, createRuleDto)
+      : this.ruleService.createSpaceEventRule(user.id, createRuleDto);
   }
 
   @Post(':id/fork')

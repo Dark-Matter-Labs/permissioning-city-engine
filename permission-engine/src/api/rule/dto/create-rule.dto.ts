@@ -31,12 +31,13 @@ export class CreateRuleDto {
   })
   target: RuleTarget;
 
+  @IsOptional()
   @IsUUID('4', { each: true })
   @IsArray()
   @ArrayMinSize(1)
   @ArrayMaxSize(100)
-  @ApiProperty({ description: 'Array of ruleBlockIds', required: true })
-  ruleBlockIds: string[];
+  @ApiProperty({ description: 'Array of ruleBlockIds', nullable: true })
+  ruleBlockIds?: string[];
 
   @IsOptional()
   @Transform(({ value }) => (Array.isArray(value) ? value : value.split(',')))
