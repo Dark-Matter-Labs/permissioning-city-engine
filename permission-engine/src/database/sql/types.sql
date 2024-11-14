@@ -26,3 +26,4 @@ DO $$ BEGIN IF NOT EXISTS (
   'rejected'
 );
 END IF;
+END $$;
