@@ -3,6 +3,7 @@ import { CompleteWithIssueResolvedSpaceEventDto } from './complete-with-issue-re
 import { CompleteWithIssueSpaceEventDto } from './complete-with-issue-space-event.dto';
 import { CreateSpaceEventDto } from './create-space-event.dto';
 import { FindAllSpaceEventDto } from './find-all-space-event.dto';
+import { UpdateSpaceEventAdditionalInfoDto } from './update-space-event-additional-info.dto';
 import { UpdateSpaceEventDto } from './update-space-event.dto';
 
 export {
@@ -12,4 +13,5 @@ export {
   CompleteSpaceEventDto,
   CompleteWithIssueSpaceEventDto,
   CompleteWithIssueResolvedSpaceEventDto,
+  UpdateSpaceEventAdditionalInfoDto,
 };

@@ -8,6 +8,7 @@ import {
   CompleteWithIssueResolvedSpaceEventDto,
   CompleteWithIssueSpaceEventDto,
   CreateSpaceEventDto,
+  UpdateSpaceEventAdditionalInfoDto,
   UpdateSpaceEventDto,
 } from './dto';
 import { SpaceEvent } from 'src/database/entity/space-event.entity';
@@ -287,6 +288,35 @@ export class SpaceEventService {
     const updateResult = await this.spaceEventRepository.update(id, {
       ...updateSpaceEventDto,
       endsAt: start.add(numberPart, stringPart).toDate(),
+      updatedAt: new Date(),
+    });
+
+    return {
+      data: {
+        result: updateResult.affected === 1,
+      },
+    };
+  }
+
+  async updateAdditionalInfo(
+    id: string,
+    updateSpaceEventAdditionalInfoDto: UpdateSpaceEventAdditionalInfoDto,
+  ): Promise<{ data: { result: boolean } }> {
+    const spaceEvent = await this.spaceEventRepository.findOneBy({ id });
+
+    if (
+      [
+        SpaceEventStatus.closed,
+        SpaceEventStatus.complete,
+        SpaceEventStatus.completeWithIssue,
+        SpaceEventStatus.completeWithIssueResolved,
+      ].includes(spaceEvent.status) === true
+    ) {
+      throw new ForbiddenException('Cannot update after closed state.');
+    }
+
+    const updateResult = await this.spaceEventRepository.update(id, {
+      ...updateSpaceEventAdditionalInfoDto,
       updatedAt: new Date(),
     });
 

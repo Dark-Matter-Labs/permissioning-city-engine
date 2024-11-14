@@ -20,6 +20,7 @@ import {
   CompleteSpaceEventDto,
   CompleteWithIssueSpaceEventDto,
   CompleteWithIssueResolvedSpaceEventDto,
+  UpdateSpaceEventAdditionalInfoDto,
 } from './dto';
 import { SpaceEventService } from './space-event.service';
 import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -216,6 +217,7 @@ export class SpaceEventController {
       updateSpaceEventDto.externalServiceId != null ||
       updateSpaceEventDto.details != null ||
       updateSpaceEventDto.link != null ||
+      updateSpaceEventDto.callbackLink != null ||
       updateSpaceEventDto.duration != null ||
       updateSpaceEventDto.startsAt != null
     ) {
@@ -226,6 +228,28 @@ export class SpaceEventController {
     }
 
     return result;
+  }
+
+  @Put(':id/additional-info')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Update SpaceEvent additional info' })
+  async updateAdditionalInfo(
+    @Req() req,
+    @Param('id') id: string,
+    @Body()
+    updateSpaceEventAdditionalInfoDto: UpdateSpaceEventAdditionalInfoDto,
+  ) {
+    const user = await this.userService.findOneByEmail(req.user.email);
+    const spaceEvent = await this.spaceEventService.findOneById(id);
+
+    if (spaceEvent.organizerId !== user.id) {
+      throw new ForbiddenException();
+    }
+
+    return await this.spaceEventService.updateAdditionalInfo(
+      id,
+      updateSpaceEventAdditionalInfoDto,
+    );
   }
 
   @Put(':id/run')
