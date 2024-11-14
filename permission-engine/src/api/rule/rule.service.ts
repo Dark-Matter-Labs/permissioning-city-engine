@@ -313,15 +313,16 @@ export class RuleService {
       hash = this.generateRuleHash(ruleBlocks.map((item) => item.hash));
     }
 
-    // prevent duplicate empty rule creation
-    if (hash === emptyHash) {
-      const emptySpaceEventRule = (
-        await this.findAll({ hash, isActive: true }, false, false)
-      )?.data?.[0];
+    const duplicateSpaceEventRule = (
+      await this.findAll(
+        { target: RuleTarget.spaceEvent, hash, isActive: true },
+        false,
+        false,
+      )
+    )?.data?.[0];
 
-      if (emptySpaceEventRule) {
-        return emptySpaceEventRule;
-      }
+    if (duplicateSpaceEventRule) {
+      return duplicateSpaceEventRule;
     }
 
     if (ruleBlocks.length > 0) {
@@ -366,7 +367,7 @@ export class RuleService {
   /**
    * The author of the rule can update the Rule.
    * Cannot update assigned space rule
-   * Cannot update spaceEvent rule when permission is requested
+   * Cannot update spaceEvent rule when permission request exists
    */
   async archiveAndUpdate(
     id: string,
@@ -443,7 +444,7 @@ export class RuleService {
 
       if (permissionRequest) {
         throw new BadRequestException(
-          'This rule is being used. Try forking it or wait until permission request is resolved.',
+          'This rule is being used. Try forking it.',
         );
       }
     } else {
