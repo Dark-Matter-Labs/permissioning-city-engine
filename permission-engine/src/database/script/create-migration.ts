@@ -3,7 +3,7 @@ import fs from 'fs';
 const help = `
   Creates a migration sql file in src/database/sql/migrations directory
 
-  usage: yarn migration:create {migrationName}
+  usage: npm run migration:create {migrationName}
 `;
 const commands = {
   help,
