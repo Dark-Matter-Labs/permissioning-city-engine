@@ -86,17 +86,21 @@ export class SpaceApprovedRuleService {
           r.created_at,
           r.updated_at,
           sar.utilization_count,
-          ARRAY_AGG(rb)
+          ARRAY_AGG(DISTINCT rb),
+          ARRAY_AGG(DISTINCT t)
         ) FROM
          space_approved_rule sar,
          rule r,
          rule_topic rt,
+         topic t,
          rule_rule_block rrb,
          rule_block rb
         WHERE
           sar.rule_id = r.id
         AND
           r.id = rt.rule_id
+        AND
+          t.id = rt.topic_id
         AND
           r.id = rrb.rule_id
         AND
@@ -132,6 +136,7 @@ export class SpaceApprovedRuleService {
           updatedAt: item.row.f9,
           utilizationCount: item.row.f10,
           ruleBlocks: item.row.f11,
+          topics: item.row.f12,
         };
       });
     }
