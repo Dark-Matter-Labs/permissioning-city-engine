@@ -61,6 +61,10 @@ export class User {
   @ApiProperty({ description: 'District' })
   district: string;
 
+  @Column()
+  @ApiProperty({ description: 'Details' })
+  details: string;
+
   @CreateDateColumn()
   @ApiProperty({ description: 'Created timestamp' })
   createdAt: Date;

@@ -56,6 +56,11 @@ export class UpdateUserDto {
   district?: string;
 
   @IsOptional()
+  @MaxLength(200)
+  @ApiPropertyOptional({ description: 'Details' })
+  details?: string;
+
+  @IsOptional()
   @IsBoolean()
   @ApiPropertyOptional({ description: 'User isActive status', type: Boolean })
   isActive?: boolean;
