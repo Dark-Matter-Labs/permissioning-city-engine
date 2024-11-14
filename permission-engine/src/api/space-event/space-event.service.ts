@@ -10,6 +10,7 @@ import {
   CreateSpaceEventDto,
   UpdateSpaceEventAdditionalInfoDto,
   UpdateSpaceEventDto,
+  UpdateSpaceEventReportDto,
 } from './dto';
 import { SpaceEvent } from 'src/database/entity/space-event.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -317,6 +318,54 @@ export class SpaceEventService {
 
     const updateResult = await this.spaceEventRepository.update(id, {
       ...updateSpaceEventAdditionalInfoDto,
+      updatedAt: new Date(),
+    });
+
+    return {
+      data: {
+        result: updateResult.affected === 1,
+      },
+    };
+  }
+
+  async updateReport(
+    id: string,
+    updateSpaceEventReportDto: UpdateSpaceEventReportDto,
+  ): Promise<{ data: { result: boolean } }> {
+    const spaceEvent = await this.spaceEventRepository.findOneBy({ id });
+
+    if (
+      [
+        SpaceEventStatus.complete,
+        SpaceEventStatus.completeWithIssue,
+        SpaceEventStatus.completeWithIssueResolved,
+      ].includes(spaceEvent.status) === false
+    ) {
+      throw new ForbiddenException('Cannot report before complete state.');
+    }
+
+    const {
+      attendeeCount,
+      spaceSuitability,
+      spaceSatisfaction,
+      eventGoal,
+      spaceIssue,
+      spaceSuggestions,
+    } = updateSpaceEventReportDto;
+
+    const report = JSON.parse(
+      JSON.stringify({
+        spaceSuitability,
+        spaceSatisfaction,
+        eventGoal,
+        spaceIssue,
+        spaceSuggestions,
+      }),
+    );
+
+    const updateResult = await this.spaceEventRepository.update(id, {
+      attendeeCount,
+      report,
       updatedAt: new Date(),
     });
 

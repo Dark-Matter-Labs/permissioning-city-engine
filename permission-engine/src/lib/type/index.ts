@@ -1,5 +1,103 @@
 import { EmailTemplate } from '../email-template/email-template.interface';
 
+export type SesMail = {
+  timestamp: string;
+  messageId: string;
+  source: string;
+  sourceArn: string;
+  sourceIp: string;
+  sendingAccountId: string;
+  callerIdentity: string;
+  destination: string[];
+  headersTruncated: boolean;
+  headers: SesMailHeader[];
+  commonHeaders: SesMailCommonHeaders;
+};
+
+export type SesMailHeader = {
+  name: string;
+  value: string;
+};
+
+export type SesMailCommonHeaders = {
+  from: string[];
+  date: string;
+  to: string[];
+  messageId: string;
+  subject: string;
+};
+
+export type SesBounce = {
+  bounceType: SesBounceType;
+  bounceSubType: SesBounceSubType;
+  bounceRecipients: SesBounceRecipient[];
+  timestamp: string;
+  feedbackId: string;
+  remoteMtaIp?: string;
+  reportingMTA?: string;
+};
+
+export enum SesBounceType {
+  Undetermined = 'Undetermined',
+  Permanent = 'Permanent',
+  Transient = 'Transient',
+}
+
+export enum SesBounceSubType {
+  // Undetermined
+  Undetermined = 'Undetermined',
+  // Permanent & Transient
+  General = 'General',
+  // Permanent
+  NoEmail = 'NoEmail',
+  Supressed = 'Supressed',
+  OnAccountSuppressionList = 'OnAccountSuppressionList',
+  // Transient
+  MailboxFull = 'MailboxFull',
+  MessageTooLarge = 'MessageTooLarge',
+  ContentRejected = 'ContentRejected',
+  AttachmentRejected = 'AttachmentRejected',
+}
+
+export type SesBounceRecipient = {
+  status?: string;
+  action?: string;
+  diagnosticCode?: string;
+  emailAddress: string;
+};
+
+export type SesComplaint = {
+  complainedRecipients: SesComplainedRecipients[];
+  timestamp: string;
+  feedbackId: string;
+  complaintSubType: string;
+  userAgent?: string;
+  complaintFeedbackType?: SesComplaintFeedbackType;
+  arrivalDate?: string;
+};
+
+export type SesComplainedRecipients = {
+  emailAddress: string;
+};
+
+export enum SesComplaintFeedbackType {
+  abuse = 'abuse',
+  authFailure = 'auth-failure',
+  fraud = 'fraud',
+  notSpam = 'not-spam',
+  other = 'other',
+  virus = 'virus',
+}
+
+export type SesDelivery = {
+  timestamp: string;
+  processingTimeMillis: number;
+  recipients: string[];
+  smtpResponse: string;
+  reportingMTA: string;
+  remoteMtaIp: string;
+};
+
 export type NotificationHandlerJobData = {
   userNotificationId: string;
   to: string;
@@ -542,100 +640,18 @@ export enum PermissionProcessType {
   permissionRequestResolved = 'permission-request-resolved',
 }
 
-export type SesMail = {
-  timestamp: string;
-  messageId: string;
-  source: string;
-  sourceArn: string;
-  sourceIp: string;
-  sendingAccountId: string;
-  callerIdentity: string;
-  destination: string[];
-  headersTruncated: boolean;
-  headers: SesMailHeader[];
-  commonHeaders: SesMailCommonHeaders;
-};
-
-export type SesMailHeader = {
-  name: string;
-  value: string;
-};
-
-export type SesMailCommonHeaders = {
-  from: string[];
-  date: string;
-  to: string[];
-  messageId: string;
-  subject: string;
-};
-
-export type SesBounce = {
-  bounceType: SesBounceType;
-  bounceSubType: SesBounceSubType;
-  bounceRecipients: SesBounceRecipient[];
-  timestamp: string;
-  feedbackId: string;
-  remoteMtaIp?: string;
-  reportingMTA?: string;
-};
-
-export enum SesBounceType {
-  Undetermined = 'Undetermined',
-  Permanent = 'Permanent',
-  Transient = 'Transient',
+export enum SpaceEventReportQuestion {
+  spaceSuitability = 'On a scale of 1-10, how would you rate the space in terms of suitability for your event? (e.g., layout, facilities, accessibility)',
+  spaceSatisfaction = 'On a scale of 1-10, how satisfied were you with the overall experience of organizing your event in this space?',
+  eventGoal = 'What were the key goals or objectives of your event? Were they achieved?',
+  spaceIssue = 'Were there any issues with the space that needed fixing before or during the event? How were these resolved?',
+  spaceSuggestions = 'Do you have any suggestions or recommendations to improve the space or the event proposal process?',
 }
 
-export enum SesBounceSubType {
-  // Undetermined
-  Undetermined = 'Undetermined',
-  // Permanent & Transient
-  General = 'General',
-  // Permanent
-  NoEmail = 'NoEmail',
-  Supressed = 'Supressed',
-  OnAccountSuppressionList = 'OnAccountSuppressionList',
-  // Transient
-  MailboxFull = 'MailboxFull',
-  MessageTooLarge = 'MessageTooLarge',
-  ContentRejected = 'ContentRejected',
-  AttachmentRejected = 'AttachmentRejected',
-}
-
-export type SesBounceRecipient = {
-  status?: string;
-  action?: string;
-  diagnosticCode?: string;
-  emailAddress: string;
-};
-
-export type SesComplaint = {
-  complainedRecipients: SesComplainedRecipients[];
-  timestamp: string;
-  feedbackId: string;
-  complaintSubType: string;
-  userAgent?: string;
-  complaintFeedbackType?: SesComplaintFeedbackType;
-  arrivalDate?: string;
-};
-
-export type SesComplainedRecipients = {
-  emailAddress: string;
-};
-
-export enum SesComplaintFeedbackType {
-  abuse = 'abuse',
-  authFailure = 'auth-failure',
-  fraud = 'fraud',
-  notSpam = 'not-spam',
-  other = 'other',
-  virus = 'virus',
-}
-
-export type SesDelivery = {
-  timestamp: string;
-  processingTimeMillis: number;
-  recipients: string[];
-  smtpResponse: string;
-  reportingMTA: string;
-  remoteMtaIp: string;
+export type SpaceEventReport = {
+  spaceSuitability: number;
+  spaceSatisfaction: number;
+  eventGoal: string;
+  spaceIssue: string;
+  spaceSuggestions: string;
 };

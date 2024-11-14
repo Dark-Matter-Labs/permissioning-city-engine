@@ -86,6 +86,12 @@ export class SpaceEvent {
   callbackLink: string;
 
   @Column()
+  attendeeCount: number;
+
+  @Column('json', { nullable: true })
+  report: Record<string, any>;
+
+  @Column()
   @ApiProperty({
     description: 'SpaceEvent duration in {number}{d|w|M|y|h|m|s} format',
   })

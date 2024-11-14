@@ -21,6 +21,7 @@ import {
   CompleteWithIssueSpaceEventDto,
   CompleteWithIssueResolvedSpaceEventDto,
   UpdateSpaceEventAdditionalInfoDto,
+  UpdateSpaceEventReportDto,
 } from './dto';
 import { SpaceEventService } from './space-event.service';
 import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -33,7 +34,7 @@ import { SpaceEventImageService } from '../space-event-image/space-event-image.s
 import { Logger } from 'src/lib/logger/logger.service';
 import { Express } from 'express';
 import { SpacePermissionerService } from '../space-permissioner/space-permissioner.service';
-import { SpaceEventStatus } from 'src/lib/type';
+import { SpaceEventReportQuestion, SpaceEventStatus } from 'src/lib/type';
 import dayjs from 'dayjs';
 
 @ApiTags('event')
@@ -81,6 +82,18 @@ export class SpaceEventController {
       endsBefore,
       name,
     });
+  }
+
+  @Get('/report')
+  @ApiOperation({ summary: 'Get SpaceEvent report questions' })
+  async findReportQuestions() {
+    return {
+      spaceSuitability: SpaceEventReportQuestion.spaceSuitability,
+      spaceSatisfaction: SpaceEventReportQuestion.spaceSatisfaction,
+      eventGoal: SpaceEventReportQuestion.eventGoal,
+      spaceIssue: SpaceEventReportQuestion.spaceIssue,
+      spaceSuggestions: SpaceEventReportQuestion.spaceSuggestions,
+    };
   }
 
   @Get(':id')
@@ -249,6 +262,28 @@ export class SpaceEventController {
     return await this.spaceEventService.updateAdditionalInfo(
       id,
       updateSpaceEventAdditionalInfoDto,
+    );
+  }
+
+  @Put(':id/report')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Update SpaceEvent report data' })
+  async updateReport(
+    @Req() req,
+    @Param('id') id: string,
+    @Body()
+    updateSpaceEventReportDto: UpdateSpaceEventReportDto,
+  ) {
+    const user = await this.userService.findOneByEmail(req.user.email);
+    const spaceEvent = await this.spaceEventService.findOneById(id);
+
+    if (spaceEvent.organizerId !== user.id) {
+      throw new ForbiddenException();
+    }
+
+    return await this.spaceEventService.updateReport(
+      id,
+      updateSpaceEventReportDto,
     );
   }
 

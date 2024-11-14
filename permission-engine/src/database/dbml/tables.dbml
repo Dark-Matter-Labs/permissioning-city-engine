@@ -120,6 +120,8 @@ Table space_event {
   duration varchar [not null]
   starts_at timestamptz [not null]
   ends_at timestamptz [not null]
+  attendee_count integer
+  report json
   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
   updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
 }
