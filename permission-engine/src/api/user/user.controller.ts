@@ -1,4 +1,12 @@
-import { Controller, Get, UseGuards, Req, Put, Body } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  UseGuards,
+  Req,
+  Put,
+  Body,
+  Param,
+} from '@nestjs/common';
 import { UserService } from './user.service';
 import { User } from '../../database/entity/user.entity';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -22,5 +30,19 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   updateSelf(@Req() req, @Body() updateUserDto: UpdateUserDto) {
     return this.userService.update(req.user.email, updateUserDto);
+  }
+
+  @Put('topic/add/:topicId')
+  @UseGuards(JwtAuthGuard)
+  async addTopic(@Req() req, @Param('topicId') topicId: string) {
+    const user = await this.userService.findOneByEmail(req.user.email);
+    return this.userService.addTopic(user.id, topicId);
+  }
+
+  @Put('topic/remove/:topicId')
+  @UseGuards(JwtAuthGuard)
+  async removeTopic(@Req() req, @Param('topicId') topicId: string) {
+    const user = await this.userService.findOneByEmail(req.user.email);
+    return this.userService.removeTopic(user.id, topicId);
   }
 }

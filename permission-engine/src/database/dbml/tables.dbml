@@ -344,4 +344,6 @@ Ref space_event_topic: space_event.id <> topic.id
 
 Ref rule_topic: rule.id <> topic.id
 
+Ref user_topic: user.id <> topic.id
+
 Ref rule_rule_block: rule.id <> rule_block.id

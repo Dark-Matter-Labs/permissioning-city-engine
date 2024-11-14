@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { User } from '../../database/entity/user.entity';
@@ -21,7 +21,7 @@ export class UserService {
     private readonly logger: Logger,
   ) {}
 
-  findOne(id: string): Promise<User> {
+  findOneById(id: string): Promise<User> {
     return this.userRepository.findOneBy({ id });
   }
 
@@ -95,6 +95,63 @@ export class UserService {
     return {
       data: {
         result: updateResult.affected === 1,
+      },
+    };
+  }
+
+  async addTopic(
+    id: string,
+    topicId: string,
+  ): Promise<{ data: { result: boolean } }> {
+    let result = false;
+    try {
+      const user = await this.findOneById(id);
+
+      if (user.topics.length >= 20) {
+        throw new BadRequestException(`Cannot have more than 20 topics`);
+      }
+
+      await this.userRepository
+        .createQueryBuilder()
+        .relation(User, 'topics')
+        .of(id)
+        .add(topicId)
+        .then(() => {
+          result = true;
+        });
+    } catch (error) {
+      throw error;
+    }
+
+    return {
+      data: {
+        result,
+      },
+    };
+  }
+
+  async removeTopic(
+    id: string,
+    topicId: string,
+  ): Promise<{ data: { result: boolean } }> {
+    let result = false;
+
+    try {
+      await this.userRepository
+        .createQueryBuilder()
+        .relation(User, 'topics')
+        .of(id)
+        .remove(topicId)
+        .then(() => {
+          result = true;
+        });
+    } catch (error) {
+      result = false;
+    }
+
+    return {
+      data: {
+        result,
       },
     };
   }

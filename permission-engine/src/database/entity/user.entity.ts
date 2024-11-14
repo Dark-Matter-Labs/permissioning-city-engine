@@ -4,6 +4,8 @@ import {
   PrimaryGeneratedColumn,
   OneToMany,
   CreateDateColumn,
+  JoinTable,
+  ManyToMany,
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { UserNotification } from './user-notification.entity';
@@ -12,6 +14,7 @@ import { ExternalService } from './external-service.entity';
 import { RuleBlock } from './rule-block.entity';
 import { Rule } from './rule.entity';
 import { SpacePermissioner } from './space-permissioner.entity';
+import { Topic } from './topic.entity';
 
 @Entity()
 export class User {
@@ -102,4 +105,8 @@ export class User {
     (spacePermissioner) => spacePermissioner.inviter,
   )
   spacePermissionerInviters: SpacePermissioner[];
+
+  @ManyToMany(() => Topic, (topic) => topic.users)
+  @JoinTable({ name: 'user_topic' })
+  topics: Topic[];
 }

@@ -11,6 +11,7 @@ import { SpaceEvent } from './space-event.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import { Rule } from './rule.entity';
 import { SpaceTopic } from './space-topic.entity';
+import { User } from './user.entity';
 
 @Entity()
 export class Topic {
@@ -68,4 +69,8 @@ export class Topic {
   @ManyToMany(() => Rule, (rule) => rule.topics)
   @JoinTable({ name: 'rule_topic' })
   rules: Rule[];
+
+  @ManyToMany(() => User, (user) => user.topics)
+  @JoinTable({ name: 'rule_topic' })
+  users: User[];
 }
