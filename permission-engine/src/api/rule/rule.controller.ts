@@ -143,9 +143,14 @@ export class RuleController {
   ) {
     const user = await this.userService.findOneByEmail(req.user.email);
     const rule = await this.ruleService.findOneById(id);
+    const { hash } = updateRuleDto;
+
+    if (hash) {
+      throw new ForbiddenException(`Cannot update hash`);
+    }
 
     if (!rule) {
-      throw new BadRequestException();
+      throw new BadRequestException(`There is no rule with id: ${id}`);
     }
 
     if (rule.authorId !== user.id) {

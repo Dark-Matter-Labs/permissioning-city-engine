@@ -24,7 +24,11 @@ import { SpaceService } from 'src/api/space/space.service';
 import { SpaceEventService } from 'src/api/space-event/space-event.service';
 import { SpaceApprovedRuleService } from 'src/api/space-approved-rule/space-approved-rule.service';
 import { RuleBlockService } from 'src/api/rule-block/rule-block.service';
-import { isInAvailabilities, formatTime } from 'src/lib/util';
+import {
+  isInAvailabilities,
+  formatTime,
+  hash as hashString,
+} from 'src/lib/util';
 import { TopicService } from 'src/api/topic/topic.service';
 
 @Processor('permission-handler')
@@ -284,6 +288,12 @@ export class PermissionHandlerProcessor {
           );
           spaceEventRule.ruleBlocks.push(newRuleBlock);
           await this.ruleService.update(spaceEventRule.id, {
+            hash: hashString(
+              spaceEventRule.ruleBlocks
+                .map((item) => item.hash)
+                .sort()
+                .join(),
+            ),
             ruleBlockIds: spaceEventRule.ruleBlocks.map((item) => item.id),
           });
         }
