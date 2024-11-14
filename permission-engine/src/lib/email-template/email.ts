@@ -4,6 +4,7 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class Email implements EmailTemplate {
+  domain: string = process.env.GOOGLE_CALLBACK_DOMAIN;
   language: Language;
   name: string;
   subject: string;
