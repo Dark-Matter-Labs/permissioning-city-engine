@@ -1,0 +1,26 @@
+{
+  "permissionResponseSummary": {
+    "text": "Excitements:\n{excitements}\n\nWorries:\n{worries}\n\nConditions:\n{conditions}",
+    "html": "<ul><li><h2>Excitements:</h2><ol>{excitements}</ol></li><li><h2>Worries:</h2><ol>{worries}</ol></li><li><h2>Conditions:</h2><ol>{conditions}</ol></li></ul>"
+  },
+  "spaceEventSummary": {
+    "text": "Title: {eventTitle}\nTopics: {eventTopics}\nDetails: {eventDetails}\n Time: {eventStartsAt} - {eventEndsAt}",
+    "html": "<ul><li><strong>Title</strong>: {eventTitle}</li><li><strong>Topics</strong>: {eventTopics}</li><li><strong>Details</strong>: {eventDetails}</li><li><strong>Time</strong>: {eventStartsAt} - {eventEndsAt}</li></ul>"
+  },
+  "showEventCompletionResult": {
+    "text": "",
+    "html": ""
+  },
+  "spaceEventIssueReport": {
+    "text": "",
+    "html": ""
+  },
+  "spaceIssueReport": {
+    "text": "",
+    "html": ""
+  },
+  "spaceIssueResolveDetails": {
+    "text": "",
+    "html": ""
+  }
+}

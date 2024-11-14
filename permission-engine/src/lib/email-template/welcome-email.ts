@@ -6,10 +6,11 @@ import { Email } from './email';
 @Injectable()
 export class WelcomeEmail extends Email {
   language: Language;
-  name: string;
   subject: string;
   html: string;
   text: string;
+
+  name: string;
   howToGuideLink: string;
   platformName: string;
 
@@ -18,8 +19,10 @@ export class WelcomeEmail extends Email {
     option: { language: Language; name: string },
   ) {
     super(option);
+
     this.name = option.name;
-    this.howToGuideLink = 'https://engine.permissioning.city/how-to-guide';
+    // TODO. Check routing policy in FrontEnd
+    this.howToGuideLink = `${this.domain}}/guide`;
     this.platformName = this.i18n.translate('dictionary.platform.name', {
       lang: this.language,
     });

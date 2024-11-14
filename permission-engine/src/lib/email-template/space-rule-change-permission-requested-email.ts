@@ -2,36 +2,30 @@ import { Language } from '../type';
 import { Email } from './email';
 import { I18nService } from 'nestjs-i18n';
 
-export class SpaceEventPermissionRequestCreatedEmail extends Email {
+export class SpaceRuleChangePermissionRequestedEmail extends Email {
   language: Language;
   subject: string;
   html: string;
   text: string;
 
   name: string;
-  spaceName: string;
-  timeoutAt: string;
-  spaceEventId: string;
-  eventDashboardLink: string;
+  spaceId: string;
+  communityDashboardLink: string;
 
   constructor(
     private readonly i18n: I18nService,
     option: {
       language: Language;
       name: string;
-      spaceName: string;
-      timeoutAt: string;
-      spaceEventId: string;
+      spaceId: string;
     },
   ) {
     super(option);
 
     this.name = option.name;
-    this.spaceName = option.spaceName;
-    this.timeoutAt = option.timeoutAt;
-    this.spaceEventId = option.spaceEventId;
+    this.spaceId = option.spaceId;
     // TODO. Check routing policy in FrontEnd
-    this.eventDashboardLink = `${this.domain}/event/${this.spaceEventId}`;
+    this.communityDashboardLink = `${this.domain}/space/${this.spaceId}/community`;
 
     this.subjectPart();
     this.htmlPart();
@@ -42,7 +36,7 @@ export class SpaceEventPermissionRequestCreatedEmail extends Email {
 
   subjectPart() {
     this.subject = this.i18n.translate(
-      'email.spaceEventPermissionRequestCreated.subject',
+      'email.spaceRuleChangePermissionRequested.subject',
       {
         lang: this.language,
         args: {},
@@ -54,14 +48,12 @@ export class SpaceEventPermissionRequestCreatedEmail extends Email {
 
   htmlPart() {
     const html = this.i18n.translate(
-      'email.spaceEventPermissionRequestCreated.html',
+      'email.spaceRuleChangePermissionRequested.html',
       {
         lang: this.language,
         args: {
           name: this.name,
-          spaceName: this.spaceName,
-          timeoutAt: this.timeoutAt,
-          eventDashboardLink: this.eventDashboardLink,
+          communityDashboardLink: this.communityDashboardLink,
         },
       },
     );
@@ -73,14 +65,12 @@ export class SpaceEventPermissionRequestCreatedEmail extends Email {
 
   textPart() {
     this.text = this.i18n.translate(
-      'email.spaceEventPermissionRequestCreated.text',
+      'email.spaceRuleChangePermissionRequested.text',
       {
         lang: this.language,
         args: {
           name: this.name,
-          spaceName: this.spaceName,
-          timeoutAt: this.timeoutAt,
-          eventDashboardLink: this.eventDashboardLink,
+          communityDashboardLink: this.communityDashboardLink,
         },
       },
     );

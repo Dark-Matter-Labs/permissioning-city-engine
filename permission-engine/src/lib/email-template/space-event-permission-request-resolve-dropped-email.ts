@@ -2,14 +2,19 @@ import { Language } from '../type';
 import { Email } from './email';
 import { I18nService } from 'nestjs-i18n';
 
-export class SpaceEventPermissionRequestedEmail extends Email {
+export class SpaceEventPermissionRequestResolveDroppedEmail extends Email {
   language: Language;
   subject: string;
   html: string;
   text: string;
 
+  target: 'eventOrganizer' | 'spacePermissioner';
+
   name: string;
   spaceId: string;
+  eventTitle: string;
+  resolveDetails: string;
+  spaceDashboardLink: string;
   communityDashboardLink: string;
 
   constructor(
@@ -18,13 +23,18 @@ export class SpaceEventPermissionRequestedEmail extends Email {
       language: Language;
       name: string;
       spaceId: string;
+      eventTitle: string;
+      resolveDetails: string;
     },
   ) {
     super(option);
 
     this.name = option.name;
+    this.eventTitle = option.eventTitle;
     this.spaceId = option.spaceId;
+    this.resolveDetails = option.resolveDetails;
     // TODO. Check routing policy in FrontEnd
+    this.spaceDashboardLink = `${this.domain}/space/${this.spaceId}`;
     this.communityDashboardLink = `${this.domain}/space/${this.spaceId}/community`;
 
     this.subjectPart();
@@ -36,7 +46,7 @@ export class SpaceEventPermissionRequestedEmail extends Email {
 
   subjectPart() {
     this.subject = this.i18n.translate(
-      'email.spaceEventPermissionRequested.subject',
+      `email.spaceEventPermissionRequestResolveDropped.${this.target}.subject`,
       {
         lang: this.language,
         args: {},
@@ -48,11 +58,14 @@ export class SpaceEventPermissionRequestedEmail extends Email {
 
   htmlPart() {
     const html = this.i18n.translate(
-      'email.spaceEventPermissionRequested.html',
+      `email.spaceEventPermissionRequestResolveDropped.${this.target}.html`,
       {
         lang: this.language,
         args: {
           name: this.name,
+          eventTitle: this.eventTitle,
+          resolveDetails: this.resolveDetails,
+          spaceDashboardLink: this.spaceDashboardLink,
           communityDashboardLink: this.communityDashboardLink,
         },
       },
@@ -65,11 +78,14 @@ export class SpaceEventPermissionRequestedEmail extends Email {
 
   textPart() {
     this.text = this.i18n.translate(
-      'email.spaceEventPermissionRequested.text',
+      `email.spaceEventPermissionRequestResolveDropped.${this.target}.text`,
       {
         lang: this.language,
         args: {
           name: this.name,
+          eventTitle: this.eventTitle,
+          resolveDetails: this.resolveDetails,
+          spaceDashboardLink: this.spaceDashboardLink,
           communityDashboardLink: this.communityDashboardLink,
         },
       },
