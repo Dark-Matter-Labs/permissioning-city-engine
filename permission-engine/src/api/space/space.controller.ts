@@ -35,13 +35,19 @@ import {
   RuleBlockType,
   SpaceAvailability,
   SpaceEventStatus,
+  SpaceHistoryType,
   SpaceImageType,
+  UserNotificationTarget,
+  UserNotificationTemplateName,
+  UserNotificationType,
 } from 'src/lib/type';
 import { RuleService } from '../rule/rule.service';
 import { SpaceEventService } from '../space-event/space-event.service';
 import { getTimeIntervals } from '../../lib/util';
 import { TopicService } from '../topic/topic.service';
 import { SpaceHistoryService } from '../space-history/space-history.service';
+import { UserNotificationService } from '../user-notification/user-notification.service';
+import { SpacePermissionerService } from '../space-permissioner/space-permissioner.service';
 
 @ApiTags('space')
 @Controller('api/v1/space')
@@ -49,11 +55,13 @@ export class SpaceController {
   constructor(
     private readonly spaceService: SpaceService,
     private readonly userService: UserService,
+    private readonly userNotificationService: UserNotificationService,
     private readonly ruleService: RuleService,
     private readonly topicService: TopicService,
     private readonly spaceEventService: SpaceEventService,
     private readonly spaceImageService: SpaceImageService,
     private readonly spaceHistoryService: SpaceHistoryService,
+    private readonly spacePermissionerService: SpacePermissionerService,
     private readonly logger: Logger,
   ) {}
 
@@ -226,6 +234,31 @@ export class SpaceController {
       }
     });
 
+    try {
+      await this.spaceHistoryService.create({
+        spaceId: space.id,
+        ruleId: space.ruleId,
+        isPublic: true,
+        type: SpaceHistoryType.create,
+      });
+    } catch (error) {
+      this.logger.error(`Failed to log space history`, error);
+    }
+
+    try {
+      await this.userNotificationService.create({
+        userId: user.id,
+        target: UserNotificationTarget.spaceOwner,
+        type: UserNotificationType.external,
+        templateName: UserNotificationTemplateName.spaceCreated,
+        params: {
+          spaceId: space.id,
+        },
+      });
+    } catch (error) {
+      this.logger.error(`Failed to notify user`, error);
+    }
+
     return space;
   }
 
@@ -287,7 +320,36 @@ export class SpaceController {
       }
     });
 
-    return this.spaceService.update(id, updateSpaceDto);
+    const updateResult = await this.spaceService.update(id, updateSpaceDto);
+
+    try {
+      await this.spaceHistoryService.create({
+        spaceId: space.id,
+        ruleId: space.ruleId,
+        isPublic: true,
+        type: SpaceHistoryType.update,
+        // TODO. translate using user.country
+        details: `${Object.keys(updateSpaceDto).join(', ')} were updated by ${user.name}`,
+      });
+    } catch (error) {
+      this.logger.error(`Failed to log space history`, error);
+    }
+
+    try {
+      await this.userNotificationService.create({
+        userId: user.id,
+        target: UserNotificationTarget.spaceOwner,
+        type: UserNotificationType.external,
+        templateName: UserNotificationTemplateName.spaceUpdated,
+        params: {
+          spaceId: space.id,
+        },
+      });
+    } catch (error) {
+      this.logger.error(`Failed to notify user`, error);
+    }
+
+    return updateResult;
   }
 
   @Post(':id/image/:type')
@@ -375,6 +437,12 @@ export class SpaceController {
   ) {
     const user = await this.userService.findOneByEmail(req.user.email);
     const space = await this.spaceService.findOneById(id);
+    const spacePermissioners =
+      await this.spacePermissionerService.findAllBySpaceId(
+        id,
+        { isActive: true },
+        { isPagination: false },
+      );
     const topic = await this.topicService.findOneById(id);
 
     if (space.ownerId !== user.id) {
@@ -396,7 +464,38 @@ export class SpaceController {
       );
     }
 
-    return this.spaceService.addTopic(id, topicId);
+    const result = await this.spaceService.addTopic(id, topicId);
+
+    try {
+      await this.spaceHistoryService.create({
+        spaceId: space.id,
+        ruleId: space.ruleId,
+        isPublic: true,
+        type: SpaceHistoryType.update,
+        // TODO. translate using user.country
+        details: `Topic ${topic.name} was added by ${user.name}`,
+      });
+    } catch (error) {
+      this.logger.error(`Failed to log space history`, error);
+    }
+
+    spacePermissioners?.data?.forEach(async (spacePermissioner) => {
+      try {
+        await this.userNotificationService.create({
+          userId: spacePermissioner.userId,
+          target: UserNotificationTarget.permissioner,
+          type: UserNotificationType.internal,
+          templateName: UserNotificationTemplateName.spaceUpdated,
+          params: {
+            spaceId: space.id,
+          },
+        });
+      } catch (error) {
+        this.logger.error(`Failed to notify user`, error);
+      }
+    });
+
+    return result;
   }
 
   @Put(':id/topic/remove/:topicId')
@@ -410,6 +509,12 @@ export class SpaceController {
     const user = await this.userService.findOneByEmail(req.user.email);
     const space = await this.spaceService.findOneById(id);
     const topic = await this.topicService.findOneById(id);
+    const spacePermissioners =
+      await this.spacePermissionerService.findAllBySpaceId(
+        id,
+        { isActive: true },
+        { isPagination: false },
+      );
 
     if (space.ownerId !== user.id) {
       throw new ForbiddenException();
@@ -419,7 +524,38 @@ export class SpaceController {
       throw new BadRequestException(`There is no topic with id: ${topicId}`);
     }
 
-    return this.spaceService.removeTopic(id, topicId);
+    const result = await this.spaceService.removeTopic(id, topicId);
+
+    try {
+      await this.spaceHistoryService.create({
+        spaceId: space.id,
+        ruleId: space.ruleId,
+        isPublic: true,
+        type: SpaceHistoryType.update,
+        // TODO. translate using user.country
+        details: `Topic ${topic.name} was removed by ${user.name}`,
+      });
+    } catch (error) {
+      this.logger.error(`Failed to log space history`, error);
+    }
+
+    spacePermissioners?.data?.forEach(async (spacePermissioner) => {
+      try {
+        await this.userNotificationService.create({
+          userId: spacePermissioner.userId,
+          target: UserNotificationTarget.permissioner,
+          type: UserNotificationType.internal,
+          templateName: UserNotificationTemplateName.spaceUpdated,
+          params: {
+            spaceId: space.id,
+          },
+        });
+      } catch (error) {
+        this.logger.error(`Failed to notify user`, error);
+      }
+    });
+
+    return result;
   }
 
   @Post(':id/issue/report')
@@ -431,8 +567,50 @@ export class SpaceController {
     @Body() reportSpaceIssueDto: ReportSpaceIssueDto,
   ) {
     const user = await this.userService.findOneByEmail(req.user.email);
+    const space = await this.spaceService.findOneById(id);
+    const spacePermissioners =
+      await this.spacePermissionerService.findAllBySpaceId(
+        id,
+        { isActive: true },
+        { isPagination: false },
+      );
+    const result = await this.spaceService.reportIssue(
+      id,
+      user.id,
+      reportSpaceIssueDto,
+    );
 
-    return this.spaceService.reportIssue(id, user.id, reportSpaceIssueDto);
+    try {
+      await this.spaceHistoryService.create({
+        spaceId: id,
+        ruleId: space.ruleId,
+        isPublic: true,
+        type: SpaceHistoryType.spaceIssue,
+        // TODO. translate using user.country
+        details: `Issue was raised by ${user.name}`,
+      });
+    } catch (error) {
+      this.logger.error(`Failed to log space history`, error);
+    }
+
+    spacePermissioners?.data?.forEach(async (spacePermissioner) => {
+      try {
+        await this.userNotificationService.create({
+          userId: spacePermissioner.userId,
+          target: UserNotificationTarget.permissioner,
+          type: UserNotificationType.external,
+          templateName: UserNotificationTemplateName.spaceIssueRaised,
+          params: {
+            spaceId: space.id,
+            spaceIssueReport: reportSpaceIssueDto.details,
+          },
+        });
+      } catch (error) {
+        this.logger.error(`Failed to notify user`, error);
+      }
+    });
+
+    return result;
   }
 
   @Post(':id/issue/resolve')
@@ -444,7 +622,50 @@ export class SpaceController {
     @Body() resolveSpaceIssueDto: ResolveSpaceIssueDto,
   ) {
     const user = await this.userService.findOneByEmail(req.user.email);
+    const space = await this.spaceService.findOneById(id);
+    const spacePermissioners =
+      await this.spacePermissionerService.findAllBySpaceId(
+        id,
+        { isActive: true },
+        { isPagination: false },
+      );
 
-    return this.spaceService.resolveIssue(id, user.id, resolveSpaceIssueDto);
+    const result = await this.spaceService.resolveIssue(
+      id,
+      user.id,
+      resolveSpaceIssueDto,
+    );
+
+    try {
+      await this.spaceHistoryService.create({
+        spaceId: id,
+        ruleId: space.ruleId,
+        isPublic: true,
+        type: SpaceHistoryType.spaceIssueResolve,
+        // TODO. translate using user.country
+        details: `Issue was resolved by ${user.name}`,
+      });
+    } catch (error) {
+      this.logger.error(`Failed to log space history`, error);
+    }
+
+    spacePermissioners?.data?.forEach(async (spacePermissioner) => {
+      try {
+        await this.userNotificationService.create({
+          userId: spacePermissioner.userId,
+          target: UserNotificationTarget.permissioner,
+          type: UserNotificationType.external,
+          templateName: UserNotificationTemplateName.spaceIssueResolved,
+          params: {
+            spaceId: space.id,
+            spaceIssueResolveDetails: resolveSpaceIssueDto.details,
+          },
+        });
+      } catch (error) {
+        this.logger.error(`Failed to notify user`, error);
+      }
+    });
+
+    return result;
   }
 }
