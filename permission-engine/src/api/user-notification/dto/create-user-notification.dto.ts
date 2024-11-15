@@ -24,7 +24,7 @@ export class CreateUserNotificationDto {
   @IsNotEmpty()
   @IsString()
   @ApiProperty({
-    description: 'UserNotification userId in uuid',
+    description: 'UserNotification target',
     required: true,
   })
   target: UserNotificationTarget;
