@@ -279,6 +279,22 @@ export class PermissionRequestService {
     };
   }
 
+  async updateSpaceEventRuleId(
+    id: string,
+    spaceEventRuleId: string,
+  ): Promise<{ data: { result: boolean } }> {
+    const updateResult = await this.permissionRequestRepository.update(id, {
+      spaceEventRuleId,
+      updatedAt: new Date(),
+    });
+
+    return {
+      data: {
+        result: updateResult.affected === 1,
+      },
+    };
+  }
+
   async updateToAssigned(id: string): Promise<{ data: { result: boolean } }> {
     const updateResult = await this.permissionRequestRepository.update(id, {
       status: PermissionRequestStatus.assigned,
@@ -372,12 +388,13 @@ export class PermissionRequestService {
 
   async updateToResolveRejected(
     id: string,
-    isForce: boolean = false,
+    option: { isForce: boolean } = { isForce: false },
   ): Promise<{ data: { result: boolean } }> {
     const dto: Partial<PermissionRequest> = {
       resolveStatus: PermissionRequestResolveStatus.resolveRejected,
       updatedAt: new Date(),
     };
+    const { isForce } = option;
 
     if (isForce === true) {
       dto.status = PermissionRequestStatus.reviewApproved;
@@ -394,7 +411,7 @@ export class PermissionRequestService {
 
   async updateToResolveAccepted(
     id: string,
-    isForce: boolean = false,
+    option: { isForce: boolean } = { isForce: false },
   ): Promise<{ data: { result: boolean; permissionCode: string | null } }> {
     const permissionCode = generateRandomCode();
     const dto: Partial<PermissionRequest> = {
@@ -402,6 +419,7 @@ export class PermissionRequestService {
       permissionCode,
       updatedAt: new Date(),
     };
+    const { isForce } = option;
 
     if (isForce === true) {
       dto.status = PermissionRequestStatus.reviewApproved;

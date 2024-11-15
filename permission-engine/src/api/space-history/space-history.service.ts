@@ -14,10 +14,10 @@ export class SpaceHistoryService {
 
   async findAll(
     findAllSpaceHistoryDto: FindAllSpaceHistoryDto,
-    isPagination: boolean = true,
+    option: { isPagination: boolean } = { isPagination: true },
   ): Promise<{ data: SpaceHistory[]; total: number }> {
     const { page, limit, spaceId, isPublic, types } = findAllSpaceHistoryDto;
-
+    const { isPagination } = option;
     const where: FindOptionsWhere<SpaceHistory> = {};
 
     if (spaceId != null) {

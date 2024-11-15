@@ -40,7 +40,7 @@ export class SpaceEventService {
 
   async findAll(
     findAllSpaceEventDto: FindAllSpaceEventDto,
-    isPagination: boolean = true,
+    option: { isPagination: boolean } = { isPagination: true },
   ): Promise<{ data: SpaceEvent[]; total: number }> {
     const {
       page,
@@ -56,7 +56,7 @@ export class SpaceEventService {
       endsBefore,
       name,
     } = findAllSpaceEventDto;
-
+    const { isPagination } = option;
     const where = [];
     const params: any[] =
       isPagination === true ? [(page - 1) * limit, limit] : [];
@@ -318,6 +318,22 @@ export class SpaceEventService {
 
     const updateResult = await this.spaceEventRepository.update(id, {
       ...updateSpaceEventAdditionalInfoDto,
+      updatedAt: new Date(),
+    });
+
+    return {
+      data: {
+        result: updateResult.affected === 1,
+      },
+    };
+  }
+
+  async updateRuleId(
+    id: string,
+    ruleId: string,
+  ): Promise<{ data: { result: boolean } }> {
+    const updateResult = await this.spaceEventRepository.update(id, {
+      ruleId,
       updatedAt: new Date(),
     });
 

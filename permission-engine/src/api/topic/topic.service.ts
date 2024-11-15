@@ -22,11 +22,11 @@ export class TopicService {
 
   async findAll(
     findAllTopicDto: FindAllTopicDto,
-    isPagination: boolean = true,
+    option: { isPagination: boolean } = { isPagination: true },
   ): Promise<{ data: Topic[]; total: number }> {
     const { page, limit, isActive, names, ids, country, region, city } =
       findAllTopicDto;
-
+    const { isPagination } = option;
     const where: FindOptionsWhere<Topic> = {};
 
     if (ids != null) {

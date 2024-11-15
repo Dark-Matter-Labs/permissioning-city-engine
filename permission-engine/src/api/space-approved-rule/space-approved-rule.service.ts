@@ -11,6 +11,7 @@ import { Rule } from 'src/database/entity/rule.entity';
 import { SpacePermissioner } from 'src/database/entity/space-permissioner.entity';
 import { SpaceService } from '../space/space.service';
 import { SpaceApprovedRuleSortBy } from 'src/lib/type';
+import { RuleService } from '../rule/rule.service';
 
 @Injectable()
 export class SpaceApprovedRuleService {
@@ -20,12 +21,14 @@ export class SpaceApprovedRuleService {
     @InjectRepository(SpacePermissioner)
     private spacePermissionerRepository: Repository<SpacePermissioner>,
     private readonly spaceService: SpaceService,
+    private readonly ruleService: RuleService,
   ) {}
 
   async findAll(
     findAllSpaceApprovedRuleDto: FindAllSpaceApprovedRuleDto,
-    isPublicOnly: boolean = true,
+    option: { isPublic: boolean } = { isPublic: true },
   ): Promise<{ data: Rule[]; total: number }> {
+    const { isPublic } = option;
     const { page, limit, spaceId, ruleId, topicIds, isActive, sortBy } =
       findAllSpaceApprovedRuleDto;
 
@@ -50,6 +53,12 @@ export class SpaceApprovedRuleService {
       paramIndex++;
       where.push(`sar.is_active = $${paramIndex}`);
       params.push(isActive);
+    }
+
+    if (isPublic != null) {
+      paramIndex++;
+      where.push(`sar.is_public = $${paramIndex}`);
+      params.push(isPublic);
     }
 
     if (topicIds != null) {
@@ -143,12 +152,12 @@ export class SpaceApprovedRuleService {
             };
           });
 
-          if (isPublicOnly === true) {
-            const publicRuleBlocks = ruleBlocks?.filter(
-              (ruleBlock) => ruleBlock.isPublic === true,
-            );
-            ruleBlocks = publicRuleBlocks;
-          }
+          // if (isPublicOnly === true) {
+          //   const publicRuleBlocks = ruleBlocks?.filter(
+          //     (ruleBlock) => ruleBlock.isPublic === true,
+          //   );
+          //   ruleBlocks = publicRuleBlocks;
+          // }
         }
 
         return {
@@ -183,26 +192,37 @@ export class SpaceApprovedRuleService {
 
   async create(
     createSpaceApprovedRuleDto: CreateSpaceApprovedRuleDto,
+    option: { isForce: boolean } = { isForce: false },
   ): Promise<SpaceApprovedRule> {
-    const { spaceId } = createSpaceApprovedRuleDto;
+    const { isForce } = option;
+    const { spaceId, ruleId } = createSpaceApprovedRuleDto;
     const space = await this.spaceService.findOneById(spaceId);
-    const isPermissionerExists =
-      await this.spacePermissionerRepository.existsBy({
-        spaceId,
+    const rule = await this.ruleService.findOneById(ruleId);
+    const isPublic = !rule.ruleBlocks.find((item) => item.isPublic === false);
+    const existingSpaceApprovedRule = await this.findOne(spaceId, ruleId);
+
+    if (existingSpaceApprovedRule) {
+      return existingSpaceApprovedRule;
+    } else {
+      const isPermissionerExists =
+        await this.spacePermissionerRepository.existsBy({
+          spaceId,
+          isActive: true,
+          userId: Not(space.ownerId),
+        });
+
+      if (isForce === false && isPermissionerExists === true) {
+        throw new ForbiddenException('Cannot update rule whithout permission.');
+      }
+
+      const spaceApprovedRule = this.spaceApprovedRuleRepository.create({
+        ...createSpaceApprovedRuleDto,
         isActive: true,
-        userId: Not(space.ownerId),
+        isPublic,
       });
 
-    if (isPermissionerExists === true) {
-      throw new ForbiddenException('Cannot update rule whithout permission.');
+      return this.spaceApprovedRuleRepository.save(spaceApprovedRule);
     }
-
-    const spaceApprovedRule = this.spaceApprovedRuleRepository.create({
-      ...createSpaceApprovedRuleDto,
-      isActive: true,
-    });
-
-    return this.spaceApprovedRuleRepository.save(spaceApprovedRule);
   }
 
   async update(

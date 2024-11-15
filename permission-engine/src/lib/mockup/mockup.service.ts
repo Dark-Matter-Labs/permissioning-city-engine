@@ -271,8 +271,12 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
       } = mockup;
 
       const topics =
-        (await this.topicService.findAll({ isActive: true }, false))?.data ??
-        [];
+        (
+          await this.topicService.findAll(
+            { isActive: true },
+            { isPagination: false },
+          )
+        )?.data ?? [];
 
       const users = [];
       const spaceRuleBlocks = [];
@@ -285,8 +289,11 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
       const spaceEvents = [];
 
       for (const createUserDto of createUserDtos) {
-        const user = (await this.userService.create(createUserDto, false)).data
-          .user;
+        const user = (
+          await this.userService.create(createUserDto, {
+            isNotification: false,
+          })
+        ).data.user;
         users.push(user);
       }
 
@@ -440,7 +447,7 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
               spaceId: space.id,
               userId: i + 1 < users.length ? users[i + 1].id : users[0].id,
             },
-            true,
+            { isActive: true },
           ),
         );
       }

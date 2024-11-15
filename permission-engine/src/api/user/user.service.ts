@@ -39,13 +39,14 @@ export class UserService {
 
   async create(
     createUserDto: CreateUserDto,
-    isNotification: boolean = true,
+    option: { isNotification: boolean } = { isNotification: true },
   ): Promise<{
     data: {
       result: boolean;
       user: User;
     };
   }> {
+    const { isNotification } = option;
     let result = true;
     const user = this.userRepository.create({
       ...createUserDto,

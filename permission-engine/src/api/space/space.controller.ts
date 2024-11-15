@@ -77,7 +77,9 @@ export class SpaceController {
   @Get(':id')
   @ApiOperation({ summary: 'Get space by id' })
   findOneById(@Param('id') id: string): Promise<Space> {
-    return this.spaceService.findOneById(id, ['spaceImages', 'spaceTopics']);
+    return this.spaceService.findOneById(id, {
+      relations: ['spaceImages', 'spaceTopics'],
+    });
   }
 
   @Get(':id/availability')
@@ -91,7 +93,7 @@ export class SpaceController {
     if (!space) {
       throw new BadRequestException(`There is no space with id: ${id}`);
     }
-    const spaceRule = await this.ruleService.findOneById(space.ruleId, false);
+    const spaceRule = await this.ruleService.findOneById(space.ruleId);
     const spaceEvents =
       (
         await this.spaceEventService.findAll(
@@ -108,7 +110,7 @@ export class SpaceController {
               SpaceEventStatus.closed,
             ],
           },
-          false,
+          { isPagination: false },
         )
       )?.data ?? [];
 
@@ -116,8 +118,10 @@ export class SpaceController {
       (
         await this.ruleService.findAll(
           { ids: spaceEvents.map((item) => item.ruleId) },
-          false,
-          false,
+          {
+            isPagination: false,
+            isPublicOnly: false,
+          },
         )
       )?.data ?? [];
 

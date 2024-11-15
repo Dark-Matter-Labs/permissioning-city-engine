@@ -32,12 +32,18 @@ export class RuleService {
 
   async findAll(
     findAllRuleDto: FindAllRuleDto,
-    isPagination: boolean = true,
-    isPublicOnly: boolean = true,
+    option: {
+      isPagination: boolean;
+      isPublicOnly: boolean;
+      queryUserId?: string;
+    } = {
+      isPagination: true,
+      isPublicOnly: true,
+    },
   ): Promise<{ data: Rule[]; total: number }> {
     const { page, limit, target, authorId, parentRuleId, hash, ids, isActive } =
       findAllRuleDto;
-
+    const { isPagination, isPublicOnly, queryUserId } = option;
     const where: FindOptionsWhere<Rule> = { isActive: true };
 
     if (target != null) {
@@ -87,7 +93,9 @@ export class RuleService {
           const publicRuleBlocks = rule?.ruleBlocks?.filter(
             (ruleBlock) => ruleBlock.isPublic === true,
           );
-          rule.ruleBlocks = publicRuleBlocks;
+          if (!queryUserId || queryUserId !== rule.authorId) {
+            rule.ruleBlocks = publicRuleBlocks;
+          }
         }
 
         return rule;
@@ -196,14 +204,17 @@ export class RuleService {
     };
   }
 
-  async findOneById(id: string, isPublicOnly: boolean = false): Promise<Rule> {
+  async findOneById(
+    id: string,
+    option: { isPublicOnly: boolean } = { isPublicOnly: false },
+  ): Promise<Rule> {
     const rule = await this.ruleRepository.findOne({
       where: {
         id,
       },
       relations: ['ruleBlocks', 'topics'],
     });
-
+    const { isPublicOnly } = option;
     if (isPublicOnly === true) {
       const publicRuleBlocks = rule.ruleBlocks.filter(
         (ruleBlock) => ruleBlock.isPublic === true,
@@ -216,8 +227,9 @@ export class RuleService {
 
   async findOneByName(
     name: string,
-    isPublicOnly: boolean = false,
+    option: { isPublicOnly: boolean } = { isPublicOnly: false },
   ): Promise<Rule> {
+    const { isPublicOnly } = option;
     const rule = await this.ruleRepository.findOne({
       where: { name },
       relations: ['ruleBlocks', 'topics'],
@@ -316,8 +328,10 @@ export class RuleService {
     const duplicateSpaceEventRule = (
       await this.findAll(
         { target: RuleTarget.spaceEvent, hash, isActive: true },
-        false,
-        false,
+        {
+          isPagination: false,
+          isPublicOnly: false,
+        },
       )
     )?.data?.[0];
 
@@ -335,8 +349,10 @@ export class RuleService {
   async fork(
     authorId: string,
     forkRuleDto: { id: string; name?: string },
+    option: { isPublicOnly: boolean },
   ): Promise<Rule> {
     const { name, id } = forkRuleDto;
+    const { isPublicOnly } = option;
     const rule = await this.ruleRepository.findOne({
       where: { id },
       relations: ['ruleBlocks'],
@@ -346,7 +362,7 @@ export class RuleService {
       throw new BadRequestException();
     }
 
-    if (rule.authorId !== authorId) {
+    if (isPublicOnly) {
       const publicRuleBlocks = rule.ruleBlocks.filter(
         (ruleBlock) => ruleBlock.isPublic === true,
       );

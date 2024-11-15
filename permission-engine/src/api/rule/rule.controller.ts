@@ -37,19 +37,28 @@ export class RuleController {
   ) {}
 
   @Get()
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get all rules' })
-  findAll(@Query() query: FindAllRuleDto) {
+  async findAll(@Req() req, @Query() query: FindAllRuleDto) {
+    const user = await this.userService.findOneByEmail(req.user.email);
     const { page, limit, target, authorId, parentRuleId, hash, ids } = query;
 
-    return this.ruleService.findAll({
-      page,
-      limit,
-      target,
-      authorId,
-      parentRuleId,
-      hash,
-      ids,
-    });
+    return this.ruleService.findAll(
+      {
+        page,
+        limit,
+        target,
+        authorId,
+        parentRuleId,
+        hash,
+        ids,
+      },
+      {
+        isPagination: true,
+        isPublicOnly: true,
+        queryUserId: user.id,
+      },
+    );
   }
 
   @Get(':id')
@@ -73,14 +82,14 @@ export class RuleController {
           {
             ruleId: id,
           },
-          false,
+          { isPagination: false },
         )
       )?.data ?? [];
     const spacePermissioners: SpacePermissioner[] = [];
 
     for (const space of spaces) {
       await this.spacePermissionerService
-        .findAllBySpaceId(space.id, { isActive: true }, false)
+        .findAllBySpaceId(space.id, { isActive: true }, { isPagination: false })
         .then((res) => {
           if (res.data) {
             spacePermissioners.push(...res.data);
@@ -129,8 +138,15 @@ export class RuleController {
     @Body() forkRuleDto: ForkRuleDto,
   ): Promise<Rule> {
     const user = await this.userService.findOneByEmail(req.user.email);
+    const rule = await this.ruleService.findOneById(id);
 
-    return this.ruleService.fork(user.id, { ...forkRuleDto, id });
+    const isPublicOnly = user.id === rule.authorId;
+
+    return this.ruleService.fork(
+      user.id,
+      { ...forkRuleDto, id },
+      { isPublicOnly },
+    );
   }
 
   @Put(':id')

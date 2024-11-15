@@ -43,7 +43,7 @@ export class PermissionResponseController {
         {
           isActive: true,
         },
-        false,
+        { isPagination: false },
       );
 
     return this.permissionResponseService.findAll({

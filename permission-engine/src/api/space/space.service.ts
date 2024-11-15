@@ -45,16 +45,20 @@ export class SpaceService {
     return this.spaceRepository.find();
   }
 
-  findOneById(id: string, relations?: string[]): Promise<Space> {
-    const option: FindOneOptions = {
+  findOneById(
+    id: string,
+    option: { relations?: string[] } = {},
+  ): Promise<Space> {
+    const { relations } = option;
+    const queryOption: FindOneOptions = {
       where: { id },
     };
 
     if (Array.isArray(relations)) {
-      option.relations = relations;
+      queryOption.relations = relations;
     }
 
-    return this.spaceRepository.findOne(option);
+    return this.spaceRepository.findOne(queryOption);
   }
 
   async findRuleById(id: string): Promise<Rule> {
@@ -107,7 +111,7 @@ export class SpaceService {
           spaceId: space.id,
           userId: ownerId,
         },
-        true,
+        { isActive: true },
       );
     } catch (error) {
       this.logger.error(error.message, error);
@@ -186,7 +190,7 @@ export class SpaceService {
     let result = false;
 
     try {
-      const space = await this.findOneById(id, ['spaceTopics']);
+      const space = await this.findOneById(id, { relations: ['spaceTopics'] });
 
       if (space.spaceTopics.length >= 20) {
         throw new BadRequestException(`Cannot have more than 20 topics`);

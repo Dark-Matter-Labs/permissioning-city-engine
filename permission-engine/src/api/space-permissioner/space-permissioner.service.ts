@@ -35,10 +35,10 @@ export class SpacePermissionerService {
   async findAllBySpaceId(
     spaceId: string,
     findAllSpacePermissionerBySpaceIdDto: FindAllSpacePermissionerBySpaceIdDto,
-    isPagination: boolean = true,
+    option: { isPagination: boolean } = { isPagination: true },
   ): Promise<{ data: SpacePermissioner[]; total: number }> {
     const { page, limit, isActive } = findAllSpacePermissionerBySpaceIdDto;
-
+    const { isPagination } = option;
     let queryOption: FindManyOptions<SpacePermissioner> = {
       where: { spaceId, isActive },
     };
@@ -63,10 +63,10 @@ export class SpacePermissionerService {
   async findAllByUserId(
     userId: string,
     findAllSpacePermissionerByUserIdDto: FindAllSpacePermissionerByUserIdDto,
-    isPagination: boolean = true,
+    option: { isPagination: boolean } = { isPagination: true },
   ): Promise<{ data: SpacePermissioner[]; total: number }> {
     const { page, limit, isActive } = findAllSpacePermissionerByUserIdDto;
-
+    const { isPagination } = option;
     let queryOption: FindManyOptions<SpacePermissioner> = {
       where: { userId, isActive },
     };
@@ -102,8 +102,9 @@ export class SpacePermissionerService {
 
   create(
     createSpacePermissionerDto: Partial<CreateSpacePermissionerDto>,
-    isActive: boolean = false,
+    option: { isActive: boolean } = { isActive: false },
   ): Promise<SpacePermissioner> {
+    const { isActive } = option;
     const spacePermissioner = this.spacePermissionerRepository.create({
       ...createSpacePermissionerDto,
       id: uuidv4(),

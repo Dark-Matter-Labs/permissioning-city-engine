@@ -9,6 +9,7 @@ export class SpaceEventPermissionRequestApprovedEmail extends Email {
   text: string;
 
   name: string;
+  permissionRequestId: string;
   eventId: string;
   eventTitle: string;
   excitements: string[];
@@ -23,12 +24,12 @@ export class SpaceEventPermissionRequestApprovedEmail extends Email {
     option: {
       language: Language;
       name: string;
+      permissionRequestId: string;
       eventId: string;
       eventTitle: string;
       excitements: string[];
       worries: string[];
       conditions: string[];
-      resolveLink: string;
       externalBookingLink: string;
     },
   ) {
@@ -39,9 +40,9 @@ export class SpaceEventPermissionRequestApprovedEmail extends Email {
     this.excitements = option.excitements;
     this.worries = option.worries;
     this.conditions = option.conditions;
-    this.resolveLink = option.resolveLink;
     this.externalBookingLink = option.externalBookingLink;
     // TODO. Check routing policy in FrontEnd
+    this.resolveLink = `${this.domain}/permission/request/${this.permissionRequestId}/resolve`;
     this.eventDashboardLink = `${this.domain}/event/${this.eventId}`;
 
     this.subjectPart();

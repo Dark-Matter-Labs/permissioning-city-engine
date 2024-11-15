@@ -35,7 +35,7 @@ export class SpaceHistoryController {
         await this.spacePermissionerService.findAllBySpaceId(
           spaceId,
           { isActive: true },
-          false,
+          { isPagination: false },
         )
       )?.data ?? [];
 

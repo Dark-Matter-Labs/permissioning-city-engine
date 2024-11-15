@@ -165,7 +165,13 @@ export class RuleBlockService {
       hash,
       isPublic:
         [
+          // private spaceEventRuleBlocks will prevent the rule to be in the space-approved-rule list in event proposal UI
           RuleBlockType.spaceEventInsurance,
+          /**
+           * event rules that contain spaceEventRequireEquipment type ruleBlock will not be shown in the spaceApprovedRule list when users choose template in the UI
+           * but user will try to create a new rule with this ruleBlock combined with the selected template -> which can be really new or already exists
+           * if the already existing rule happens to be a pre-approved one -> will be auto approved
+           */
           RuleBlockType.spaceEventRequireEquipment,
           RuleBlockType.spacePrivateGuide,
         ].includes(type) === true
