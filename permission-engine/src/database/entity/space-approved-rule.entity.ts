@@ -41,6 +41,12 @@ export class SpaceApprovedRule {
   @ApiProperty({ description: 'Is space approved rule active' })
   isActive: boolean;
 
+  @Column({ default: true })
+  @ApiProperty({
+    description: 'Space approved rule has public rule blocks only',
+  })
+  isPublic: boolean;
+
   @Column({ default: 0 })
   @ApiProperty({
     description: 'How many times the rule was utilized in the space',
