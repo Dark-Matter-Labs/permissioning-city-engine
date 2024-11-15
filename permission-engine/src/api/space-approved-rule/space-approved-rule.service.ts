@@ -24,6 +24,7 @@ export class SpaceApprovedRuleService {
 
   async findAll(
     findAllSpaceApprovedRuleDto: FindAllSpaceApprovedRuleDto,
+    isPublicOnly: boolean = true,
   ): Promise<{ data: Rule[]; total: number }> {
     const { page, limit, spaceId, ruleId, topicIds, isActive, sortBy } =
       findAllSpaceApprovedRuleDto;
@@ -124,6 +125,32 @@ export class SpaceApprovedRuleService {
 
     if (data != null) {
       result = data.map((item) => {
+        let ruleBlocks = item.row.f11;
+        if (ruleBlocks) {
+          ruleBlocks = ruleBlocks.map((item) => {
+            return {
+              id: item.id,
+              name: item.name,
+              hash: item.hash,
+              author: item.author,
+              authorId: item.author_id,
+              type: item.type,
+              content: item.content,
+              details: item.details,
+              isPublic: item.is_public,
+              createdAt: item.created_at,
+              updatedAt: item.updated_at,
+            };
+          });
+
+          if (isPublicOnly === true) {
+            const publicRuleBlocks = ruleBlocks?.filter(
+              (ruleBlock) => ruleBlock.isPublic === true,
+            );
+            ruleBlocks = publicRuleBlocks;
+          }
+        }
+
         return {
           id: item.row.f1,
           name: item.row.f2,
@@ -135,11 +162,12 @@ export class SpaceApprovedRuleService {
           createdAt: item.row.f8,
           updatedAt: item.row.f9,
           utilizationCount: item.row.f10,
-          ruleBlocks: item.row.f11,
+          ruleBlocks,
           topics: item.row.f12,
         };
       });
     }
+
     return {
       data: result,
       total: parseInt(total),
