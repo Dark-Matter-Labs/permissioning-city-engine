@@ -24,6 +24,8 @@ import { PermissionHandlerService } from 'src/lib/permission-handler/permission-
 import { PermissionHandlerModule } from 'src/lib/permission-handler/permission-handler.module';
 import { SpaceTopic } from 'src/database/entity/space-topic.entity';
 import { SpaceTopicService } from '../space-topic/space-topic.service';
+import { SpaceHistory } from 'src/database/entity/space-history.entity';
+import { SpaceHistoryService } from '../space-history/space-history.service';
 
 @Module({
   imports: [
@@ -41,6 +43,7 @@ import { SpaceTopicService } from '../space-topic/space-topic.service';
       PermissionResponse,
       SpaceEvent,
       SpacePermissioner,
+      SpaceHistory,
     ]),
     PermissionHandlerModule,
   ],
@@ -56,6 +59,7 @@ import { SpaceTopicService } from '../space-topic/space-topic.service';
     SpaceEventService,
     SpacePermissionerService,
     PermissionHandlerService,
+    SpaceHistoryService,
   ],
 })
 export class RuleModule {}

@@ -6,6 +6,7 @@ import {
   CreateDateColumn,
   JoinColumn,
   ManyToOne,
+  OneToMany,
 } from 'typeorm';
 import { SpaceHistoryType } from 'src/lib/type';
 import { Space } from './space.entity';
@@ -13,6 +14,7 @@ import { Rule } from './rule.entity';
 import { SpacePermissioner } from './space-permissioner.entity';
 import { SpaceEvent } from './space-event.entity';
 import { PermissionRequest } from './permission-request.entity';
+import { User } from './user.entity';
 
 @Entity()
 export class SpaceHistory {
@@ -35,6 +37,30 @@ export class SpaceHistory {
   @Column()
   @ApiProperty({ description: 'SpaceHistory ruleId in uuid' })
   ruleId: string;
+
+  @ManyToOne(() => User, (user) => user.spaceHistories)
+  @JoinColumn()
+  logger: User;
+
+  @Column()
+  @ApiProperty({ description: 'SpaceHistory loggerId in uuid' })
+  loggerId: string;
+
+  @Column({ type: 'uuid', nullable: true })
+  spaceHistoryId: string;
+
+  @ManyToOne(
+    () => SpaceHistory,
+    (spaceHistory) => spaceHistory.childHistories,
+    {
+      nullable: true,
+    },
+  )
+  @JoinColumn({ name: 'space_history_id' })
+  parentHistory: SpaceHistory;
+
+  @OneToMany(() => SpaceHistory, (spaceHistory) => spaceHistory.parentHistory)
+  childHistories: SpaceHistory[];
 
   @ManyToOne(
     () => SpacePermissioner,

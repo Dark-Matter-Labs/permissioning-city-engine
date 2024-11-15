@@ -149,6 +149,7 @@ CREATE TABLE "space_history" (
   "id" uuid PRIMARY KEY,
   "space_id" uuid NOT NULL,
   "rule_id" uuid NOT NULL,
+  "space_history_id" uuid,
   "space_permissioner_id" uuid,
   "space_event_id" uuid,
   "permission_request_id" uuid,
@@ -310,6 +311,8 @@ ALTER TABLE "rule" ADD FOREIGN KEY ("parent_rule_id") REFERENCES "rule" ("id");
 ALTER TABLE "rule_block" ADD FOREIGN KEY ("author_id") REFERENCES "user" ("id");
 
 ALTER TABLE "space_history" ADD FOREIGN KEY ("space_id") REFERENCES "space" ("id");
+
+ALTER TABLE "space_history" ADD FOREIGN KEY ("space_history_id") REFERENCES "space_history" ("id");
 
 ALTER TABLE "space_history" ADD FOREIGN KEY ("rule_id") REFERENCES "rule" ("id");
 

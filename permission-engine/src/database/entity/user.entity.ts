@@ -15,6 +15,7 @@ import { RuleBlock } from './rule-block.entity';
 import { Rule } from './rule.entity';
 import { SpacePermissioner } from './space-permissioner.entity';
 import { Topic } from './topic.entity';
+import { SpaceHistory } from './space-history.entity';
 
 @Entity()
 export class User {
@@ -105,6 +106,9 @@ export class User {
     (spacePermissioner) => spacePermissioner.inviter,
   )
   spacePermissionerInviters: SpacePermissioner[];
+
+  @OneToMany(() => SpaceHistory, (spacehistory) => spacehistory.logger)
+  spaceHistories: SpaceHistory[];
 
   @ManyToMany(() => Topic, (topic) => topic.users)
   @JoinTable({ name: 'user_topic' })

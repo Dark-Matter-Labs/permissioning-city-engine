@@ -28,6 +28,22 @@ export class CreateSpaceHistoryDto {
   @IsOptional()
   @IsUUID('4')
   @ApiPropertyOptional({
+    description: 'SpaceHistory loggerId in uuid',
+    nullable: true,
+  })
+  loggerId?: string;
+
+  @IsOptional()
+  @IsUUID('4')
+  @ApiPropertyOptional({
+    description: 'SpaceHistory spaceHistoryId in uuid',
+    nullable: true,
+  })
+  spaceHistoryId?: string;
+
+  @IsOptional()
+  @IsUUID('4')
+  @ApiPropertyOptional({
     description: 'SpaceHistory spacePermissionerId in uuid',
     nullable: true,
   })

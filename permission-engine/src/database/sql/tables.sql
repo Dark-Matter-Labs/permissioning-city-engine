@@ -149,6 +149,7 @@ CREATE TABLE IF NOT EXISTS "space_history" (
   "id" uuid PRIMARY KEY,
   "space_id" uuid NOT NULL,
   "rule_id" uuid NOT NULL,
+  "space_history_id" uuid,
   "space_permissioner_id" uuid,
   "space_event_id" uuid,
   "permission_request_id" uuid,
@@ -553,6 +554,20 @@ BEGIN
         ALTER TABLE space_history
         ADD CONSTRAINT space_history_fkey_space_id
         FOREIGN KEY ("space_id") REFERENCES "space" ("id");
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.table_constraints
+        WHERE constraint_type = 'FOREIGN KEY'
+        AND table_name = 'space_history'
+        AND constraint_name = 'space_history_fkey_space_history_id'
+    ) THEN
+        ALTER TABLE space_history
+        ADD CONSTRAINT space_history_fkey_space_history_id
+        FOREIGN KEY ("space_history_id") REFERENCES "space_history" ("id");
     END IF;
 END $$;
 DO $$

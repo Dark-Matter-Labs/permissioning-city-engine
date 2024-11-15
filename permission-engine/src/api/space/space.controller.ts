@@ -21,6 +21,8 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import {
   FindAllMatchedRuleDto,
   FindSpaceAvailabilityDto,
+  ReportSpaceIssueDto,
+  ResolveSpaceIssueDto,
   UpdateSpaceDto,
 } from './dto';
 import { UserService } from '../user/user.service';
@@ -315,5 +317,31 @@ export class SpaceController {
     }
 
     return this.spaceService.removeTopic(id, topicId);
+  }
+
+  @Post(':id/issue/report')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Remove a topic from space' })
+  async reportIssue(
+    @Req() req,
+    @Param('id') id: string,
+    @Body() reportSpaceIssueDto: ReportSpaceIssueDto,
+  ) {
+    const user = await this.userService.findOneByEmail(req.user.email);
+
+    return this.spaceService.reportIssue(id, user.id, reportSpaceIssueDto);
+  }
+
+  @Post(':id/issue/resolve')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Remove a topic from space' })
+  async resolveIssue(
+    @Req() req,
+    @Param('id') id: string,
+    @Body() resolveSpaceIssueDto: ResolveSpaceIssueDto,
+  ) {
+    const user = await this.userService.findOneByEmail(req.user.email);
+
+    return this.spaceService.resolveIssue(id, user.id, resolveSpaceIssueDto);
   }
 }

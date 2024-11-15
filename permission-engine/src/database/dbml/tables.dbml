@@ -173,6 +173,8 @@ Table space_history {
   id uuid [primary key]
   space_id uuid [not null]
   rule_id uuid [not null]
+  logger_id uuid
+  space_history_id uuid
   space_permissioner_id uuid
   space_event_id uuid
   permission_request_id uuid
@@ -182,7 +184,9 @@ Table space_history {
   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
 }
 Ref: space_history.space_id > space.id
+Ref: space_history.space_history_id > space_history.id
 Ref: space_history.rule_id > rule.id
+Ref: space_history.logger_id > user.id
 Ref: space_history.space_permissioner_id > space_permissioner.id
 Ref: space_history.space_event_id > space_event.id
 Ref: space_history.permission_request_id > permission_request.id

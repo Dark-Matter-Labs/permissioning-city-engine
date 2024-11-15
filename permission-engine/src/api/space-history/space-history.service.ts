@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CreateSpaceHistoryDto, FindAllSpaceHistoryDto } from './dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindManyOptions, FindOptionsWhere, Repository } from 'typeorm';
+import { FindManyOptions, FindOptionsWhere, In, Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { SpaceHistory } from 'src/database/entity/space-history.entity';
 
@@ -16,12 +16,16 @@ export class SpaceHistoryService {
     findAllSpaceHistoryDto: FindAllSpaceHistoryDto,
     isPagination: boolean = true,
   ): Promise<{ data: SpaceHistory[]; total: number }> {
-    const { page, limit, spaceId, isPublic } = findAllSpaceHistoryDto;
+    const { page, limit, spaceId, isPublic, types } = findAllSpaceHistoryDto;
 
     const where: FindOptionsWhere<SpaceHistory> = {};
 
     if (spaceId != null) {
       where.spaceId = spaceId;
+    }
+
+    if (types != null) {
+      where.type = In(types);
     }
 
     if (isPublic != null) {
@@ -35,6 +39,7 @@ export class SpaceHistoryService {
       relations: [
         'space',
         'rule',
+        'logger',
         'spacePermissioner',
         'spaceEvent',
         'permissionRequest',
