@@ -87,6 +87,11 @@ export class RuleBlockController {
     const { type, content } = createRuleBlockDto;
     const user = await this.userService.findOneByEmail(req.user.email);
     const { files } = uploadedFiles;
+
+    if (files.length > 1) {
+      throw new BadRequestException('Only 1 file is allowed');
+    }
+
     // will take the first file only
     const file = files?.[0];
 
