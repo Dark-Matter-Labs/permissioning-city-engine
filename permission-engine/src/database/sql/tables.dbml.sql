@@ -38,6 +38,7 @@ CREATE TABLE "space_image" (
   "id" uuid PRIMARY KEY,
   "space_id" uuid NOT NULL,
   "link" text NOT NULL,
+  "type" varchar NOT NULL DEFAULT 'list',
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
   "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
 );
@@ -47,6 +48,7 @@ CREATE TABLE "space_approved_rule" (
   "rule_id" uuid NOT NULL,
   "permission_request_id" uuid,
   "is_active" bool NOT NULL DEFAULT true,
+  "is_public" bool NOT NULL DEFAULT true,
   "utilization_count" integer NOT NULL DEFAULT 0,
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
   "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
@@ -116,6 +118,7 @@ CREATE TABLE "space_event_image" (
   "id" uuid PRIMARY KEY,
   "space_event_id" uuid NOT NULL,
   "link" text NOT NULL,
+  "type" varchar NOT NULL DEFAULT 'list',
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
   "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
 );
@@ -149,6 +152,7 @@ CREATE TABLE "space_history" (
   "id" uuid PRIMARY KEY,
   "space_id" uuid NOT NULL,
   "rule_id" uuid NOT NULL,
+  "logger_id" uuid,
   "space_history_id" uuid,
   "space_permissioner_id" uuid,
   "space_event_id" uuid,
@@ -315,6 +319,8 @@ ALTER TABLE "space_history" ADD FOREIGN KEY ("space_id") REFERENCES "space" ("id
 ALTER TABLE "space_history" ADD FOREIGN KEY ("space_history_id") REFERENCES "space_history" ("id");
 
 ALTER TABLE "space_history" ADD FOREIGN KEY ("rule_id") REFERENCES "rule" ("id");
+
+ALTER TABLE "space_history" ADD FOREIGN KEY ("logger_id") REFERENCES "user" ("id");
 
 ALTER TABLE "space_history" ADD FOREIGN KEY ("space_permissioner_id") REFERENCES "space_permissioner" ("id");
 

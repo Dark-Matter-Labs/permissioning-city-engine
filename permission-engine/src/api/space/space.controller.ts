@@ -23,6 +23,7 @@ import {
   FindSpaceAvailabilityDto,
   ReportSpaceIssueDto,
   ResolveSpaceIssueDto,
+  SetSpaceImageDto,
   UpdateSpaceDto,
 } from './dto';
 import { UserService } from '../user/user.service';
@@ -34,11 +35,13 @@ import {
   RuleBlockType,
   SpaceAvailability,
   SpaceEventStatus,
+  SpaceImageType,
 } from 'src/lib/type';
 import { RuleService } from '../rule/rule.service';
 import { SpaceEventService } from '../space-event/space-event.service';
 import { getTimeIntervals } from '../../lib/util';
 import { TopicService } from '../topic/topic.service';
+import { SpaceHistoryService } from '../space-history/space-history.service';
 
 @ApiTags('space')
 @Controller('api/v1/space')
@@ -50,6 +53,7 @@ export class SpaceController {
     private readonly topicService: TopicService,
     private readonly spaceEventService: SpaceEventService,
     private readonly spaceImageService: SpaceImageService,
+    private readonly spaceHistoryService: SpaceHistoryService,
     private readonly logger: Logger,
   ) {}
 
@@ -199,8 +203,15 @@ export class SpaceController {
     @Body() createSpaceDto: CreateSpaceDto,
   ): Promise<Space> {
     const { images } = uploadedFiles;
+    const maxImageCount = 5;
     const user = await this.userService.findOneByEmail(req.user.email);
     const space = await this.spaceService.create(user.id, createSpaceDto);
+
+    if (images.length > 5) {
+      throw new BadRequestException(
+        `Cannot have more than ${maxImageCount} images`,
+      );
+    }
 
     images?.map(async (s3File) => {
       try {
@@ -208,6 +219,7 @@ export class SpaceController {
           id: s3File.key.split('_')[0],
           spaceId: space.id,
           link: s3File.location,
+          type: SpaceImageType.list,
         });
       } catch (error) {
         this.logger.error('Failed to create spaceImage', error);
@@ -244,11 +256,23 @@ export class SpaceController {
     @Body() updateSpaceDto: UpdateSpaceDto,
   ) {
     const { images } = uploadedFiles;
+    const maxImageCount = 5;
     const user = await this.userService.findOneByEmail(req.user.email);
-    const space = await this.spaceService.findOneById(id);
+    const space = await this.spaceService.findOneById(id, {
+      relations: ['spaceImages'],
+    });
 
     if (space.ownerId !== user.id) {
       throw new ForbiddenException();
+    }
+
+    if (
+      space.spaceImages.filter((item) => item.type === SpaceImageType.list)
+        .length === 5
+    ) {
+      throw new BadRequestException(
+        `Cannot have more than ${maxImageCount} images`,
+      );
     }
 
     images?.map(async (s3File) => {
@@ -264,6 +288,81 @@ export class SpaceController {
     });
 
     return this.spaceService.update(id, updateSpaceDto);
+  }
+
+  @Post(':id/image/:type')
+  @UseGuards(JwtAuthGuard)
+  @ApiBody({ type: SetSpaceImageDto })
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: 'images', maxCount: 1 }], {
+      fileFilter(req, file, cb) {
+        if (
+          ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'].includes(
+            file.mimetype,
+          ) === false
+        ) {
+          cb(new BadRequestException('file must be an image'), false);
+        } else {
+          cb(null, true);
+        }
+      },
+    }),
+  )
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Set space image' })
+  async setImage(
+    @Req() req,
+    @Param('id') id: string,
+    @Param('type') type: SpaceImageType,
+    @UploadedFiles() uploadedFiles: { images: Express.MulterS3.File[] },
+  ) {
+    const { images } = uploadedFiles;
+    const maxImageCount = 5;
+
+    if (images.length > 1) {
+      throw new BadRequestException('Only 1 image is allowed');
+    }
+
+    if (
+      [
+        SpaceImageType.list,
+        SpaceImageType.cover,
+        SpaceImageType.thumbnail,
+      ].includes(type) === false
+    ) {
+      throw new BadRequestException(`type ${type} is not allowed`);
+    }
+
+    const user = await this.userService.findOneByEmail(req.user.email);
+    const space = await this.spaceService.findOneById(id, {
+      relations: ['spaceImages'],
+    });
+
+    if (space.ownerId !== user.id) {
+      throw new ForbiddenException();
+    }
+
+    if (
+      space.spaceImages.filter((item) => item.type === SpaceImageType.list)
+        .length === 5
+    ) {
+      throw new BadRequestException(
+        `Cannot have more than ${maxImageCount} images`,
+      );
+    }
+
+    const image = images[0];
+
+    try {
+      await this.spaceImageService.create({
+        id: image.key.split('_')[0],
+        spaceId: space.id,
+        link: image.location,
+        type,
+      });
+    } catch (error) {
+      this.logger.error('Failed to create spaceImage', error);
+    }
   }
 
   @Put(':id/topic/add/:topicId')

@@ -41,6 +41,7 @@ Table space_image {
   id uuid [primary key]
   space_id uuid [not null]
   link text [not null]
+  type varchar [not null, default: 'list']
   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
   updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
 }
@@ -136,6 +137,7 @@ Table space_event_image {
   id uuid [primary key]
   space_event_id uuid [not null]
   link text [not null]
+  type varchar [not null, default: 'list']
   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
   updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
 }

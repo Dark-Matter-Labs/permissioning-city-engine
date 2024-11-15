@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS "space_image" (
   "id" uuid PRIMARY KEY,
   "space_id" uuid NOT NULL,
   "link" text NOT NULL,
+  "type" varchar NOT NULL DEFAULT 'list',
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
   "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
 );
@@ -47,6 +48,7 @@ CREATE TABLE IF NOT EXISTS "space_approved_rule" (
   "rule_id" uuid NOT NULL,
   "permission_request_id" uuid,
   "is_active" bool NOT NULL DEFAULT true,
+  "is_public" bool NOT NULL DEFAULT true,
   "utilization_count" integer NOT NULL DEFAULT 0,
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
   "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
@@ -116,6 +118,7 @@ CREATE TABLE IF NOT EXISTS "space_event_image" (
   "id" uuid PRIMARY KEY,
   "space_event_id" uuid NOT NULL,
   "link" text NOT NULL,
+  "type" varchar NOT NULL DEFAULT 'list',
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
   "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
 );
@@ -149,6 +152,7 @@ CREATE TABLE IF NOT EXISTS "space_history" (
   "id" uuid PRIMARY KEY,
   "space_id" uuid NOT NULL,
   "rule_id" uuid NOT NULL,
+  "logger_id" uuid,
   "space_history_id" uuid,
   "space_permissioner_id" uuid,
   "space_event_id" uuid,
@@ -582,6 +586,20 @@ BEGIN
         ALTER TABLE space_history
         ADD CONSTRAINT space_history_fkey_rule_id
         FOREIGN KEY ("rule_id") REFERENCES "rule" ("id");
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.table_constraints
+        WHERE constraint_type = 'FOREIGN KEY'
+        AND table_name = 'space_history'
+        AND constraint_name = 'space_history_fkey_logger_id'
+    ) THEN
+        ALTER TABLE space_history
+        ADD CONSTRAINT space_history_fkey_logger_id
+        FOREIGN KEY ("logger_id") REFERENCES "user" ("id");
     END IF;
 END $$;
 DO $$

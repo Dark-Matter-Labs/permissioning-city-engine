@@ -1,5 +1,6 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { SpaceImageType } from 'src/lib/type';
 
 export class CreateSpaceImageDto {
   @IsOptional()
@@ -24,4 +25,12 @@ export class CreateSpaceImageDto {
     required: true,
   })
   link: string;
+
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({
+    description: 'SpaceImage type',
+    nullable: true,
+  })
+  type?: SpaceImageType = SpaceImageType.list;
 }

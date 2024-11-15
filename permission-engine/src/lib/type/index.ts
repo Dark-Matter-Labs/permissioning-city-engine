@@ -671,3 +671,15 @@ export enum SpaceHistoryType {
   spaceIssue = 'space_issue',
   spaceIssueResolve = 'space_issue_resolve',
 }
+
+export enum SpaceImageType {
+  list = 'list',
+  thumbnail = 'thumbnail',
+  cover = 'cover',
+}
+
+export enum SpaceEventImageType {
+  list = 'list',
+  thumbnail = 'thumbnail',
+  cover = 'cover',
+}

@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { SpaceImage } from 'src/database/entity/space-image.entity';
+import { SpaceImageType } from 'src/lib/type';
 
 @Injectable()
 export class SpaceImageService {
@@ -24,7 +25,20 @@ export class SpaceImageService {
     await this.spaceImageRepository.delete(id);
   }
 
-  create(createSpaceImageDto: CreateSpaceImageDto): Promise<SpaceImage> {
+  async create(createSpaceImageDto: CreateSpaceImageDto): Promise<SpaceImage> {
+    const { spaceId, type } = createSpaceImageDto;
+    if (type !== SpaceImageType.list) {
+      const existingImage = await this.spaceImageRepository.findOneBy({
+        spaceId,
+        type,
+      });
+
+      // replace if exists
+      if (existingImage) {
+        await this.remove(existingImage.id);
+      }
+    }
+
     const spaceImage = this.spaceImageRepository.create({
       ...createSpaceImageDto,
       id: createSpaceImageDto.id ?? uuidv4(),
