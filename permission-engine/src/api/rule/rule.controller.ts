@@ -61,6 +61,62 @@ export class RuleController {
     );
   }
 
+  @Get('space/:spaceId')
+  @ApiOperation({ summary: 'Get rule by spaceId' })
+  @UseGuards(JwtAuthGuard)
+  async findOneBySpaceId(
+    @Req() req,
+    @Param('spaceId') spaceId: string,
+  ): Promise<Rule> {
+    const user = await this.userService.findOneByEmail(req.user.email);
+    const rule = await this.ruleService.findOneBySpaceId(spaceId);
+
+    if (!rule) {
+      throw new BadRequestException(
+        `There is no rule with spaceId: ${spaceId}`,
+      );
+    }
+
+    const publicRuleBlocks = rule?.ruleBlocks?.filter(
+      (ruleBlock) => ruleBlock.isPublic === true,
+    );
+    const spaces =
+      (await this.spaceService.findAllByRuleId(rule.id))?.data ?? [];
+    const spaceEvents =
+      (
+        await this.spaceEventService.findAll(
+          {
+            ruleId: rule.id,
+          },
+          { isPagination: false },
+        )
+      )?.data ?? [];
+    const spacePermissioners: SpacePermissioner[] = [];
+
+    for (const space of spaces) {
+      await this.spacePermissionerService
+        .findAllBySpaceId(space.id, { isActive: true }, { isPagination: false })
+        .then((res) => {
+          if (res.data) {
+            spacePermissioners.push(...res.data);
+          }
+        });
+    }
+
+    if (
+      [
+        user.id,
+        ...spaces.map((item) => item.ownerId),
+        ...spaceEvents.map((item) => item.organizerId),
+        ...spacePermissioners.map((item) => item.userId),
+      ].includes(rule.authorId) === false
+    ) {
+      rule.ruleBlocks = publicRuleBlocks;
+    }
+
+    return rule;
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get rule by id' })
   @UseGuards(JwtAuthGuard)

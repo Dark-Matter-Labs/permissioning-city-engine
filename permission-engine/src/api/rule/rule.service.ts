@@ -225,6 +225,120 @@ export class RuleService {
     return rule;
   }
 
+  async findOneBySpaceId(
+    spaceId: string,
+    option: { isPublicOnly: boolean } = { isPublicOnly: false },
+  ): Promise<Rule> {
+    const query = `
+      WITH filtered_data AS (
+        SELECT 
+          r.id,
+          r.name,
+          r.hash,
+          r.author_id,
+          r.target,
+          r.parent_rule_id,
+          r.is_active,
+          r.created_at,
+          r.updated_at,
+          ARRAY_AGG(DISTINCT rb) AS ruleblocks,
+          ARRAY_AGG(DISTINCT t) AS topics
+        FROM 
+          space s,
+          rule r,
+          rule_topic rt,
+          topic t,
+          rule_rule_block rrb,
+          rule_block rb
+        WHERE
+          s.rule_id = r.id
+        AND
+          r.id = rt.rule_id
+        AND
+          t.id = rt.topic_id
+        AND
+          r.id = rrb.rule_id
+        AND
+          rrb.rule_block_id = rb.id
+        AND
+          s.id = $1
+        GROUP BY r.id
+      )
+      SELECT json_agg(filtered_data) AS data
+      FROM filtered_data
+    `;
+
+    const [{ data }] = await this.ruleRepository.query(query, [spaceId]);
+
+    if (!data || data.length === 0) {
+      throw new Error('Rule not found');
+    }
+
+    const [result] = data;
+
+    if (result.ruleblocks) {
+      result.ruleBlocks = result.ruleblocks.map((item) => {
+        console.log(item);
+        return {
+          id: item.id,
+          name: item.name,
+          hash: item.hash,
+          author: item.author,
+          authorId: item.author_id,
+          type: item.type,
+          content: item.content,
+          details: item.details,
+          isPublic: item.is_public,
+          createdAt: item.created_at,
+          updatedAt: item.updated_at,
+        };
+      });
+    }
+
+    if (result.topics) {
+      result.topics = result.topics.map((item) => {
+        return {
+          id: item.id,
+          authorId: item.author_id,
+          name: item.name,
+          icon: item.icon,
+          country: item.country,
+          region: item.region,
+          city: item.city,
+          details: item.details,
+          isActive: item.is_active,
+          createdAt: item.created_at,
+          updatedAt: item.updated_at,
+        };
+      });
+    }
+
+    // Map the raw result to a Rule object with RuleBlocks
+    const rule = {
+      id: result.id,
+      name: result.name,
+      hash: result.hash,
+      authorId: result.author_id,
+      target: result.target,
+      parentRuleId: result.parent_rule_id,
+      isActive: result.is_active,
+      createdAt: result.created_at,
+      updatedAt: result.updated_at,
+      ruleBlocks: result.ruleBlocks,
+      topics: result.topics,
+    };
+
+    const { isPublicOnly } = option;
+    if (isPublicOnly === true) {
+      const publicRuleBlocks = rule.ruleBlocks.filter(
+        (ruleBlock) => ruleBlock.isPublic === true,
+      );
+      rule.ruleBlocks = publicRuleBlocks;
+    }
+
+    return rule as Rule;
+  }
+
   async findOneByName(
     name: string,
     option: { isPublicOnly: boolean } = { isPublicOnly: false },
