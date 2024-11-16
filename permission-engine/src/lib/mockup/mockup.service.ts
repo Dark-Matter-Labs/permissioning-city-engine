@@ -359,6 +359,7 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
             await this.spaceImageService.create({
               id: createSpaceImageDto.id,
               link: createSpaceImageDto.link,
+              type: createSpaceImageDto.type,
               spaceId: space.id,
             });
           });

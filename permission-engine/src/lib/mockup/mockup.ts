@@ -16,6 +16,7 @@ import {
   RuleTarget,
   SpaceEquipmentType,
   SpaceEventAccessType,
+  SpaceImageType,
 } from 'src/lib/type';
 import { v4 as uuidv4 } from 'uuid';
 import { hash } from '../util';
@@ -544,18 +545,22 @@ const createSpaceImageDtos: Partial<CreateSpaceImageDto>[] = [
   {
     id: 'aa0a6de4-3df3-4d1b-a579-6e17ce867d6c',
     link: 'https://permissioning-the-city.s3.ap-northeast-2.amazonaws.com/aa0a6de4-3df3-4d1b-a579-6e17ce867d6c_0c4412c86177bbac5b35cf5d6fa0aae3.jpg',
+    type: SpaceImageType.cover,
   },
   {
     id: 'd3bcebbf-a2f7-4475-b113-3025ce57d828',
     link: 'https://permissioning-the-city.s3.ap-northeast-2.amazonaws.com/d3bcebbf-a2f7-4475-b113-3025ce57d828_9898a2abda6cc262f7706ed4330fad08.jpg',
+    type: SpaceImageType.cover,
   },
   {
     id: 'a3cdd311-f9bb-4254-aa38-311f14d91ffb',
     link: 'https://permissioning-the-city.s3.ap-northeast-2.amazonaws.com/a3cdd311-f9bb-4254-aa38-311f14d91ffb_6ad51f21eb41d6cdd002f2c8f38c4f21.jpg',
+    type: SpaceImageType.cover,
   },
   {
     id: '86f2000b-48b3-48b4-b35c-343cbe6e1348',
     link: 'https://permissioning-the-city.s3.ap-northeast-2.amazonaws.com/86f2000b-48b3-48b4-b35c-343cbe6e1348_4e20f9cdcdbd18674f552dde21d8cf05.jpg',
+    type: SpaceImageType.cover,
   },
 ];
 const createSpaceEventImageDtos: Partial<CreateSpaceEventImageDto>[] = [
