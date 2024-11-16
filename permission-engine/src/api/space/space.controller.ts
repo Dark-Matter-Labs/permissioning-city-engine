@@ -90,7 +90,7 @@ export class SpaceController {
   @ApiOperation({ summary: 'Get space by id' })
   findOneById(@Param('id') id: string): Promise<Space> {
     return this.spaceService.findOneById(id, {
-      relations: ['spaceImages', 'spaceTopics'],
+      relations: ['spaceImages', 'spaceTopics.topic'],
     });
   }
 
