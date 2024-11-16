@@ -65,6 +65,10 @@ export class RuleBlockService {
     return this.ruleBlockRepository.findOneBy({ id });
   }
 
+  findOneByHash(hash: string): Promise<RuleBlock> {
+    return this.ruleBlockRepository.findOneBy({ hash });
+  }
+
   async remove(id: string): Promise<void> {
     await this.ruleBlockRepository.delete(id);
   }
@@ -81,19 +85,15 @@ export class RuleBlockService {
 
     const trimmedContent = content?.trim() ?? '';
     const trimmedName = name.trim();
-    // omit after 3rd item in the splitted array: which is reason
-    const contentSplitByType = trimmedContent.split(
-      RuleBlockContentDivider.type,
-    );
-    const [contentKey, contentValue] = contentSplitByType;
     const hash = Util.hash(
-      [
-        type,
-        contentSplitByType.length > 2
-          ? [contentKey, contentValue].join(RuleBlockContentDivider.type)
-          : trimmedContent,
-      ].join(RuleBlockContentDivider.type),
+      [type, trimmedContent].join(RuleBlockContentDivider.type),
     );
+
+    const existingRuleBlock = await this.findOneByHash(hash);
+
+    if (existingRuleBlock) {
+      return existingRuleBlock;
+    }
 
     switch (type) {
       case RuleBlockType.spaceGeneral:

@@ -49,6 +49,12 @@ export class RuleBlockController {
     });
   }
 
+  @Get('hash/:hash')
+  @ApiOperation({ summary: 'Get RuleBlock by hash' })
+  findOneByHash(@Param('hash') hash: string): Promise<RuleBlock> {
+    return this.ruleBlockService.findOneByHash(hash);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get RuleBlock by id' })
   findOneById(@Param('id') id: string): Promise<RuleBlock> {
