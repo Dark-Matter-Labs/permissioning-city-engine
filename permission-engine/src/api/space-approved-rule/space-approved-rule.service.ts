@@ -135,6 +135,7 @@ export class SpaceApprovedRuleService {
     if (data != null) {
       result = data.map((item) => {
         let ruleBlocks = item.row.f11;
+        let topics = item.row.f12;
         if (ruleBlocks) {
           ruleBlocks = ruleBlocks.map((item) => {
             return {
@@ -151,13 +152,23 @@ export class SpaceApprovedRuleService {
               updatedAt: item.updated_at,
             };
           });
-
-          // if (isPublicOnly === true) {
-          //   const publicRuleBlocks = ruleBlocks?.filter(
-          //     (ruleBlock) => ruleBlock.isPublic === true,
-          //   );
-          //   ruleBlocks = publicRuleBlocks;
-          // }
+        }
+        if (topics) {
+          topics = topics.map((item) => {
+            return {
+              id: item.id,
+              authorId: item.author_id,
+              name: item.name,
+              icon: item.icon,
+              country: item.country,
+              region: item.region,
+              city: item.city,
+              details: item.details,
+              isActive: item.is_active,
+              createdAt: item.created_at,
+              updatedAt: item.updated_at,
+            };
+          });
         }
 
         return {
@@ -172,7 +183,7 @@ export class SpaceApprovedRuleService {
           updatedAt: item.row.f9,
           utilizationCount: item.row.f10,
           ruleBlocks,
-          topics: item.row.f12,
+          topics,
         };
       });
     }
