@@ -32,12 +32,18 @@ export class RuleService {
 
   async findAll(
     findAllRuleDto: FindAllRuleDto,
-    isPagination: boolean = true,
-    isPublicOnly: boolean = true,
+    option: {
+      isPagination: boolean;
+      isPublicOnly: boolean;
+      queryUserId?: string;
+    } = {
+      isPagination: true,
+      isPublicOnly: true,
+    },
   ): Promise<{ data: Rule[]; total: number }> {
-    const { page, limit, target, authorId, parentRuleId, hash, ids } =
+    const { page, limit, target, authorId, parentRuleId, hash, ids, isActive } =
       findAllRuleDto;
-
+    const { isPagination, isPublicOnly, queryUserId } = option;
     const where: FindOptionsWhere<Rule> = { isActive: true };
 
     if (target != null) {
@@ -60,11 +66,19 @@ export class RuleService {
       where.id = In(ids);
     }
 
-    let queryOption: FindManyOptions<Rule> = { where };
+    if (isActive != null) {
+      where.isActive = isActive;
+    } else {
+      where.isActive = true;
+    }
+
+    let queryOption: FindManyOptions<Rule> = {
+      where,
+      relations: ['ruleBlocks'],
+    };
     if (isPagination === true) {
       queryOption = {
         ...queryOption,
-        relations: ['ruleBlocks'],
         skip: (page - 1) * limit,
         take: limit,
       };
@@ -79,7 +93,9 @@ export class RuleService {
           const publicRuleBlocks = rule?.ruleBlocks?.filter(
             (ruleBlock) => ruleBlock.isPublic === true,
           );
-          rule.ruleBlocks = publicRuleBlocks;
+          if (!queryUserId || queryUserId !== rule.authorId) {
+            rule.ruleBlocks = publicRuleBlocks;
+          }
         }
 
         return rule;
@@ -188,14 +204,17 @@ export class RuleService {
     };
   }
 
-  async findOneById(id: string, isPublicOnly: boolean = false): Promise<Rule> {
+  async findOneById(
+    id: string,
+    option: { isPublicOnly: boolean } = { isPublicOnly: false },
+  ): Promise<Rule> {
     const rule = await this.ruleRepository.findOne({
       where: {
         id,
       },
       relations: ['ruleBlocks', 'topics'],
     });
-
+    const { isPublicOnly } = option;
     if (isPublicOnly === true) {
       const publicRuleBlocks = rule.ruleBlocks.filter(
         (ruleBlock) => ruleBlock.isPublic === true,
@@ -206,10 +225,125 @@ export class RuleService {
     return rule;
   }
 
+  async findOneBySpaceId(
+    spaceId: string,
+    option: { isPublicOnly: boolean } = { isPublicOnly: false },
+  ): Promise<Rule> {
+    const query = `
+      WITH filtered_data AS (
+        SELECT 
+          r.id,
+          r.name,
+          r.hash,
+          r.author_id,
+          r.target,
+          r.parent_rule_id,
+          r.is_active,
+          r.created_at,
+          r.updated_at,
+          ARRAY_AGG(DISTINCT rb) AS ruleblocks,
+          ARRAY_AGG(DISTINCT t) AS topics
+        FROM 
+          space s,
+          rule r,
+          rule_topic rt,
+          topic t,
+          rule_rule_block rrb,
+          rule_block rb
+        WHERE
+          s.rule_id = r.id
+        AND
+          r.id = rt.rule_id
+        AND
+          t.id = rt.topic_id
+        AND
+          r.id = rrb.rule_id
+        AND
+          rrb.rule_block_id = rb.id
+        AND
+          s.id = $1
+        GROUP BY r.id
+      )
+      SELECT json_agg(filtered_data) AS data
+      FROM filtered_data
+    `;
+
+    const [{ data }] = await this.ruleRepository.query(query, [spaceId]);
+
+    if (!data || data.length === 0) {
+      throw new Error('Rule not found');
+    }
+
+    const [result] = data;
+
+    if (result.ruleblocks) {
+      result.ruleBlocks = result.ruleblocks.map((item) => {
+        console.log(item);
+        return {
+          id: item.id,
+          name: item.name,
+          hash: item.hash,
+          author: item.author,
+          authorId: item.author_id,
+          type: item.type,
+          content: item.content,
+          details: item.details,
+          isPublic: item.is_public,
+          createdAt: item.created_at,
+          updatedAt: item.updated_at,
+        };
+      });
+    }
+
+    if (result.topics) {
+      result.topics = result.topics.map((item) => {
+        return {
+          id: item.id,
+          authorId: item.author_id,
+          name: item.name,
+          icon: item.icon,
+          country: item.country,
+          region: item.region,
+          city: item.city,
+          details: item.details,
+          isActive: item.is_active,
+          createdAt: item.created_at,
+          updatedAt: item.updated_at,
+        };
+      });
+    }
+
+    // Map the raw result to a Rule object with RuleBlocks
+    const rule = {
+      id: result.id,
+      name: result.name,
+      hash: result.hash,
+      authorId: result.author_id,
+      target: result.target,
+      parentRuleId: result.parent_rule_id,
+      isActive: result.is_active,
+      createdAt: result.created_at,
+      updatedAt: result.updated_at,
+      ruleBlocks: result.ruleBlocks,
+      topics: result.topics,
+    };
+
+    const { isPublicOnly } = option;
+    if (isPublicOnly === true) {
+      const publicRuleBlocks = rule.ruleBlocks.filter(
+        (ruleBlock) => ruleBlock.isPublic === true,
+      );
+      rule.ruleBlocks = publicRuleBlocks;
+    }
+
+    return rule as Rule;
+  }
+
   async findOneByName(
     name: string,
-    isPublicOnly: boolean = false,
+    option: { isPublicOnly: boolean } = { isPublicOnly: false },
   ): Promise<Rule> {
+    const { isPublicOnly } = option;
     const rule = await this.ruleRepository.findOne({
       where: { name },
       relations: ['ruleBlocks', 'topics'],
@@ -229,27 +363,13 @@ export class RuleService {
     await this.ruleRepository.delete(id);
   }
 
-  async create(authorId: string, createRuleDto: CreateRuleDto): Promise<Rule> {
-    const { target, ruleBlockIds, topicIds } = createRuleDto;
-    const ruleBlocks = await this.ruleBlockRepository.find({
-      where: { id: In(ruleBlockIds) },
-    });
-    const hash = Util.hash(
-      ruleBlocks
-        .filter((item) => item.isPublic === true)
-        .map((item) => item.hash)
-        .sort()
-        .join(),
-    );
-
-    if (target === RuleTarget.space) {
-      this.validateSpaceRuleBlockSet(ruleBlocks);
-    } else if (target === RuleTarget.spaceEvent) {
-      this.validateSpaceEventRuleBlockSet(ruleBlocks);
-    } else {
-      throw new BadRequestException();
-    }
-
+  async create(
+    authorId: string,
+    createRuleDto: CreateRuleDto,
+    ruleBlocks: RuleBlock[],
+    hash: string,
+  ): Promise<Rule> {
+    const { topicIds } = createRuleDto;
     const rule = this.ruleRepository.create({
       ...createRuleDto,
       id: uuidv4(),
@@ -273,11 +393,80 @@ export class RuleService {
     return rule;
   }
 
+  async createSpaceRule(
+    authorId: string,
+    createRuleDto: CreateRuleDto,
+  ): Promise<Rule> {
+    const { target, ruleBlockIds } = createRuleDto;
+
+    if (target !== RuleTarget.space) {
+      throw new BadRequestException();
+    }
+
+    if (!ruleBlockIds) {
+      throw new BadRequestException(
+        `Need to contain at least 1 item in ruleBlockIds`,
+      );
+    }
+
+    const ruleBlocks = await this.ruleBlockRepository.find({
+      where: { id: In(ruleBlockIds) },
+    });
+    const hash = this.generateRuleHash(ruleBlocks.map((item) => item.hash));
+
+    this.validateSpaceRuleBlockSet(ruleBlocks);
+
+    return await this.create(authorId, createRuleDto, ruleBlocks, hash);
+  }
+
+  async createSpaceEventRule(
+    authorId: string,
+    createRuleDto: CreateRuleDto,
+  ): Promise<Rule> {
+    const { target, ruleBlockIds } = createRuleDto;
+    const emptyHash: string = Util.hash('');
+    let ruleBlocks: RuleBlock[] = [];
+    let hash: string = emptyHash;
+
+    if (target !== RuleTarget.spaceEvent) {
+      throw new BadRequestException();
+    }
+
+    if (ruleBlockIds) {
+      ruleBlocks = await this.ruleBlockRepository.find({
+        where: { id: In(ruleBlockIds) },
+      });
+      hash = this.generateRuleHash(ruleBlocks.map((item) => item.hash));
+    }
+
+    const duplicateSpaceEventRule = (
+      await this.findAll(
+        { target: RuleTarget.spaceEvent, hash, isActive: true },
+        {
+          isPagination: false,
+          isPublicOnly: false,
+        },
+      )
+    )?.data?.[0];
+
+    if (duplicateSpaceEventRule) {
+      return duplicateSpaceEventRule;
+    }
+
+    if (ruleBlocks.length > 0) {
+      this.validateSpaceEventRuleBlockSet(ruleBlocks);
+    }
+
+    return await this.create(authorId, createRuleDto, ruleBlocks, hash);
+  }
+
   async fork(
     authorId: string,
     forkRuleDto: { id: string; name?: string },
+    option: { isPublicOnly: boolean },
   ): Promise<Rule> {
     const { name, id } = forkRuleDto;
+    const { isPublicOnly } = option;
     const rule = await this.ruleRepository.findOne({
       where: { id },
       relations: ['ruleBlocks'],
@@ -287,7 +476,7 @@ export class RuleService {
       throw new BadRequestException();
     }
 
-    if (rule.authorId !== authorId) {
+    if (isPublicOnly) {
       const publicRuleBlocks = rule.ruleBlocks.filter(
         (ruleBlock) => ruleBlock.isPublic === true,
       );
@@ -308,7 +497,7 @@ export class RuleService {
   /**
    * The author of the rule can update the Rule.
    * Cannot update assigned space rule
-   * Cannot update spaceEvent rule when permission is requested
+   * Cannot update spaceEvent rule when permission request exists
    */
   async archiveAndUpdate(
     id: string,
@@ -385,7 +574,7 @@ export class RuleService {
 
       if (permissionRequest) {
         throw new BadRequestException(
-          'This rule is being used. Try forking it or wait until permission request is resolved.',
+          'This rule is being used. Try forking it.',
         );
       }
     } else {
@@ -634,5 +823,9 @@ export class RuleService {
     }
 
     return true;
+  }
+
+  generateRuleHash(ruleBlockHashs: string[]) {
+    return Util.hash(ruleBlockHashs.sort().join());
   }
 }

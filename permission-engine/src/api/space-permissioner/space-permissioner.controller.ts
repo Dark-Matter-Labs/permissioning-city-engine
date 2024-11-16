@@ -103,7 +103,7 @@ export class SpacePermissionerController {
         spaceId,
         inviterId: inviter.id,
       },
-      false,
+      {isActive: false},
     );
   }
 
@@ -140,7 +140,7 @@ export class SpacePermissionerController {
           spaceId,
           userId: user.id,
         },
-        true,
+        {isActive: true},
       );
     }
   }

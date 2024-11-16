@@ -8,6 +8,7 @@ import {
   CreateDateColumn,
 } from 'typeorm';
 import { SpaceEvent } from './space-event.entity';
+import { SpaceEventImageType } from 'src/lib/type';
 
 @Entity()
 export class SpaceEventImage {
@@ -24,6 +25,9 @@ export class SpaceEventImage {
 
   @Column()
   link: string;
+
+  @Column()
+  type: SpaceEventImageType;
 
   @CreateDateColumn()
   @ApiProperty({ description: 'Created timestamp' })

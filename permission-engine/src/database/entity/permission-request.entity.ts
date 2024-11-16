@@ -17,6 +17,7 @@ import { SpaceEvent } from './space-event.entity';
 import { Space } from './space.entity';
 import { PermissionResponse } from './permission-response.entity';
 import { SpaceApprovedRule } from './space-approved-rule.entity';
+import { SpaceHistory } from './space-history.entity';
 
 @Entity()
 export class PermissionRequest {
@@ -101,4 +102,10 @@ export class PermissionRequest {
     (spaceApprovedRule) => spaceApprovedRule.permissionRequest,
   )
   spaceApprovedRules: SpaceApprovedRule[];
+
+  @OneToMany(
+    () => SpaceHistory,
+    (spaceHistory) => spaceHistory.permissionRequest,
+  )
+  spaceHistories: SpaceHistory[];
 }

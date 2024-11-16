@@ -41,6 +41,7 @@ Table space_image {
   id uuid [primary key]
   space_id uuid [not null]
   link text [not null]
+  type varchar [not null, default: 'list']
   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
   updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
 }
@@ -51,6 +52,7 @@ Table space_approved_rule {
   rule_id uuid [not null]
   permission_request_id uuid
   is_active bool [not null, default: true]
+  is_public bool [not null, default: true]
   utilization_count integer [not null, default: 0]
   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
   updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
@@ -120,6 +122,8 @@ Table space_event {
   duration varchar [not null]
   starts_at timestamptz [not null]
   ends_at timestamptz [not null]
+  attendee_count integer
+  report json
   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
   updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
 }
@@ -133,6 +137,7 @@ Table space_event_image {
   id uuid [primary key]
   space_event_id uuid [not null]
   link text [not null]
+  type varchar [not null, default: 'list']
   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
   updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
 }
@@ -171,18 +176,23 @@ Table space_history {
   id uuid [primary key]
   space_id uuid [not null]
   rule_id uuid [not null]
-  user_id uuid
+  logger_id uuid
+  space_history_id uuid
+  space_permissioner_id uuid
   space_event_id uuid
-  permissioner_ids uuid[]
-  is_active bool [not null, default: true]
-  type varchar [not null, note: 'create, update_details, activate, deactivate, permissioner_join, permissioner_leave, permission_request, permission_response']
+  permission_request_id uuid
+  is_public bool [not null, default: true]
+  type varchar [not null, note: 'create,update,permissioner_join,permissioner_leave,permission_request,permission_request_resolve,space_event_start,space_event_close,space_event_complete,space_event_complete_with_issue,space_event_complete_with_issue_resolve,space_issue,space_issue_resolve']
   details text
   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
 }
 Ref: space_history.space_id > space.id
-Ref: space_history.user_id > user.id
-Ref: space_history.space_event_id > space_event.id
+Ref: space_history.space_history_id > space_history.id
 Ref: space_history.rule_id > rule.id
+Ref: space_history.logger_id > user.id
+Ref: space_history.space_permissioner_id > space_permissioner.id
+Ref: space_history.space_event_id > space_event.id
+Ref: space_history.permission_request_id > permission_request.id
 
 Table permission_request {
   id uuid [primary key]
@@ -287,20 +297,6 @@ Ref: space_permissioner.user_id > user.id
 Ref: space_permissioner.inviter_id > user.id
 Ref: space_permissioner.space_id > space.id
 
-Table topic_follower {
-  topic_id uuid [not null]
-  user_id uuid [not null]
-  is_active bool [not null, default: true]
-  created_at timestamptz [default: `CURRENT_TIMESTAMP`]
-  updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
-
-  indexes {
-    (topic_id, user_id) [pk]
-  }
-}
-Ref: topic_follower.user_id > user.id
-Ref: topic_follower.topic_id > topic.id
-
 Table space_topic {
   space_id uuid [not null]
   topic_id uuid [not null]
@@ -343,5 +339,7 @@ Ref external_service_user: external_service.id <> user.id
 Ref space_event_topic: space_event.id <> topic.id
 
 Ref rule_topic: rule.id <> topic.id
+
+Ref user_topic: user.id <> topic.id
 
 Ref rule_rule_block: rule.id <> rule_block.id

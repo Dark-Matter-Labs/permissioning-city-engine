@@ -37,6 +37,8 @@ import { Topic } from 'src/database/entity/topic.entity';
 import { TopicService } from '../topic/topic.service';
 import { SpaceTopic } from 'src/database/entity/space-topic.entity';
 import { SpaceTopicService } from '../space-topic/space-topic.service';
+import { SpaceHistory } from 'src/database/entity/space-history.entity';
+import { SpaceHistoryService } from '../space-history/space-history.service';
 
 @Module({
   imports: [
@@ -47,6 +49,7 @@ import { SpaceTopicService } from '../space-topic/space-topic.service';
       Space,
       SpaceEquipment,
       SpaceTopic,
+      SpaceHistory,
       User,
       UserNotification,
       Rule,
@@ -86,6 +89,7 @@ import { SpaceTopicService } from '../space-topic/space-topic.service';
     SpaceService,
     SpaceEquipmentService,
     SpaceTopicService,
+    SpaceHistoryService,
     UserService,
     UserNotificationService,
     RuleService,

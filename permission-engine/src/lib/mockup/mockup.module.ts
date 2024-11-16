@@ -34,6 +34,8 @@ import { SpaceTopic } from 'src/database/entity/space-topic.entity';
 import { SpaceTopicService } from 'src/api/space-topic/space-topic.service';
 import { TopicService } from 'src/api/topic/topic.service';
 import { Topic } from 'src/database/entity/topic.entity';
+import { SpaceHistory } from 'src/database/entity/space-history.entity';
+import { SpaceHistoryService } from 'src/api/space-history/space-history.service';
 
 @Module({
   imports: [
@@ -56,6 +58,7 @@ import { Topic } from 'src/database/entity/topic.entity';
       Rule,
       RuleBlock,
       Topic,
+      SpaceHistory,
     ]),
   ],
   providers: [
@@ -76,6 +79,7 @@ import { Topic } from 'src/database/entity/topic.entity';
     RuleService,
     RuleBlockService,
     TopicService,
+    SpaceHistoryService,
   ],
   exports: [MockupService],
 })

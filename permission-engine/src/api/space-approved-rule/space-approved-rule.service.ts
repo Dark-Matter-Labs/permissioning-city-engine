@@ -11,6 +11,7 @@ import { Rule } from 'src/database/entity/rule.entity';
 import { SpacePermissioner } from 'src/database/entity/space-permissioner.entity';
 import { SpaceService } from '../space/space.service';
 import { SpaceApprovedRuleSortBy } from 'src/lib/type';
+import { RuleService } from '../rule/rule.service';
 
 @Injectable()
 export class SpaceApprovedRuleService {
@@ -20,11 +21,14 @@ export class SpaceApprovedRuleService {
     @InjectRepository(SpacePermissioner)
     private spacePermissionerRepository: Repository<SpacePermissioner>,
     private readonly spaceService: SpaceService,
+    private readonly ruleService: RuleService,
   ) {}
 
   async findAll(
     findAllSpaceApprovedRuleDto: FindAllSpaceApprovedRuleDto,
+    option: { isPublic: boolean } = { isPublic: true },
   ): Promise<{ data: Rule[]; total: number }> {
+    const { isPublic } = option;
     const { page, limit, spaceId, ruleId, topicIds, isActive, sortBy } =
       findAllSpaceApprovedRuleDto;
 
@@ -49,6 +53,12 @@ export class SpaceApprovedRuleService {
       paramIndex++;
       where.push(`sar.is_active = $${paramIndex}`);
       params.push(isActive);
+    }
+
+    if (isPublic != null) {
+      paramIndex++;
+      where.push(`sar.is_public = $${paramIndex}`);
+      params.push(isPublic);
     }
 
     if (topicIds != null) {
@@ -86,17 +96,21 @@ export class SpaceApprovedRuleService {
           r.created_at,
           r.updated_at,
           sar.utilization_count,
-          ARRAY_AGG(rb)
+          ARRAY_AGG(DISTINCT rb),
+          ARRAY_AGG(DISTINCT t)
         ) FROM
          space_approved_rule sar,
          rule r,
          rule_topic rt,
+         topic t,
          rule_rule_block rrb,
          rule_block rb
         WHERE
           sar.rule_id = r.id
         AND
           r.id = rt.rule_id
+        AND
+          t.id = rt.topic_id
         AND
           r.id = rrb.rule_id
         AND
@@ -120,6 +134,43 @@ export class SpaceApprovedRuleService {
 
     if (data != null) {
       result = data.map((item) => {
+        let ruleBlocks = item.row.f11;
+        let topics = item.row.f12;
+        if (ruleBlocks) {
+          ruleBlocks = ruleBlocks.map((item) => {
+            return {
+              id: item.id,
+              name: item.name,
+              hash: item.hash,
+              author: item.author,
+              authorId: item.author_id,
+              type: item.type,
+              content: item.content,
+              details: item.details,
+              isPublic: item.is_public,
+              createdAt: item.created_at,
+              updatedAt: item.updated_at,
+            };
+          });
+        }
+        if (topics) {
+          topics = topics.map((item) => {
+            return {
+              id: item.id,
+              authorId: item.author_id,
+              name: item.name,
+              icon: item.icon,
+              country: item.country,
+              region: item.region,
+              city: item.city,
+              details: item.details,
+              isActive: item.is_active,
+              createdAt: item.created_at,
+              updatedAt: item.updated_at,
+            };
+          });
+        }
+
         return {
           id: item.row.f1,
           name: item.row.f2,
@@ -131,10 +182,12 @@ export class SpaceApprovedRuleService {
           createdAt: item.row.f8,
           updatedAt: item.row.f9,
           utilizationCount: item.row.f10,
-          ruleBlocks: item.row.f11,
+          ruleBlocks,
+          topics,
         };
       });
     }
+
     return {
       data: result,
       total: parseInt(total),
@@ -150,26 +203,37 @@ export class SpaceApprovedRuleService {
 
   async create(
     createSpaceApprovedRuleDto: CreateSpaceApprovedRuleDto,
+    option: { isForce: boolean } = { isForce: false },
   ): Promise<SpaceApprovedRule> {
-    const { spaceId } = createSpaceApprovedRuleDto;
+    const { isForce } = option;
+    const { spaceId, ruleId } = createSpaceApprovedRuleDto;
     const space = await this.spaceService.findOneById(spaceId);
-    const isPermissionerExists =
-      await this.spacePermissionerRepository.existsBy({
-        spaceId,
+    const rule = await this.ruleService.findOneById(ruleId);
+    const isPublic = !rule.ruleBlocks.find((item) => item.isPublic === false);
+    const existingSpaceApprovedRule = await this.findOne(spaceId, ruleId);
+
+    if (existingSpaceApprovedRule) {
+      return existingSpaceApprovedRule;
+    } else {
+      const isPermissionerExists =
+        await this.spacePermissionerRepository.existsBy({
+          spaceId,
+          isActive: true,
+          userId: Not(space.ownerId),
+        });
+
+      if (isForce === false && isPermissionerExists === true) {
+        throw new ForbiddenException('Cannot update rule whithout permission.');
+      }
+
+      const spaceApprovedRule = this.spaceApprovedRuleRepository.create({
+        ...createSpaceApprovedRuleDto,
         isActive: true,
-        userId: Not(space.ownerId),
+        isPublic,
       });
 
-    if (isPermissionerExists === true) {
-      throw new ForbiddenException('Cannot update rule whithout permission.');
+      return this.spaceApprovedRuleRepository.save(spaceApprovedRule);
     }
-
-    const spaceApprovedRule = this.spaceApprovedRuleRepository.create({
-      ...createSpaceApprovedRuleDto,
-      isActive: true,
-    });
-
-    return this.spaceApprovedRuleRepository.save(spaceApprovedRule);
   }
 
   async update(

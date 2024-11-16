@@ -6,16 +6,22 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOneOptions, Not, Repository } from 'typeorm';
 import { Space } from '../../database/entity/space.entity';
-import { CreateSpaceDto, UpdateSpaceDto } from './dto';
+import {
+  CreateSpaceDto,
+  ReportSpaceIssueDto,
+  ResolveSpaceIssueDto,
+  UpdateSpaceDto,
+} from './dto';
 import { User } from 'src/database/entity/user.entity';
 import { Rule } from 'src/database/entity/rule.entity';
 import { SpacePermissioner } from 'src/database/entity/space-permissioner.entity';
 import { v4 as uuidv4 } from 'uuid';
-import { RuleBlockType } from 'src/lib/type';
+import { RuleBlockType, SpaceHistoryType } from 'src/lib/type';
 import { RuleBlock } from 'src/database/entity/rule-block.entity';
 import { SpacePermissionerService } from '../space-permissioner/space-permissioner.service';
 import { Logger } from 'src/lib/logger/logger.service';
 import { SpaceTopicService } from '../space-topic/space-topic.service';
+import { SpaceHistoryService } from '../space-history/space-history.service';
 
 @Injectable()
 export class SpaceService {
@@ -30,6 +36,7 @@ export class SpaceService {
     private spacePermissionerRepository: Repository<SpacePermissioner>,
     private readonly spacePermissionerService: SpacePermissionerService,
     private readonly spaceTopicService: SpaceTopicService,
+    private readonly spaceHistoryService: SpaceHistoryService,
     private readonly logger: Logger,
   ) {}
 
@@ -38,16 +45,20 @@ export class SpaceService {
     return this.spaceRepository.find();
   }
 
-  findOneById(id: string, relations?: string[]): Promise<Space> {
-    const option: FindOneOptions = {
+  findOneById(
+    id: string,
+    option: { relations?: string[] } = {},
+  ): Promise<Space> {
+    const { relations } = option;
+    const queryOption: FindOneOptions = {
       where: { id },
     };
 
     if (Array.isArray(relations)) {
-      option.relations = relations;
+      queryOption.relations = relations;
     }
 
-    return this.spaceRepository.findOne(option);
+    return this.spaceRepository.findOne(queryOption);
   }
 
   async findRuleById(id: string): Promise<Rule> {
@@ -100,7 +111,7 @@ export class SpaceService {
           spaceId: space.id,
           userId: ownerId,
         },
-        true,
+        { isActive: true },
       );
     } catch (error) {
       this.logger.error(error.message, error);
@@ -179,7 +190,7 @@ export class SpaceService {
     let result = false;
 
     try {
-      const space = await this.findOneById(id, ['spaceTopics']);
+      const space = await this.findOneById(id, { relations: ['spaceTopics'] });
 
       if (space.spaceTopics.length >= 20) {
         throw new BadRequestException(`Cannot have more than 20 topics`);
@@ -228,5 +239,52 @@ export class SpaceService {
         result,
       },
     };
+  }
+
+  async reportIssue(
+    spaceId: string,
+    loggerId: string,
+    reportSpaceIssueDto: ReportSpaceIssueDto,
+  ) {
+    const space = await this.findOneById(spaceId);
+
+    if (!space) {
+      throw new BadRequestException();
+    }
+
+    return await this.spaceHistoryService.create({
+      ...reportSpaceIssueDto,
+      spaceId,
+      loggerId,
+      ruleId: space.ruleId,
+      type: SpaceHistoryType.spaceIssue,
+    });
+  }
+
+  async resolveIssue(
+    spaceId: string,
+    loggerId: string,
+    resolveSpaceIssueDto: ResolveSpaceIssueDto,
+  ) {
+    const space = await this.findOneById(spaceId);
+
+    if (!space) {
+      throw new BadRequestException();
+    }
+
+    const spaceHistory = await this.spaceHistoryService.findOneById(
+      resolveSpaceIssueDto.spaceHistoryId,
+    );
+
+    const { isPublic } = spaceHistory;
+
+    return await this.spaceHistoryService.create({
+      ...resolveSpaceIssueDto,
+      spaceId,
+      loggerId,
+      ruleId: space.ruleId,
+      type: SpaceHistoryType.spaceIssueResolve,
+      isPublic,
+    });
   }
 }

@@ -26,4 +26,9 @@ export class CreateUserDto {
   @MaxLength(100)
   @ApiPropertyOptional({ description: 'City' })
   city?: string;
+
+  @IsOptional()
+  @MaxLength(200)
+  @ApiPropertyOptional({ description: 'Details' })
+  details?: string;
 }

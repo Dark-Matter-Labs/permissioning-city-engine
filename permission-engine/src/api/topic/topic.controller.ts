@@ -1,9 +1,19 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { TopicService } from './topic.service';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { FindAllTopicDto } from './dto';
+import { CreateTopicDto, FindAllTopicDto } from './dto';
 import { UserService } from '../user/user.service';
 import { Topic } from 'src/database/entity/topic.entity';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 @ApiTags('topic')
 @Controller('api/v1/topic')
@@ -51,17 +61,17 @@ export class TopicController {
   }
 
   // TODO. Decide topic management policy
-  // @Post()
-  // @ApiOperation({ summary: 'Create a topic' })
-  // @UseGuards(JwtAuthGuard)
-  // async create(
-  //   @Req() req,
-  //   @Body() createRuleDto: CreateTopicDto,
-  // ): Promise<Topic> {
-  //   const user = await this.userService.findOneByEmail(req.user.email);
+  @Post()
+  @ApiOperation({ summary: 'Create a topic' })
+  @UseGuards(JwtAuthGuard)
+  async create(
+    @Req() req,
+    @Body() createRuleDto: CreateTopicDto,
+  ): Promise<Topic> {
+    const user = await this.userService.findOneByEmail(req.user.email);
 
-  //   return this.topicService.create(user.id, createRuleDto);
-  // }
+    return this.topicService.create(user.id, createRuleDto);
+  }
 
   // @Put()
   // @ApiOperation({ summary: 'Update a topic' })

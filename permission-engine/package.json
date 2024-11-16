@@ -8,8 +8,8 @@
   "scripts": {
     "build": "nest build",
     "postbuild": "npm run dbml2sql:build",
-    "dbml2sql:build": "npm run dbml2sql:table && mkdir -p dist/database/sql && mkdir -p dist/database/sql/migrations && cp src/database/sql/*.sql dist/database/sql && cp src/database/sql/migrations/*.sql dist/database/sql/migrations",
-    "dbml2sql:table": "cd src/database && dbml2sql dbml/tables.dbml --postgres > sql/tables.dbml.sql && ts-node script/refine-sql.ts sql/tables.dbml.sql > sql/tables.sql",
+    "dbml2sql:build": "npm run dbml2sql:tables && mkdir -p dist/database/sql && mkdir -p dist/database/sql/migrations && cp src/database/sql/*.sql dist/database/sql && cp src/database/sql/migrations/*.sql dist/database/sql/migrations",
+    "dbml2sql:tables": "cd src/database && dbml2sql dbml/tables.dbml --postgres > sql/tables.dbml.sql && ts-node script/refine-sql.ts sql/tables.dbml.sql > sql/tables.sql",
     "migration:create": "ts-node src/database/script/create-migration.ts",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
@@ -112,6 +112,7 @@
     "supertest": "^6.3.3",
     "ts-jest": "^29.1.0",
     "ts-loader": "^9.4.3",
+    "ts-migrate": "^0.1.35",
     "ts-node": "^10.9.1",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.1.3"

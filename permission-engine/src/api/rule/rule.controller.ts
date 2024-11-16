@@ -23,6 +23,7 @@ import { SpaceEventService } from '../space-event/space-event.service';
 import { SpacePermissionerService } from '../space-permissioner/space-permissioner.service';
 import { SpaceService } from '../space/space.service';
 import { SpacePermissioner } from 'src/database/entity/space-permissioner.entity';
+import { RuleTarget } from 'src/lib/type';
 
 @ApiTags('rule')
 @Controller('api/v1/rule')
@@ -36,19 +37,84 @@ export class RuleController {
   ) {}
 
   @Get()
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get all rules' })
-  findAll(@Query() query: FindAllRuleDto) {
+  async findAll(@Req() req, @Query() query: FindAllRuleDto) {
+    const user = await this.userService.findOneByEmail(req.user.email);
     const { page, limit, target, authorId, parentRuleId, hash, ids } = query;
 
-    return this.ruleService.findAll({
-      page,
-      limit,
-      target,
-      authorId,
-      parentRuleId,
-      hash,
-      ids,
-    });
+    return this.ruleService.findAll(
+      {
+        page,
+        limit,
+        target,
+        authorId,
+        parentRuleId,
+        hash,
+        ids,
+      },
+      {
+        isPagination: true,
+        isPublicOnly: true,
+        queryUserId: user.id,
+      },
+    );
+  }
+
+  @Get('space/:spaceId')
+  @ApiOperation({ summary: 'Get rule by spaceId' })
+  @UseGuards(JwtAuthGuard)
+  async findOneBySpaceId(
+    @Req() req,
+    @Param('spaceId') spaceId: string,
+  ): Promise<Rule> {
+    const user = await this.userService.findOneByEmail(req.user.email);
+    const rule = await this.ruleService.findOneBySpaceId(spaceId);
+
+    if (!rule) {
+      throw new BadRequestException(
+        `There is no rule with spaceId: ${spaceId}`,
+      );
+    }
+
+    const publicRuleBlocks = rule?.ruleBlocks?.filter(
+      (ruleBlock) => ruleBlock.isPublic === true,
+    );
+    const spaces =
+      (await this.spaceService.findAllByRuleId(rule.id))?.data ?? [];
+    const spaceEvents =
+      (
+        await this.spaceEventService.findAll(
+          {
+            ruleId: rule.id,
+          },
+          { isPagination: false },
+        )
+      )?.data ?? [];
+    const spacePermissioners: SpacePermissioner[] = [];
+
+    for (const space of spaces) {
+      await this.spacePermissionerService
+        .findAllBySpaceId(space.id, { isActive: true }, { isPagination: false })
+        .then((res) => {
+          if (res.data) {
+            spacePermissioners.push(...res.data);
+          }
+        });
+    }
+
+    if (
+      [
+        user.id,
+        ...spaces.map((item) => item.ownerId),
+        ...spaceEvents.map((item) => item.organizerId),
+        ...spacePermissioners.map((item) => item.userId),
+      ].includes(rule.authorId) === false
+    ) {
+      rule.ruleBlocks = publicRuleBlocks;
+    }
+
+    return rule;
   }
 
   @Get(':id')
@@ -72,14 +138,14 @@ export class RuleController {
           {
             ruleId: id,
           },
-          false,
+          { isPagination: false },
         )
       )?.data ?? [];
     const spacePermissioners: SpacePermissioner[] = [];
 
     for (const space of spaces) {
       await this.spacePermissionerService
-        .findAllBySpaceId(space.id, { isActive: true }, false)
+        .findAllBySpaceId(space.id, { isActive: true }, { isPagination: false })
         .then((res) => {
           if (res.data) {
             spacePermissioners.push(...res.data);
@@ -110,7 +176,13 @@ export class RuleController {
   ): Promise<Rule> {
     const user = await this.userService.findOneByEmail(req.user.email);
 
-    return this.ruleService.create(user.id, createRuleDto);
+    const { target } = createRuleDto;
+    if ([RuleTarget.space, RuleTarget.spaceEvent].includes(target) === false) {
+      throw new BadRequestException(`Unsupported rule target: ${target}`);
+    }
+    return target === RuleTarget.space
+      ? this.ruleService.createSpaceRule(user.id, createRuleDto)
+      : this.ruleService.createSpaceEventRule(user.id, createRuleDto);
   }
 
   @Post(':id/fork')
@@ -122,8 +194,15 @@ export class RuleController {
     @Body() forkRuleDto: ForkRuleDto,
   ): Promise<Rule> {
     const user = await this.userService.findOneByEmail(req.user.email);
+    const rule = await this.ruleService.findOneById(id);
 
-    return this.ruleService.fork(user.id, { ...forkRuleDto, id });
+    const isPublicOnly = user.id === rule.authorId;
+
+    return this.ruleService.fork(
+      user.id,
+      { ...forkRuleDto, id },
+      { isPublicOnly },
+    );
   }
 
   @Put(':id')
@@ -136,9 +215,14 @@ export class RuleController {
   ) {
     const user = await this.userService.findOneByEmail(req.user.email);
     const rule = await this.ruleService.findOneById(id);
+    const { hash } = updateRuleDto;
+
+    if (hash) {
+      throw new ForbiddenException(`Cannot update hash`);
+    }
 
     if (!rule) {
-      throw new BadRequestException();
+      throw new BadRequestException(`There is no rule with id: ${id}`);
     }
 
     if (rule.authorId !== user.id) {

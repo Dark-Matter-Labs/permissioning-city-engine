@@ -8,7 +8,9 @@ import {
   CompleteWithIssueResolvedSpaceEventDto,
   CompleteWithIssueSpaceEventDto,
   CreateSpaceEventDto,
+  UpdateSpaceEventAdditionalInfoDto,
   UpdateSpaceEventDto,
+  UpdateSpaceEventReportDto,
 } from './dto';
 import { SpaceEvent } from 'src/database/entity/space-event.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -38,7 +40,7 @@ export class SpaceEventService {
 
   async findAll(
     findAllSpaceEventDto: FindAllSpaceEventDto,
-    isPagination: boolean = true,
+    option: { isPagination: boolean } = { isPagination: true },
   ): Promise<{ data: SpaceEvent[]; total: number }> {
     const {
       page,
@@ -54,7 +56,7 @@ export class SpaceEventService {
       endsBefore,
       name,
     } = findAllSpaceEventDto;
-
+    const { isPagination } = option;
     const where = [];
     const params: any[] =
       isPagination === true ? [(page - 1) * limit, limit] : [];
@@ -287,6 +289,99 @@ export class SpaceEventService {
     const updateResult = await this.spaceEventRepository.update(id, {
       ...updateSpaceEventDto,
       endsAt: start.add(numberPart, stringPart).toDate(),
+      updatedAt: new Date(),
+    });
+
+    return {
+      data: {
+        result: updateResult.affected === 1,
+      },
+    };
+  }
+
+  async updateAdditionalInfo(
+    id: string,
+    updateSpaceEventAdditionalInfoDto: UpdateSpaceEventAdditionalInfoDto,
+  ): Promise<{ data: { result: boolean } }> {
+    const spaceEvent = await this.spaceEventRepository.findOneBy({ id });
+
+    if (
+      [
+        SpaceEventStatus.closed,
+        SpaceEventStatus.complete,
+        SpaceEventStatus.completeWithIssue,
+        SpaceEventStatus.completeWithIssueResolved,
+      ].includes(spaceEvent.status) === true
+    ) {
+      throw new ForbiddenException('Cannot update after closed state.');
+    }
+
+    const updateResult = await this.spaceEventRepository.update(id, {
+      ...updateSpaceEventAdditionalInfoDto,
+      updatedAt: new Date(),
+    });
+
+    return {
+      data: {
+        result: updateResult.affected === 1,
+      },
+    };
+  }
+
+  async updateRuleId(
+    id: string,
+    ruleId: string,
+  ): Promise<{ data: { result: boolean } }> {
+    const updateResult = await this.spaceEventRepository.update(id, {
+      ruleId,
+      updatedAt: new Date(),
+    });
+
+    return {
+      data: {
+        result: updateResult.affected === 1,
+      },
+    };
+  }
+
+  async updateReport(
+    id: string,
+    updateSpaceEventReportDto: UpdateSpaceEventReportDto,
+  ): Promise<{ data: { result: boolean } }> {
+    const spaceEvent = await this.spaceEventRepository.findOneBy({ id });
+
+    if (
+      [
+        SpaceEventStatus.complete,
+        SpaceEventStatus.completeWithIssue,
+        SpaceEventStatus.completeWithIssueResolved,
+      ].includes(spaceEvent.status) === false
+    ) {
+      throw new ForbiddenException('Cannot report before complete state.');
+    }
+
+    const {
+      attendeeCount,
+      spaceSuitability,
+      spaceSatisfaction,
+      eventGoal,
+      spaceIssue,
+      spaceSuggestions,
+    } = updateSpaceEventReportDto;
+
+    const report = JSON.parse(
+      JSON.stringify({
+        spaceSuitability,
+        spaceSatisfaction,
+        eventGoal,
+        spaceIssue,
+        spaceSuggestions,
+      }),
+    );
+
+    const updateResult = await this.spaceEventRepository.update(id, {
+      attendeeCount,
+      report,
       updatedAt: new Date(),
     });
 

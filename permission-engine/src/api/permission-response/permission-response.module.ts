@@ -26,6 +26,8 @@ import { SpaceTopic } from 'src/database/entity/space-topic.entity';
 import { PermissionRequestService } from '../permission-request/permission-request.service';
 import { TopicService } from '../topic/topic.service';
 import { Topic } from 'src/database/entity/topic.entity';
+import { SpaceHistory } from 'src/database/entity/space-history.entity';
+import { SpaceHistoryService } from '../space-history/space-history.service';
 
 @Module({
   imports: [
@@ -36,6 +38,7 @@ import { Topic } from 'src/database/entity/topic.entity';
       SpaceEvent,
       SpaceEquipment,
       SpaceTopic,
+      SpaceHistory,
       User,
       UserNotification,
       Rule,
@@ -53,6 +56,7 @@ import { Topic } from 'src/database/entity/topic.entity';
     SpaceEventService,
     SpaceEquipmentService,
     SpaceTopicService,
+    SpaceHistoryService,
     UserService,
     UserNotificationService,
     RuleService,

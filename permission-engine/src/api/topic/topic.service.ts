@@ -22,11 +22,11 @@ export class TopicService {
 
   async findAll(
     findAllTopicDto: FindAllTopicDto,
-    isPagination: boolean = true,
+    option: { isPagination: boolean } = { isPagination: true },
   ): Promise<{ data: Topic[]; total: number }> {
     const { page, limit, isActive, names, ids, country, region, city } =
       findAllTopicDto;
-
+    const { isPagination } = option;
     const where: FindOptionsWhere<Topic> = {};
 
     if (ids != null) {
@@ -225,6 +225,69 @@ export class TopicService {
             t.updated_at
         ) FROM topic t, rule_topic rt
         WHERE t.id = rt.topic_id AND ${where.join(' AND ')}
+        GROUP BY t.id
+      )
+      SELECT COUNT(*) AS total, json_agg(filtered_data) AS data
+      FROM filtered_data;
+    `;
+
+    const [{ data, total }] = await this.topicRepository.query(query, params);
+
+    let result = [];
+
+    if (data != null) {
+      result = data.map((item) => {
+        return {
+          id: item.row.f1,
+          authorId: item.row.f2,
+          name: item.row.f3,
+          icon: item.row.f4,
+          country: item.row.f5,
+          region: item.row.f6,
+          city: item.row.f7,
+          details: item.row.f8,
+          isActive: item.row.f9,
+          createdAt: item.row.f10,
+          updatedAt: item.row.f11,
+        };
+      });
+    }
+
+    return {
+      data: result,
+      total: parseInt(total),
+    };
+  }
+
+  async findAllByUserId(
+    userId: string,
+  ): Promise<{ data: Topic[]; total: number }> {
+    const where = [];
+    const params: any[] = [];
+    let paramIndex: number = params.length;
+
+    if (userId != null) {
+      paramIndex++;
+      where.push(`ut.user_id = $${paramIndex}`);
+      params.push(userId);
+    }
+
+    const query = `
+      WITH filtered_data AS (
+        SELECT (
+            t.id,
+            t.author_id,
+            t.name,
+            t.icon,
+            t.country,
+            t.region,
+            t.city,
+            t.details,
+            t.is_active,
+            t.created_at,
+            t.updated_at
+        ) FROM topic t, user_topic ut
+        WHERE t.id = ut.topic_id AND ${where.join(' AND ')}
         GROUP BY t.id
       )
       SELECT COUNT(*) AS total, json_agg(filtered_data) AS data

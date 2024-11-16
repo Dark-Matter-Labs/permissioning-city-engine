@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS "space_image" (
   "id" uuid PRIMARY KEY,
   "space_id" uuid NOT NULL,
   "link" text NOT NULL,
+  "type" varchar NOT NULL DEFAULT 'list',
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
   "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
 );
@@ -47,6 +48,8 @@ CREATE TABLE IF NOT EXISTS "space_approved_rule" (
   "rule_id" uuid NOT NULL,
   "permission_request_id" uuid,
   "is_active" bool NOT NULL DEFAULT true,
+  "is_public" bool NOT NULL DEFAULT true,
+  "utilization_count" integer NOT NULL DEFAULT 0,
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
   "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
   PRIMARY KEY ("space_id", "rule_id")
@@ -105,6 +108,8 @@ CREATE TABLE IF NOT EXISTS "space_event" (
   "duration" varchar NOT NULL,
   "starts_at" timestamptz NOT NULL,
   "ends_at" timestamptz NOT NULL,
+  "attendee_count" integer,
+  "report" json,
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
   "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
 );
@@ -113,6 +118,7 @@ CREATE TABLE IF NOT EXISTS "space_event_image" (
   "id" uuid PRIMARY KEY,
   "space_event_id" uuid NOT NULL,
   "link" text NOT NULL,
+  "type" varchar NOT NULL DEFAULT 'list',
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
   "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
 );
@@ -146,10 +152,12 @@ CREATE TABLE IF NOT EXISTS "space_history" (
   "id" uuid PRIMARY KEY,
   "space_id" uuid NOT NULL,
   "rule_id" uuid NOT NULL,
-  "user_id" uuid,
+  "logger_id" uuid,
+  "space_history_id" uuid,
+  "space_permissioner_id" uuid,
   "space_event_id" uuid,
-  "permissioner_ids" uuid[],
-  "is_active" bool NOT NULL DEFAULT true,
+  "permission_request_id" uuid,
+  "is_public" bool NOT NULL DEFAULT true,
   "type" varchar NOT NULL,
   "details" text,
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
@@ -164,8 +172,8 @@ CREATE TABLE IF NOT EXISTS "permission_request" (
   "space_event_rule_id" uuid,
   "status" varchar NOT NULL DEFAULT 'pending',
   "resolve_status" varchar,
+  "resolve_details" text,
   "permission_code" varchar,
-  "response_summary" text,
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
   "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
 );
@@ -225,19 +233,9 @@ CREATE TABLE IF NOT EXISTS "space_permissioner" (
   "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
 );
 
-CREATE TABLE IF NOT EXISTS "topic_follower" (
-  "topic_id" uuid NOT NULL,
-  "user_id" uuid NOT NULL,
-  "is_active" bool NOT NULL DEFAULT true,
-  "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
-  "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
-  PRIMARY KEY ("topic_id", "user_id")
-);
-
 CREATE TABLE IF NOT EXISTS "space_topic" (
   "space_id" uuid NOT NULL,
   "topic_id" uuid NOT NULL,
-  "is_desired" bool NOT NULL DEFAULT true,
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
   "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
   PRIMARY KEY ("space_id", "topic_id")
@@ -270,6 +268,12 @@ CREATE TABLE IF NOT EXISTS "rule_topic" (
   PRIMARY KEY ("rule_id", "topic_id")
 );
 
+CREATE TABLE IF NOT EXISTS "user_topic" (
+  "user_id" uuid,
+  "topic_id" uuid,
+  PRIMARY KEY ("user_id", "topic_id")
+);
+
 CREATE TABLE IF NOT EXISTS "rule_rule_block" (
   "rule_id" uuid,
   "rule_block_id" uuid,
@@ -280,7 +284,7 @@ COMMENT ON COLUMN "user"."type" IS 'individual, organization, government';
 COMMENT ON COLUMN "user"."birth_year" IS 'year of birth';
 COMMENT ON COLUMN "topic"."icon" IS 'unicode emoji';
 COMMENT ON COLUMN "space_event"."status" IS 'pending, permission_requested, permission_approved, permission_approved_with_condition, permission_rejected, running, complete';
-COMMENT ON COLUMN "space_history"."type" IS 'create, update_details, activate, deactivate, permissioner_join, permissioner_leave, permission_request, permission_response';
+COMMENT ON COLUMN "space_history"."type" IS 'create,update,permissioner_join,permissioner_leave,permission_request,permission_request_resolve,space_event_start,space_event_close,space_event_complete,space_event_complete_with_issue,space_event_complete_with_issue_resolve,space_issue,space_issue_resolve';
 COMMENT ON COLUMN "permission_request"."space_event_id" IS 'when space_event_id is null, the permission_request is for the space rule revision';
 COMMENT ON COLUMN "permission_request"."space_event_rule_id" IS 'when space_event_rule_id is null, the permission_request is for the space rule revision';
 COMMENT ON COLUMN "permission_request"."status" IS 'pending, assigned, assign_failed, review_approved, review_approved_with_condition';
@@ -563,11 +567,53 @@ BEGIN
         FROM information_schema.table_constraints
         WHERE constraint_type = 'FOREIGN KEY'
         AND table_name = 'space_history'
-        AND constraint_name = 'space_history_fkey_user_id'
+        AND constraint_name = 'space_history_fkey_space_history_id'
     ) THEN
         ALTER TABLE space_history
-        ADD CONSTRAINT space_history_fkey_user_id
-        FOREIGN KEY ("user_id") REFERENCES "user" ("id");
+        ADD CONSTRAINT space_history_fkey_space_history_id
+        FOREIGN KEY ("space_history_id") REFERENCES "space_history" ("id");
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.table_constraints
+        WHERE constraint_type = 'FOREIGN KEY'
+        AND table_name = 'space_history'
+        AND constraint_name = 'space_history_fkey_rule_id'
+    ) THEN
+        ALTER TABLE space_history
+        ADD CONSTRAINT space_history_fkey_rule_id
+        FOREIGN KEY ("rule_id") REFERENCES "rule" ("id");
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.table_constraints
+        WHERE constraint_type = 'FOREIGN KEY'
+        AND table_name = 'space_history'
+        AND constraint_name = 'space_history_fkey_logger_id'
+    ) THEN
+        ALTER TABLE space_history
+        ADD CONSTRAINT space_history_fkey_logger_id
+        FOREIGN KEY ("logger_id") REFERENCES "user" ("id");
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.table_constraints
+        WHERE constraint_type = 'FOREIGN KEY'
+        AND table_name = 'space_history'
+        AND constraint_name = 'space_history_fkey_space_permissioner_id'
+    ) THEN
+        ALTER TABLE space_history
+        ADD CONSTRAINT space_history_fkey_space_permissioner_id
+        FOREIGN KEY ("space_permissioner_id") REFERENCES "space_permissioner" ("id");
     END IF;
 END $$;
 DO $$
@@ -591,11 +637,11 @@ BEGIN
         FROM information_schema.table_constraints
         WHERE constraint_type = 'FOREIGN KEY'
         AND table_name = 'space_history'
-        AND constraint_name = 'space_history_fkey_rule_id'
+        AND constraint_name = 'space_history_fkey_permission_request_id'
     ) THEN
         ALTER TABLE space_history
-        ADD CONSTRAINT space_history_fkey_rule_id
-        FOREIGN KEY ("rule_id") REFERENCES "rule" ("id");
+        ADD CONSTRAINT space_history_fkey_permission_request_id
+        FOREIGN KEY ("permission_request_id") REFERENCES "permission_request" ("id");
     END IF;
 END $$;
 DO $$
@@ -842,34 +888,6 @@ BEGIN
         SELECT 1
         FROM information_schema.table_constraints
         WHERE constraint_type = 'FOREIGN KEY'
-        AND table_name = 'topic_follower'
-        AND constraint_name = 'topic_follower_fkey_user_id'
-    ) THEN
-        ALTER TABLE topic_follower
-        ADD CONSTRAINT topic_follower_fkey_user_id
-        FOREIGN KEY ("user_id") REFERENCES "user" ("id");
-    END IF;
-END $$;
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1
-        FROM information_schema.table_constraints
-        WHERE constraint_type = 'FOREIGN KEY'
-        AND table_name = 'topic_follower'
-        AND constraint_name = 'topic_follower_fkey_topic_id'
-    ) THEN
-        ALTER TABLE topic_follower
-        ADD CONSTRAINT topic_follower_fkey_topic_id
-        FOREIGN KEY ("topic_id") REFERENCES "topic" ("id");
-    END IF;
-END $$;
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1
-        FROM information_schema.table_constraints
-        WHERE constraint_type = 'FOREIGN KEY'
         AND table_name = 'space_topic'
         AND constraint_name = 'space_topic_fkey_space_id'
     ) THEN
@@ -973,6 +991,34 @@ BEGIN
     ) THEN
         ALTER TABLE rule_topic
         ADD CONSTRAINT rule_topic_fkey_topic_id
+        FOREIGN KEY ("topic_id") REFERENCES "topic" ("id");
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.table_constraints
+        WHERE constraint_type = 'FOREIGN KEY'
+        AND table_name = 'user_topic'
+        AND constraint_name = 'user_topic_fkey_user_id'
+    ) THEN
+        ALTER TABLE user_topic
+        ADD CONSTRAINT user_topic_fkey_user_id
+        FOREIGN KEY ("user_id") REFERENCES "user" ("id");
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.table_constraints
+        WHERE constraint_type = 'FOREIGN KEY'
+        AND table_name = 'user_topic'
+        AND constraint_name = 'user_topic_fkey_topic_id'
+    ) THEN
+        ALTER TABLE user_topic
+        ADD CONSTRAINT user_topic_fkey_topic_id
         FOREIGN KEY ("topic_id") REFERENCES "topic" ("id");
     END IF;
 END $$;

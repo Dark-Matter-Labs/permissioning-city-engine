@@ -1,0 +1,26 @@
+{
+  "permissionResponseSummary": {
+    "text": "기대:\n{excitements}\n\n걱정:\n{worries}\n\n조건:\n{conditions}",
+    "html": "<ul><li><h2>기대:</h2><ol>{excitements}</ol></li><li><h2>걱정:</h2><ol>{worries}</ol></li><li><h2>조건:</h2><ol>{conditions}</ol></li></ul>"
+  },
+  "spaceEventSummary": {
+    "text": "이벤트: {eventTitle}\n주제: {eventTopics}\n내용: {eventDetails}\n 시간: {eventStartsAt} - {eventEndsAt}",
+    "html": "<ul><li><strong>이벤트</strong>: {eventTitle}</li><li><strong>주제</strong>: {eventTopics}</li><li><strong>내용</strong>: {eventDetails}</li><li><strong>시간</strong>: {eventStartsAt} - {eventEndsAt}</li></ul>"
+  },
+  "showEventCompletionResult": {
+    "text": "",
+    "html": ""
+  },
+  "spaceEventIssueReport": {
+    "text": "",
+    "html": ""
+  },
+  "spaceIssueReport": {
+    "text": "",
+    "html": ""
+  },
+  "spaceIssueResolveDetails": {
+    "text": "",
+    "html": ""
+  }
+}

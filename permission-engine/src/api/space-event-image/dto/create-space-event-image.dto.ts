@@ -1,5 +1,6 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { SpaceEventImageType } from 'src/lib/type';
 
 export class CreateSpaceEventImageDto {
   @IsOptional()
@@ -24,4 +25,12 @@ export class CreateSpaceEventImageDto {
     required: true,
   })
   link: string;
+
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({
+    description: 'SpaceEventImage type',
+    nullable: true,
+  })
+  type?: SpaceEventImageType = SpaceEventImageType.list;
 }

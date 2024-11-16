@@ -21,6 +21,9 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import {
   FindAllMatchedRuleDto,
   FindSpaceAvailabilityDto,
+  ReportSpaceIssueDto,
+  ResolveSpaceIssueDto,
+  SetSpaceImageDto,
   UpdateSpaceDto,
 } from './dto';
 import { UserService } from '../user/user.service';
@@ -32,11 +35,19 @@ import {
   RuleBlockType,
   SpaceAvailability,
   SpaceEventStatus,
+  SpaceHistoryType,
+  SpaceImageType,
+  UserNotificationTarget,
+  UserNotificationTemplateName,
+  UserNotificationType,
 } from 'src/lib/type';
 import { RuleService } from '../rule/rule.service';
 import { SpaceEventService } from '../space-event/space-event.service';
 import { getTimeIntervals } from '../../lib/util';
 import { TopicService } from '../topic/topic.service';
+import { SpaceHistoryService } from '../space-history/space-history.service';
+import { UserNotificationService } from '../user-notification/user-notification.service';
+import { SpacePermissionerService } from '../space-permissioner/space-permissioner.service';
 
 @ApiTags('space')
 @Controller('api/v1/space')
@@ -44,10 +55,13 @@ export class SpaceController {
   constructor(
     private readonly spaceService: SpaceService,
     private readonly userService: UserService,
+    private readonly userNotificationService: UserNotificationService,
     private readonly ruleService: RuleService,
     private readonly topicService: TopicService,
     private readonly spaceEventService: SpaceEventService,
     private readonly spaceImageService: SpaceImageService,
+    private readonly spaceHistoryService: SpaceHistoryService,
+    private readonly spacePermissionerService: SpacePermissionerService,
     private readonly logger: Logger,
   ) {}
 
@@ -75,7 +89,9 @@ export class SpaceController {
   @Get(':id')
   @ApiOperation({ summary: 'Get space by id' })
   findOneById(@Param('id') id: string): Promise<Space> {
-    return this.spaceService.findOneById(id, ['spaceImages', 'spaceTopics']);
+    return this.spaceService.findOneById(id, {
+      relations: ['spaceImages', 'spaceTopics.topic'],
+    });
   }
 
   @Get(':id/availability')
@@ -89,7 +105,7 @@ export class SpaceController {
     if (!space) {
       throw new BadRequestException(`There is no space with id: ${id}`);
     }
-    const spaceRule = await this.ruleService.findOneById(space.ruleId, false);
+    const spaceRule = await this.ruleService.findOneById(space.ruleId);
     const spaceEvents =
       (
         await this.spaceEventService.findAll(
@@ -106,7 +122,7 @@ export class SpaceController {
               SpaceEventStatus.closed,
             ],
           },
-          false,
+          { isPagination: false },
         )
       )?.data ?? [];
 
@@ -114,8 +130,10 @@ export class SpaceController {
       (
         await this.ruleService.findAll(
           { ids: spaceEvents.map((item) => item.ruleId) },
-          false,
-          false,
+          {
+            isPagination: false,
+            isPublicOnly: false,
+          },
         )
       )?.data ?? [];
 
@@ -193,8 +211,15 @@ export class SpaceController {
     @Body() createSpaceDto: CreateSpaceDto,
   ): Promise<Space> {
     const { images } = uploadedFiles;
+    const maxImageCount = 5;
     const user = await this.userService.findOneByEmail(req.user.email);
     const space = await this.spaceService.create(user.id, createSpaceDto);
+
+    if (images.length > 5) {
+      throw new BadRequestException(
+        `Cannot have more than ${maxImageCount} images`,
+      );
+    }
 
     images?.map(async (s3File) => {
       try {
@@ -202,11 +227,37 @@ export class SpaceController {
           id: s3File.key.split('_')[0],
           spaceId: space.id,
           link: s3File.location,
+          type: SpaceImageType.list,
         });
       } catch (error) {
         this.logger.error('Failed to create spaceImage', error);
       }
     });
+
+    try {
+      await this.spaceHistoryService.create({
+        spaceId: space.id,
+        ruleId: space.ruleId,
+        isPublic: true,
+        type: SpaceHistoryType.create,
+      });
+    } catch (error) {
+      this.logger.error(`Failed to log space history`, error);
+    }
+
+    try {
+      await this.userNotificationService.create({
+        userId: user.id,
+        target: UserNotificationTarget.spaceOwner,
+        type: UserNotificationType.external,
+        templateName: UserNotificationTemplateName.spaceCreated,
+        params: {
+          spaceId: space.id,
+        },
+      });
+    } catch (error) {
+      this.logger.error(`Failed to notify user`, error);
+    }
 
     return space;
   }
@@ -238,11 +289,23 @@ export class SpaceController {
     @Body() updateSpaceDto: UpdateSpaceDto,
   ) {
     const { images } = uploadedFiles;
+    const maxImageCount = 5;
     const user = await this.userService.findOneByEmail(req.user.email);
-    const space = await this.spaceService.findOneById(id);
+    const space = await this.spaceService.findOneById(id, {
+      relations: ['spaceImages'],
+    });
 
     if (space.ownerId !== user.id) {
       throw new ForbiddenException();
+    }
+
+    if (
+      space.spaceImages.filter((item) => item.type === SpaceImageType.list)
+        .length === 5
+    ) {
+      throw new BadRequestException(
+        `Cannot have more than ${maxImageCount} images`,
+      );
     }
 
     images?.map(async (s3File) => {
@@ -257,7 +320,111 @@ export class SpaceController {
       }
     });
 
-    return this.spaceService.update(id, updateSpaceDto);
+    const updateResult = await this.spaceService.update(id, updateSpaceDto);
+
+    try {
+      await this.spaceHistoryService.create({
+        spaceId: space.id,
+        ruleId: space.ruleId,
+        isPublic: true,
+        type: SpaceHistoryType.update,
+        // TODO. translate using user.country
+        details: `${Object.keys(updateSpaceDto).join(', ')} were updated by ${user.name}`,
+      });
+    } catch (error) {
+      this.logger.error(`Failed to log space history`, error);
+    }
+
+    try {
+      await this.userNotificationService.create({
+        userId: user.id,
+        target: UserNotificationTarget.spaceOwner,
+        type: UserNotificationType.external,
+        templateName: UserNotificationTemplateName.spaceUpdated,
+        params: {
+          spaceId: space.id,
+        },
+      });
+    } catch (error) {
+      this.logger.error(`Failed to notify user`, error);
+    }
+
+    return updateResult;
+  }
+
+  @Post(':id/image/:type')
+  @UseGuards(JwtAuthGuard)
+  @ApiBody({ type: SetSpaceImageDto })
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: 'images', maxCount: 1 }], {
+      fileFilter(req, file, cb) {
+        if (
+          ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'].includes(
+            file.mimetype,
+          ) === false
+        ) {
+          cb(new BadRequestException('file must be an image'), false);
+        } else {
+          cb(null, true);
+        }
+      },
+    }),
+  )
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Set space image' })
+  async setImage(
+    @Req() req,
+    @Param('id') id: string,
+    @Param('type') type: SpaceImageType,
+    @UploadedFiles() uploadedFiles: { images: Express.MulterS3.File[] },
+  ) {
+    const { images } = uploadedFiles;
+    const maxImageCount = 5;
+
+    if (images.length > 1) {
+      throw new BadRequestException('Only 1 image is allowed');
+    }
+
+    if (
+      [
+        SpaceImageType.list,
+        SpaceImageType.cover,
+        SpaceImageType.thumbnail,
+      ].includes(type) === false
+    ) {
+      throw new BadRequestException(`type ${type} is not allowed`);
+    }
+
+    const user = await this.userService.findOneByEmail(req.user.email);
+    const space = await this.spaceService.findOneById(id, {
+      relations: ['spaceImages'],
+    });
+
+    if (space.ownerId !== user.id) {
+      throw new ForbiddenException();
+    }
+
+    if (
+      space.spaceImages.filter((item) => item.type === SpaceImageType.list)
+        .length === 5
+    ) {
+      throw new BadRequestException(
+        `Cannot have more than ${maxImageCount} images`,
+      );
+    }
+
+    const image = images[0];
+
+    try {
+      await this.spaceImageService.create({
+        id: image.key.split('_')[0],
+        spaceId: space.id,
+        link: image.location,
+        type,
+      });
+    } catch (error) {
+      this.logger.error('Failed to create spaceImage', error);
+    }
   }
 
   @Put(':id/topic/add/:topicId')
@@ -270,6 +437,12 @@ export class SpaceController {
   ) {
     const user = await this.userService.findOneByEmail(req.user.email);
     const space = await this.spaceService.findOneById(id);
+    const spacePermissioners =
+      await this.spacePermissionerService.findAllBySpaceId(
+        id,
+        { isActive: true },
+        { isPagination: false },
+      );
     const topic = await this.topicService.findOneById(id);
 
     if (space.ownerId !== user.id) {
@@ -291,7 +464,38 @@ export class SpaceController {
       );
     }
 
-    return this.spaceService.addTopic(id, topicId);
+    const result = await this.spaceService.addTopic(id, topicId);
+
+    try {
+      await this.spaceHistoryService.create({
+        spaceId: space.id,
+        ruleId: space.ruleId,
+        isPublic: true,
+        type: SpaceHistoryType.update,
+        // TODO. translate using user.country
+        details: `Topic ${topic.name} was added by ${user.name}`,
+      });
+    } catch (error) {
+      this.logger.error(`Failed to log space history`, error);
+    }
+
+    spacePermissioners?.data?.forEach(async (spacePermissioner) => {
+      try {
+        await this.userNotificationService.create({
+          userId: spacePermissioner.userId,
+          target: UserNotificationTarget.permissioner,
+          type: UserNotificationType.internal,
+          templateName: UserNotificationTemplateName.spaceUpdated,
+          params: {
+            spaceId: space.id,
+          },
+        });
+      } catch (error) {
+        this.logger.error(`Failed to notify user`, error);
+      }
+    });
+
+    return result;
   }
 
   @Put(':id/topic/remove/:topicId')
@@ -305,6 +509,12 @@ export class SpaceController {
     const user = await this.userService.findOneByEmail(req.user.email);
     const space = await this.spaceService.findOneById(id);
     const topic = await this.topicService.findOneById(id);
+    const spacePermissioners =
+      await this.spacePermissionerService.findAllBySpaceId(
+        id,
+        { isActive: true },
+        { isPagination: false },
+      );
 
     if (space.ownerId !== user.id) {
       throw new ForbiddenException();
@@ -314,6 +524,148 @@ export class SpaceController {
       throw new BadRequestException(`There is no topic with id: ${topicId}`);
     }
 
-    return this.spaceService.removeTopic(id, topicId);
+    const result = await this.spaceService.removeTopic(id, topicId);
+
+    try {
+      await this.spaceHistoryService.create({
+        spaceId: space.id,
+        ruleId: space.ruleId,
+        isPublic: true,
+        type: SpaceHistoryType.update,
+        // TODO. translate using user.country
+        details: `Topic ${topic.name} was removed by ${user.name}`,
+      });
+    } catch (error) {
+      this.logger.error(`Failed to log space history`, error);
+    }
+
+    spacePermissioners?.data?.forEach(async (spacePermissioner) => {
+      try {
+        await this.userNotificationService.create({
+          userId: spacePermissioner.userId,
+          target: UserNotificationTarget.permissioner,
+          type: UserNotificationType.internal,
+          templateName: UserNotificationTemplateName.spaceUpdated,
+          params: {
+            spaceId: space.id,
+          },
+        });
+      } catch (error) {
+        this.logger.error(`Failed to notify user`, error);
+      }
+    });
+
+    return result;
+  }
+
+  @Post(':id/issue/report')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Remove a topic from space' })
+  async reportIssue(
+    @Req() req,
+    @Param('id') id: string,
+    @Body() reportSpaceIssueDto: ReportSpaceIssueDto,
+  ) {
+    const user = await this.userService.findOneByEmail(req.user.email);
+    const space = await this.spaceService.findOneById(id);
+    const spacePermissioners =
+      await this.spacePermissionerService.findAllBySpaceId(
+        id,
+        { isActive: true },
+        { isPagination: false },
+      );
+    const result = await this.spaceService.reportIssue(
+      id,
+      user.id,
+      reportSpaceIssueDto,
+    );
+
+    try {
+      await this.spaceHistoryService.create({
+        spaceId: id,
+        ruleId: space.ruleId,
+        isPublic: true,
+        type: SpaceHistoryType.spaceIssue,
+        // TODO. translate using user.country
+        details: `Issue was raised by ${user.name}`,
+      });
+    } catch (error) {
+      this.logger.error(`Failed to log space history`, error);
+    }
+
+    spacePermissioners?.data?.forEach(async (spacePermissioner) => {
+      try {
+        await this.userNotificationService.create({
+          userId: spacePermissioner.userId,
+          target: UserNotificationTarget.permissioner,
+          type: UserNotificationType.external,
+          templateName: UserNotificationTemplateName.spaceIssueRaised,
+          params: {
+            spaceId: space.id,
+            spaceIssueReport: reportSpaceIssueDto.details,
+          },
+        });
+      } catch (error) {
+        this.logger.error(`Failed to notify user`, error);
+      }
+    });
+
+    return result;
+  }
+
+  @Post(':id/issue/resolve')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Remove a topic from space' })
+  async resolveIssue(
+    @Req() req,
+    @Param('id') id: string,
+    @Body() resolveSpaceIssueDto: ResolveSpaceIssueDto,
+  ) {
+    const user = await this.userService.findOneByEmail(req.user.email);
+    const space = await this.spaceService.findOneById(id);
+    const spacePermissioners =
+      await this.spacePermissionerService.findAllBySpaceId(
+        id,
+        { isActive: true },
+        { isPagination: false },
+      );
+
+    const result = await this.spaceService.resolveIssue(
+      id,
+      user.id,
+      resolveSpaceIssueDto,
+    );
+
+    try {
+      await this.spaceHistoryService.create({
+        spaceId: id,
+        ruleId: space.ruleId,
+        isPublic: true,
+        type: SpaceHistoryType.spaceIssueResolve,
+        // TODO. translate using user.country
+        details: `Issue was resolved by ${user.name}`,
+      });
+    } catch (error) {
+      this.logger.error(`Failed to log space history`, error);
+    }
+
+    spacePermissioners?.data?.forEach(async (spacePermissioner) => {
+      try {
+        await this.userNotificationService.create({
+          userId: spacePermissioner.userId,
+          target: UserNotificationTarget.permissioner,
+          type: UserNotificationType.external,
+          templateName: UserNotificationTemplateName.spaceIssueResolved,
+          params: {
+            spaceId: space.id,
+            spaceIssueResolveDetails: resolveSpaceIssueDto.details,
+          },
+        });
+      } catch (error) {
+        this.logger.error(`Failed to notify user`, error);
+      }
+    });
+
+    return result;
   }
 }

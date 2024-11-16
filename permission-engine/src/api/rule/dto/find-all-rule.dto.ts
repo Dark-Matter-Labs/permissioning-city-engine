@@ -1,4 +1,10 @@
-import { IsOptional, IsUUID, IsString, IsArray } from 'class-validator';
+import {
+  IsOptional,
+  IsUUID,
+  IsString,
+  IsArray,
+  IsBoolean,
+} from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { RuleTarget } from 'src/lib/type';
 import { PaginationDto } from 'src/lib/dto';
@@ -21,6 +27,14 @@ export class FindAllRuleDto extends PaginationDto {
     type: String,
   })
   target?: RuleTarget;
+
+  @IsOptional()
+  @IsBoolean()
+  @ApiPropertyOptional({
+    description: 'Rule is active status',
+    type: 'boolean',
+  })
+  isActive?: boolean;
 
   @IsOptional()
   @IsUUID()

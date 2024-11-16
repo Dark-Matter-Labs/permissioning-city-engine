@@ -20,6 +20,9 @@ import {
   CompleteSpaceEventDto,
   CompleteWithIssueSpaceEventDto,
   CompleteWithIssueResolvedSpaceEventDto,
+  UpdateSpaceEventAdditionalInfoDto,
+  UpdateSpaceEventReportDto,
+  SetSpaceEventImageDto,
 } from './dto';
 import { SpaceEventService } from './space-event.service';
 import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -32,7 +35,11 @@ import { SpaceEventImageService } from '../space-event-image/space-event-image.s
 import { Logger } from 'src/lib/logger/logger.service';
 import { Express } from 'express';
 import { SpacePermissionerService } from '../space-permissioner/space-permissioner.service';
-import { SpaceEventStatus } from 'src/lib/type';
+import {
+  SpaceEventImageType,
+  SpaceEventReportQuestion,
+  SpaceEventStatus,
+} from 'src/lib/type';
 import dayjs from 'dayjs';
 
 @ApiTags('event')
@@ -80,6 +87,18 @@ export class SpaceEventController {
       endsBefore,
       name,
     });
+  }
+
+  @Get('/report')
+  @ApiOperation({ summary: 'Get SpaceEvent report questions' })
+  async findReportQuestions() {
+    return {
+      spaceSuitability: SpaceEventReportQuestion.spaceSuitability,
+      spaceSatisfaction: SpaceEventReportQuestion.spaceSatisfaction,
+      eventGoal: SpaceEventReportQuestion.eventGoal,
+      spaceIssue: SpaceEventReportQuestion.spaceIssue,
+      spaceSuggestions: SpaceEventReportQuestion.spaceSuggestions,
+    };
   }
 
   @Get(':id')
@@ -216,6 +235,7 @@ export class SpaceEventController {
       updateSpaceEventDto.externalServiceId != null ||
       updateSpaceEventDto.details != null ||
       updateSpaceEventDto.link != null ||
+      updateSpaceEventDto.callbackLink != null ||
       updateSpaceEventDto.duration != null ||
       updateSpaceEventDto.startsAt != null
     ) {
@@ -226,6 +246,124 @@ export class SpaceEventController {
     }
 
     return result;
+  }
+
+  @Post(':id/image/:type')
+  @UseGuards(JwtAuthGuard)
+  @ApiBody({ type: SetSpaceEventImageDto })
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: 'images', maxCount: 1 }], {
+      fileFilter(req, file, cb) {
+        if (
+          ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'].includes(
+            file.mimetype,
+          ) === false
+        ) {
+          cb(new BadRequestException('file must be an image'), false);
+        } else {
+          cb(null, true);
+        }
+      },
+    }),
+  )
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Set space image' })
+  async setImage(
+    @Req() req,
+    @Param('id') id: string,
+    @Param('type') type: SpaceEventImageType,
+    @UploadedFiles() uploadedFiles: { images: Express.MulterS3.File[] },
+  ) {
+    const { images } = uploadedFiles;
+    const maxImageCount = 5;
+
+    if (images.length > 1) {
+      throw new BadRequestException('Only 1 image is allowed');
+    }
+
+    if (
+      [
+        SpaceEventImageType.list,
+        SpaceEventImageType.cover,
+        SpaceEventImageType.thumbnail,
+      ].includes(type) === false
+    ) {
+      throw new BadRequestException(`type ${type} is not allowed`);
+    }
+
+    const user = await this.userService.findOneByEmail(req.user.email);
+    const spaceEvent = await this.spaceEventService.findOneById(id);
+
+    if (spaceEvent.organizerId !== user.id) {
+      throw new ForbiddenException();
+    }
+
+    if (
+      spaceEvent.spaceEventImages.filter(
+        (item) => item.type === SpaceEventImageType.list,
+      ).length === 5
+    ) {
+      throw new BadRequestException(
+        `Cannot have more than ${maxImageCount} images`,
+      );
+    }
+
+    const image = images[0];
+
+    try {
+      await this.spaceEventImageService.create({
+        id: image.key.split('_')[0],
+        spaceEventId: spaceEvent.id,
+        link: image.location,
+        type,
+      });
+    } catch (error) {
+      this.logger.error('Failed to create spaceEventImage', error);
+    }
+  }
+
+  @Put(':id/additional-info')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Update SpaceEvent additional info' })
+  async updateAdditionalInfo(
+    @Req() req,
+    @Param('id') id: string,
+    @Body()
+    updateSpaceEventAdditionalInfoDto: UpdateSpaceEventAdditionalInfoDto,
+  ) {
+    const user = await this.userService.findOneByEmail(req.user.email);
+    const spaceEvent = await this.spaceEventService.findOneById(id);
+
+    if (spaceEvent.organizerId !== user.id) {
+      throw new ForbiddenException();
+    }
+
+    return await this.spaceEventService.updateAdditionalInfo(
+      id,
+      updateSpaceEventAdditionalInfoDto,
+    );
+  }
+
+  @Put(':id/report')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Update SpaceEvent report data' })
+  async updateReport(
+    @Req() req,
+    @Param('id') id: string,
+    @Body()
+    updateSpaceEventReportDto: UpdateSpaceEventReportDto,
+  ) {
+    const user = await this.userService.findOneByEmail(req.user.email);
+    const spaceEvent = await this.spaceEventService.findOneById(id);
+
+    if (spaceEvent.organizerId !== user.id) {
+      throw new ForbiddenException();
+    }
+
+    return await this.spaceEventService.updateReport(
+      id,
+      updateSpaceEventReportDto,
+    );
   }
 
   @Put(':id/run')

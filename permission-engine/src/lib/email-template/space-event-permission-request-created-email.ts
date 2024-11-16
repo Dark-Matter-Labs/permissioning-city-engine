@@ -4,15 +4,15 @@ import { I18nService } from 'nestjs-i18n';
 
 export class SpaceEventPermissionRequestCreatedEmail extends Email {
   language: Language;
+  subject: string;
+  html: string;
+  text: string;
+
   name: string;
   spaceName: string;
   timeoutAt: string;
   spaceEventId: string;
   eventDashboardLink: string;
-
-  subject: string;
-  html: string;
-  text: string;
 
   constructor(
     private readonly i18n: I18nService,
@@ -25,12 +25,13 @@ export class SpaceEventPermissionRequestCreatedEmail extends Email {
     },
   ) {
     super(option);
+
     this.name = option.name;
     this.spaceName = option.spaceName;
     this.timeoutAt = option.timeoutAt;
     this.spaceEventId = option.spaceEventId;
-    this.eventDashboardLink =
-      process.env.GOOGLE_CALLBACK_DOMAIN + `/event/${this.spaceEventId}`;
+    // TODO. Check routing policy in FrontEnd
+    this.eventDashboardLink = `${this.domain}/event/${this.spaceEventId}`;
 
     this.subjectPart();
     this.htmlPart();

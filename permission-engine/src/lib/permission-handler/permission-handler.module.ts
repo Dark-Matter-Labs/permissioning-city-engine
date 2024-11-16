@@ -33,6 +33,8 @@ import { SpaceTopic } from 'src/database/entity/space-topic.entity';
 import { SpaceTopicService } from 'src/api/space-topic/space-topic.service';
 import { Topic } from 'src/database/entity/topic.entity';
 import { TopicService } from 'src/api/topic/topic.service';
+import { SpaceHistory } from 'src/database/entity/space-history.entity';
+import { SpaceHistoryService } from 'src/api/space-history/space-history.service';
 
 @Global()
 @Module({
@@ -51,6 +53,7 @@ import { TopicService } from 'src/api/topic/topic.service';
       SpacePermissioner,
       SpaceApprovedRule,
       SpaceTopic,
+      SpaceHistory,
       Rule,
       RuleBlock,
       Topic,
@@ -74,6 +77,7 @@ import { TopicService } from 'src/api/topic/topic.service';
     SpacePermissionerService,
     SpaceApprovedRuleService,
     SpaceTopicService,
+    SpaceHistoryService,
     RuleService,
     RuleBlockService,
     TopicService,

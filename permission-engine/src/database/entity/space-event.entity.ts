@@ -19,6 +19,7 @@ import { Rule } from './rule.entity';
 import { PermissionRequest } from './permission-request.entity';
 import { ExternalService } from './external-service.entity';
 import { SpaceEventImage } from './space-event-image.entity';
+import { SpaceHistory } from './space-history.entity';
 
 @Entity()
 export class SpaceEvent {
@@ -86,6 +87,12 @@ export class SpaceEvent {
   callbackLink: string;
 
   @Column()
+  attendeeCount: number;
+
+  @Column('json', { nullable: true })
+  report: Record<string, any>;
+
+  @Column()
   @ApiProperty({
     description: 'SpaceEvent duration in {number}{d|w|M|y|h|m|s} format',
   })
@@ -125,4 +132,7 @@ export class SpaceEvent {
   @ManyToMany(() => Topic, (topic) => topic.spaceEvents)
   @JoinTable({ name: 'space_event_topic' })
   topics: Topic[];
+
+  @OneToMany(() => SpaceHistory, (spaceHistory) => spaceHistory.spaceEvent)
+  spaceHistories: SpaceHistory[];
 }

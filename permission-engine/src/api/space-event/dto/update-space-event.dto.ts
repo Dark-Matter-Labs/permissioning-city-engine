@@ -77,10 +77,6 @@ export class UpdateSpaceEventDto {
   startsAt?: Date;
 
   @IsOptional()
-  @IsDateString()
-  endsAt?: Date;
-
-  @IsOptional()
   @Transform(({ value }) => (Array.isArray(value) ? value : value.split(',')))
   @IsArray()
   @IsUUID('4', { each: true })

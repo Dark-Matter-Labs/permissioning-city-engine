@@ -37,6 +37,8 @@ import { SpaceTopic } from 'src/database/entity/space-topic.entity';
 import { SpaceTopicService } from '../space-topic/space-topic.service';
 import { Topic } from 'src/database/entity/topic.entity';
 import { TopicService } from '../topic/topic.service';
+import { SpaceHistory } from 'src/database/entity/space-history.entity';
+import { SpaceHistoryService } from '../space-history/space-history.service';
 
 @Module({
   imports: [
@@ -57,6 +59,7 @@ import { TopicService } from '../topic/topic.service';
       SpacePermissioner,
       RuleBlock,
       Topic,
+      SpaceHistory,
     ]),
     MulterModule.registerAsync({
       imports: [ConfigModule],
@@ -98,6 +101,7 @@ import { TopicService } from '../topic/topic.service';
     S3Service,
     PermissionHandlerService,
     TopicService,
+    SpaceHistoryService,
   ],
 })
 export class SpaceEventModule {}

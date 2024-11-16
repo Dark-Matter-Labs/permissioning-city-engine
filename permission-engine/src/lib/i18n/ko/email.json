@@ -17,17 +17,17 @@
   "spaceEventPermissionRequestApproved": {
     "subject": "활동 신청이 승인되었습니다",
     "text": "안녕하세요 {name}님,\n\n요청하신 {eventTitle}에 대한 신청이 승인되었습니다.\n\n{permissionResponseSummary}\n\n{resolveLink} 에서 승인 내용을 확정하고 {externalBookingLink} 에서 **승인 코드**를 입력해 예약을 완료하세요.\n{eventDashboardLink} 에서 자세한 내용을 확인하실 수 있습니다.",
-    "html": "<h1>안녕하세요 {name}님,</h1><p>요청하신 {eventTitle}에 대한 신청이 승인되었습니다.</p><p>{permissionResponseSummary}</p><p><a href='{resolveLink}'>활동 승인 내용 확정 페이지</a>에서 승인 내용을 확정하고 <a href='{externalBookingLink}'>예약 사이트</a>에서 <strong>승인 코드</strong>를 입력해 예약을 완료하세요.\n<a href='{eventDashboardLink}'>활동 대시보드</a>에서 자세한 내용을 확인하실 수 있습니다.</p>"
+    "html": "<h1>안녕하세요 {name}님,</h1><p>요청하신 {eventTitle}에 대한 신청이 승인되었습니다.</p>{permissionResponseSummary}<p><a href='{resolveLink}'>활동 승인 내용 확정 페이지</a>에서 승인 내용을 확정하고 <a href='{externalBookingLink}'>예약 사이트</a>에서 <strong>승인 코드</strong>를 입력해 예약을 완료하세요.\n<a href='{eventDashboardLink}'>활동 대시보드</a>에서 자세한 내용을 확인하실 수 있습니다.</p>"
   },
   "spaceEventPermissionRequestRejected": {
     "subject": "활동 신청 검토 결과 안내",
     "text": "안녕하세요 {name}님,\n\n{eventTitle} 신청을 검토했지만, 아쉽게도 이번에는 승인되지 않았어요.\n\n{permissionResponseSummary}\n\n리뷰어의 검토 내용을 참고하셔서 새로운 신청을 제출해 보시면 어떨까요? 저희는 언제나 새로운 시도와 도전을 응원합니다!\n{eventDashboardLink} 에서 자세한 내용을 확인하실 수 있습니다.",
-    "html": "<h1>안녕하세요 {name}님,</h1><p>{eventTitle} 신청을 검토했지만, 아쉽게도 이번에는 승인되지 않았어요.</p><p>{permissionResponseSummary}</p><p>리뷰어의 검토 내용을 참고하셔서 새로운 신청을 제출해 보시면 어떨까요? 저희는 언제나 새로운 시도와 도전을 응원합니다!\n<a href='{eventDashboardLink}'>활동 대시보드</a>에서 자세한 내용을 확인하실 수 있습니다.</p>"
+    "html": "<h1>안녕하세요 {name}님,</h1><p>{eventTitle} 신청을 검토했지만, 아쉽게도 이번에는 승인되지 않았어요.</p>{permissionResponseSummary}<p>리뷰어의 검토 내용을 참고하셔서 새로운 신청을 제출해 보시면 어떨까요? 저희는 언제나 새로운 시도와 도전을 응원합니다!\n<a href='{eventDashboardLink}'>활동 대시보드</a>에서 자세한 내용을 확인하실 수 있습니다.</p>"
   },
   "spaceEventPermissionRequestReviewCompleted": {
     "subject": "활동 신청 검토가 완료되었습니다",
     "text": "안녕하세요 {name}님,\n\n**{eventTitle}** 활동에 대한 검토가 완료되었습니다!\n\n{permissionResponseSummary}\n\n리뷰 과정에 함께해 주셔서 감사합니다. {name}님의 소중한 기여로 다양한 활동들이 커뮤니티의 가치를 반영하며 원활하게 진행될 수 있습니다.\n\n{communityDashboardLink} 에서 자세한 내용을 확인해 주세요. 앞으로도 지속적인 참여와 협력을 기대합니다!",
-    "html": "<h1>안녕하세요 {name}님,</h1><p><strong>{eventTitle}</strong> 활동에 대한 검토가 완료되었습니다!</p><p>{permissionResponseSummary}</p><p>리뷰 과정에 함께해 주셔서 감사합니다. {name}님의 소중한 기여로 다양한 활동들이 커뮤니티의 가치를 반영하며 원활하게 진행될 수 있습니다.</p><p><a href='{communityDashboardLink}'>커뮤니티 대시보드</a> 에서 자세한 내용을 확인해 주세요. 앞으로도 지속적인 참여와 협력을 기대합니다!</p>"
+    "html": "<h1>안녕하세요 {name}님,</h1><p><strong>{eventTitle}</strong> 활동에 대한 검토가 완료되었습니다!</p>{permissionResponseSummary}<p>리뷰 과정에 함께해 주셔서 감사합니다. {name}님의 소중한 기여로 다양한 활동들이 커뮤니티의 가치를 반영하며 원활하게 진행될 수 있습니다.</p><p><a href='{communityDashboardLink}'>커뮤니티 대시보드</a> 에서 자세한 내용을 확인해 주세요. 앞으로도 지속적인 참여와 협력을 기대합니다!</p>"
   },
   "spaceEventPermissionRequestResolveAccepted": {
     "eventOrganizer": {
@@ -66,17 +66,17 @@
   "spaceRuleChangePermissionRequestApproved": {
     "subject": "공간 규칙 변경 신청이 승인되었습니다",
     "text": "안녕하세요 {name}님,\n\n공간 규칙을 **{ruleName}**로 변경하는 요청 사항이 승인되었습니다!\n\n{permissionResponseSummary}\n\n{communityDashboardLink} 에서 자세한 내용을 확인할 수 있습니다.",
-    "html": "<h1>안녕하세요 {name}님,</h1><p>공간 규칙을 <strong>{ruleName}</strong>로 변경하는 요청 사항이 승인되었습니다!</p><p>{permissionResponseSummary}</p><p><a href='{communityDashboardLink}'>커뮤니티 대시보드</a>에서 자세한 내용을 확인할 수 있습니다.</p>"
+    "html": "<h1>안녕하세요 {name}님,</h1><p>공간 규칙을 <strong>{ruleName}</strong>로 변경하는 요청 사항이 승인되었습니다!</p>{permissionResponseSummary}<p><a href='{communityDashboardLink}'>커뮤니티 대시보드</a>에서 자세한 내용을 확인할 수 있습니다.</p>"
   },
   "spaceRuleChangePermissionRequestRejected": {
     "subject": "공간 규칙 변경 신청 검토 안내",
     "text": "안녕하세요 {name}님,\n\n공간 규칙 변경을 신청해주셔서 감사합니다. **{ruleName}** 규칙으로 규칙을 변경하는 것을 검토했지만, 아쉽게도 이번에는 승인되지 않았습니다.\n\n{permissionResponseSummary}\n\n리뷰어의 검토 내용을 참고하셔서 새로운 신청을 제출해 보시면 어떨까요? 저희는 언제나 새로운 시도와 도전을 응원합니다!\n{communityDashboardLink} 에서 자세한 내용을 확인하실 수 있습니다.",
-    "html": "<h1>안녕하세요 {name}님,</h1><p>공간 규칙 변경을 신청해주셔서 감사합니다. <strong>{ruleName}</strong> 규칙으로 규칙을 변경하는 것을 검토했지만, 아쉽게도 이번에는 승인되지 않았습니다.</p><p>{permissionResponseSummary}</p><p>리뷰어의 검토 내용을 참고하셔서 새로운 신청을 제출해 보시면 어떨까요? 저희는 언제나 새로운 시도와 도전을 응원합니다!\n<a href='{communityDashboardLink}'>Community Dashboard</a>에서 자세한 내용을 확인하실 수 있습니다.</p>"
+    "html": "<h1>안녕하세요 {name}님,</h1><p>공간 규칙 변경을 신청해주셔서 감사합니다. <strong>{ruleName}</strong> 규칙으로 규칙을 변경하는 것을 검토했지만, 아쉽게도 이번에는 승인되지 않았습니다.</p>{permissionResponseSummary}<p>리뷰어의 검토 내용을 참고하셔서 새로운 신청을 제출해 보시면 어떨까요? 저희는 언제나 새로운 시도와 도전을 응원합니다!\n<a href='{communityDashboardLink}'>Community Dashboard</a>에서 자세한 내용을 확인하실 수 있습니다.</p>"
   },
   "spaceRuleChangePermissionRequestReviewCompleted": {
     "subject": "공간 규칙 변경 신청 검토가 완료되었습니다",
     "text": "안녕하세요 {name}님,\n\nThe review for **{ruleName}** is now complete!\n\n{permissionResponseSummary}\n\nThank you for your time and effort in supporting the review process. Your contributions help ensure that events align with our community values and run smoothly.\n\nYou can view the details on the {communityDashboardLink}. We truly appreciate your involvement and look forward to your continued participation!",
-    "html": "<h1>안녕하세요 {name}님,</h1><p>The review for <strong>{ruleName}</strong> is now complete!</p><p>{permissionResponseSummary}</p><p>Thank you for your time and effort in supporting the review process. Your contributions help ensure that events align with our community values and run smoothly.</p><p>You can view the details on the <a href='{communityDashboardLink}'>커뮤니티 대시보드</a>. We truly appreciate your involvement and look forward to your continued participation!</p>"
+    "html": "<h1>안녕하세요 {name}님,</h1><p>The review for <strong>{ruleName}</strong> is now complete!</p>{permissionResponseSummary}<p>Thank you for your time and effort in supporting the review process. Your contributions help ensure that events align with our community values and run smoothly.</p><p>You can view the details on the <a href='{communityDashboardLink}'>커뮤니티 대시보드</a>. We truly appreciate your involvement and look forward to your continued participation!</p>"
   },
   "spaceEventRulePreApprovePermissionRequestCreated": {
     "subject": "규칙 템플릿 사전 승인 신청이 제출되었습니다",
@@ -91,17 +91,17 @@
   "spaceEventRulePreApprovePermissionRequestApproved": {
     "subject": "규칙 템플릿 사전 승인 신청이 승인되었습니다",
     "text": "안녕하세요 {name}님,\n\n새로운 규칙 템플릿 사전 승인 요청이 통과되었습니다!\n\n{permissionResponseSummary}\n\n{communityDashboardLink} 에서 자세한 내용을 확인해 보세요.",
-    "html": "<h1>안녕하세요 {name}님,</h1><p>새로운 규칙 템플릿 사전 승인 요청이 통과되었습니다!</p><p>{permissionResponseSummary}</p><p><a href='{communityDashboardLink}'>커뮤니티 대시보드</a> 에서 자세한 내용을 확인해 보세요.</p>"
+    "html": "<h1>안녕하세요 {name}님,</h1><p>새로운 규칙 템플릿 사전 승인 요청이 통과되었습니다!</p>{permissionResponseSummary}<p><a href='{communityDashboardLink}'>커뮤니티 대시보드</a> 에서 자세한 내용을 확인해 보세요.</p>"
   },
   "spaceEventRulePreApprovePermissionRequestRejected": {
     "subject": "규칙 템플릿 사전 승인 신청 검토 안내",
     "text": "안녕하세요 {name}님,\n\nThank you for submitting your proposal for {eventTitle}. After careful review, the proposal was not approved this time.\n\n{permissionResponseSummary}\n\nWe encourage you to review the feedback provided by the reviewers and submit a new proposal. We're excited to see how your ideas evolve and hope you’ll try again soon!\nYou can also check the details on your {eventDashboardLink}.",
-    "html": "<h1>안녕하세요 {name}님,</h1><p>Thank you for submitting your proposal for {eventTitle}. After careful review, the proposal was not approved this time.</p><p>{permissionResponseSummary}</p><p>We encourage you to review the feedback provided by the reviewers and submit a new proposal. We're excited to see how your ideas evolve and hope you’ll try again soon!\nYou can also check the details on your <a href='{eventDashboardLink}'>활동 대시보드</a>.</p>"
+    "html": "<h1>안녕하세요 {name}님,</h1><p>Thank you for submitting your proposal for {eventTitle}. After careful review, the proposal was not approved this time.</p>{permissionResponseSummary}<p>We encourage you to review the feedback provided by the reviewers and submit a new proposal. We're excited to see how your ideas evolve and hope you’ll try again soon!\nYou can also check the details on your <a href='{eventDashboardLink}'>활동 대시보드</a>.</p>"
   },
   "spaceEventRulePreApprovePermissionRequestReviewCompleted": {
     "subject": "규칙 템플릿 사전 승인 신청 검토가 완료되었습니다",
     "text": "안녕하세요 {name}님,\n\nThe review for **{eventTitle}** is now complete!\n\n{permissionResponseSummary}\n\nThank you for your time and effort in supporting the review process. Your contributions help ensure that events align with our community values and run smoothly.\n\nYou can view the details on the {communityDashboardLink}. We truly appreciate your involvement and look forward to your continued participation!",
-    "html": "<h1>안녕하세요 {name}님,</h1><p>The review for <strong>{eventTitle}</strong> is now complete!</p><p>{permissionResponseSummary}</p><p>Thank you for your time and effort in supporting the review process. Your contributions help ensure that events align with our community values and run smoothly.</p><p>You can view the details on the <a href='{communityDashboardLink}'>커뮤니티 대시보드</a>. We truly appreciate your involvement and look forward to your continued participation!</p>"
+    "html": "<h1>안녕하세요 {name}님,</h1><p>The review for <strong>{eventTitle}</strong> is now complete!</p>{permissionResponseSummary}<p>Thank you for your time and effort in supporting the review process. Your contributions help ensure that events align with our community values and run smoothly.</p><p>You can view the details on the <a href='{communityDashboardLink}'>커뮤니티 대시보드</a>. We truly appreciate your involvement and look forward to your continued participation!</p>"
   },
   "spaceCreated": {
     "subject": "공간이 등록되었습니다!",
@@ -150,8 +150,8 @@
   },
   "ruleCreated": {
     "subject": "새 규칙이 추가되었습니다",
-    "text": "안녕하세요 {name}님,\n\n새로운 규칙이 생성되었습니다!\n\n{ruleDetails}\n\n{ruleDashboardLink} 에서 자세한 내용을 확인하실 수 있습니다.",
-    "html": "<h1>Hi {name},</h1><p>새로운 규칙이 생성되었습니다!</p><p>{ruleDetails}</p><p><a href='{ruleDashboardLink}'>규칙 대시보드</a>에서 자세한 내용을 확인하실 수 있습니다.</p>"
+    "text": "안녕하세요 {name}님,\n\n새로운 규칙 ${ruleTitle}이 생성되었습니다!\n\n{ruleDashboardLink} 에서 자세한 내용을 확인하실 수 있습니다.",
+    "html": "<h1>Hi {name},</h1><p>새로운 규칙 ${ruleTitle}이 생성되었습니다!</p><p><a href='{ruleDashboardLink}'>규칙 대시보드</a>에서 자세한 내용을 확인하실 수 있습니다.</p>"
   },
   "ruleAssigned": {
     "subject": "규칙이 적용되었습니다",

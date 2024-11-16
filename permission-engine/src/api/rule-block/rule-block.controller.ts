@@ -49,6 +49,12 @@ export class RuleBlockController {
     });
   }
 
+  @Get('hash/:hash')
+  @ApiOperation({ summary: 'Get RuleBlock by hash' })
+  findOneByHash(@Param('hash') hash: string): Promise<RuleBlock> {
+    return this.ruleBlockService.findOneByHash(hash);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get RuleBlock by id' })
   findOneById(@Param('id') id: string): Promise<RuleBlock> {
@@ -87,6 +93,11 @@ export class RuleBlockController {
     const { type, content } = createRuleBlockDto;
     const user = await this.userService.findOneByEmail(req.user.email);
     const { files } = uploadedFiles;
+
+    if (files.length > 1) {
+      throw new BadRequestException('Only 1 file is allowed');
+    }
+
     // will take the first file only
     const file = files?.[0];
 

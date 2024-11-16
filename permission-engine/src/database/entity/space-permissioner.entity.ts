@@ -11,6 +11,7 @@ import {
 import { Space } from './space.entity';
 import { User } from './user.entity';
 import { PermissionResponse } from './permission-response.entity';
+import { SpaceHistory } from './space-history.entity';
 
 @Entity()
 export class SpacePermissioner {
@@ -58,4 +59,10 @@ export class SpacePermissioner {
     (permissionResponse) => permissionResponse.spacePermissioner,
   )
   permissionResponses: PermissionResponse[];
+
+  @OneToMany(
+    () => SpaceHistory,
+    (spaceHistory) => spaceHistory.spacePermissioner,
+  )
+  spaceHistories: SpaceHistory[];
 }

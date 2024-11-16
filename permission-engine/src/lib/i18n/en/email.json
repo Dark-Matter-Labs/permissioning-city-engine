@@ -17,17 +17,17 @@
   "spaceEventPermissionRequestApproved": {
     "subject": "Your Proposal Has Been Approved",
     "text": "Hi {name},\n\nYour proposal for {eventTitle} has been approved!\n\n{permissionResponseSummary}\n\nYou can resolve the request from {resolveLink} and submit the permission code to the booking platform {externalBookingLink} to finalize your booking.\nYou can also check the details on your {eventDashboardLink}.",
-    "html": "<h1>Hi {name},</h1><p>Your proposal for {eventTitle} has been approved!</p><p>{permissionResponseSummary}</p><p>You can resolve the request from <a href='{resolveLink}'>Permission Request Resolve page</a> and submit the permission code to the booking platform <a href='{externalBookingLink}'>Booking Platform</a> to finalize your booking.\nYou can also check the details on your <a href='{eventDashboardLink}'>Event Dashboard</a>.</p>"
+    "html": "<h1>Hi {name},</h1><p>Your proposal for {eventTitle} has been approved!</p>{permissionResponseSummary<p>You can resolve the request from <a href='{resolveLink}'>Permission Request Resolve page</a> and submit the permission code to the booking platform <a href='{externalBookingLink}'>Booking Platform</a> to finalize your booking.\nYou can also check the details on your <a href='{eventDashboardLink}'>Event Dashboard</a>.</p>"
   },
   "spaceEventPermissionRequestRejected": {
     "subject": "Your Proposal has been Reviewed",
     "text": "Hi {name},\n\nThank you for submitting your proposal for {eventTitle}. After careful review, the proposal was not approved this time.\n\n{permissionResponseSummary}\n\nWe encourage you to review the feedback provided by the reviewers and submit a new proposal. We're excited to see how your ideas evolve and hope you’ll try again soon!\nYou can also check the details on your {eventDashboardLink}.",
-    "html": "<h1>Hi {name},</h1><p>Thank you for submitting your proposal for {eventTitle}. After careful review, the proposal was not approved this time.</p><p>{permissionResponseSummary}</p><p>We encourage you to review the feedback provided by the reviewers and submit a new proposal. We're excited to see how your ideas evolve and hope you’ll try again soon!\nYou can also check the details on your <a href='{eventDashboardLink}'>Event Dashboard</a>.</p>"
+    "html": "<h1>Hi {name},</h1><p>Thank you for submitting your proposal for {eventTitle}. After careful review, the proposal was not approved this time.</p>{permissionResponseSummary<p>We encourage you to review the feedback provided by the reviewers and submit a new proposal. We're excited to see how your ideas evolve and hope you’ll try again soon!\nYou can also check the details on your <a href='{eventDashboardLink}'>Event Dashboard</a>.</p>"
   },
   "spaceEventPermissionRequestReviewCompleted": {
     "subject": "Review Completed",
     "text": "Hi {name},\n\nThe review for **{eventTitle}** is now complete!\n\n{permissionResponseSummary}\n\nThank you for your time and effort in supporting the review process. Your contributions help ensure that events align with our community values and run smoothly.\n\nYou can view the details on the {communityDashboardLink}. We truly appreciate your involvement and look forward to your continued participation!",
-    "html": "<h1>Hi {name},</h1><p>The review for <strong>{eventTitle}</strong> is now complete!</p><p>{permissionResponseSummary}</p><p>Thank you for your time and effort in supporting the review process. Your contributions help ensure that events align with our community values and run smoothly.</p><p>You can view the details on the <a href='{communityDashboardLink}'>Community Dashboard</a>. We truly appreciate your involvement and look forward to your continued participation!</p>"
+    "html": "<h1>Hi {name},</h1><p>The review for <strong>{eventTitle}</strong> is now complete!</p>{permissionResponseSummary<p>Thank you for your time and effort in supporting the review process. Your contributions help ensure that events align with our community values and run smoothly.</p><p>You can view the details on the <a href='{communityDashboardLink}'>Community Dashboard</a>. We truly appreciate your involvement and look forward to your continued participation!</p>"
   },
   "spaceEventPermissionRequestResolveAccepted": {
     "eventOrganizer": {
@@ -78,17 +78,17 @@
   "spaceRuleChangePermissionRequestApproved": {
     "subject": "Your Proposal Has Been Approved",
     "text": "Hi {name},\n\nYour proposal for replacing the space rule to **{ruleName}** has been approved!\n\n{permissionResponseSummary}\n\nYou can check the details on the {communityDashboardLink}.",
-    "html": "<h1>Hi {name},</h1><p>Your proposal for replacing the space rule to <strong>{ruleName}</strong> has been approved!</p><p>{permissionResponseSummary}</p><p>You can check the details on the <a href='{communityDashboardLink}'>Community Dashboard</a>.</p>"
+    "html": "<h1>Hi {name},</h1><p>Your proposal for replacing the space rule to <strong>{ruleName}</strong> has been approved!</p>{permissionResponseSummary<p>You can check the details on the <a href='{communityDashboardLink}'>Community Dashboard</a>.</p>"
   },
   "spaceRuleChangePermissionRequestRejected": {
     "subject": "Your Proposal has been Reviewed",
     "text": "Hi {name},\n\nThank you for submitting your proposal for replacing the space rule to **{ruleName}**. After careful review, the proposal was not approved this time.\n\n{permissionResponseSummary}\n\nWe encourage you to review the feedback provided by the reviewers and submit a new proposal. We're excited to see how your ideas evolve and hope you’ll try again soon!\nYou can also check the details on the {communityDashboardLink}.",
-    "html": "<h1>Hi {name},</h1><p>Thank you for submitting your proposal for replacing the space rule to <strong>{ruleName}</strong>. After careful review, the proposal was not approved this time.</p><p>{permissionResponseSummary}</p><p>We encourage you to review the feedback provided by the reviewers and submit a new proposal. We're excited to see how your ideas evolve and hope you’ll try again soon!\nYou can also check the details on the <a href='{communityDashboardLink}'>Community Dashboard</a>.</p>"
+    "html": "<h1>Hi {name},</h1><p>Thank you for submitting your proposal for replacing the space rule to <strong>{ruleName}</strong>. After careful review, the proposal was not approved this time.</p>{permissionResponseSummary<p>We encourage you to review the feedback provided by the reviewers and submit a new proposal. We're excited to see how your ideas evolve and hope you’ll try again soon!\nYou can also check the details on the <a href='{communityDashboardLink}'>Community Dashboard</a>.</p>"
   },
   "spaceRuleChangePermissionRequestReviewCompleted": {
     "subject": "Review Completed",
     "text": "Hi {name},\n\nThe review for replacing the space rule to **{ruleName}** is now complete!\n\n{permissionResponseSummary}\n\nThank you for your time and effort in supporting the review process. Your contributions help ensure that events align with our community values and run smoothly.\n\nYou can view the details on the {communityDashboardLink}. We truly appreciate your involvement and look forward to your continued participation!",
-    "html": "<h1>Hi {name},</h1><p>The review for replacing the space rule to <strong>{ruleName}</strong> is now complete!</p><p>{permissionResponseSummary}</p><p>Thank you for your time and effort in supporting the review process. Your contributions help ensure that events align with our community values and run smoothly.</p><p>You can view the details on the <a href='{communityDashboardLink}'>Community Dashboard</a>. We truly appreciate your involvement and look forward to your continued participation!</p>"
+    "html": "<h1>Hi {name},</h1><p>The review for replacing the space rule to <strong>{ruleName}</strong> is now complete!</p>{permissionResponseSummary<p>Thank you for your time and effort in supporting the review process. Your contributions help ensure that events align with our community values and run smoothly.</p><p>You can view the details on the <a href='{communityDashboardLink}'>Community Dashboard</a>. We truly appreciate your involvement and look forward to your continued participation!</p>"
   },
   "spaceEventRulePreApprovePermissionRequestCreated": {
     "subject": "Your Event Rule Pre-Approve Proposal is Submitted",
@@ -103,17 +103,17 @@
   "spaceEventRulePreApprovePermissionRequestApproved": {
     "subject": "Your Proposal Has Been Approved",
     "text": "Hi {name},\n\nYour proposal for pre-approving the rule **{ruleName}** has been approved!\n\n{permissionResponseSummary}\n\nYou can check the details on the {communityDashboardLink}.",
-    "html": "<h1>Hi {name},</h1><p>Your proposal for pre-approving the rule <strong>{ruleName}</strong> has been approved!</p><p>{permissionResponseSummary}</p><p>You can check the details on the <a href='{communityDashboardLink}'>Community Dashboard</a>.</p>"
+    "html": "<h1>Hi {name},</h1><p>Your proposal for pre-approving the rule <strong>{ruleName}</strong> has been approved!</p>{permissionResponseSummary<p>You can check the details on the <a href='{communityDashboardLink}'>Community Dashboard</a>.</p>"
   },
   "spaceEventRulePreApprovePermissionRequestRejected": {
     "subject": "Your Proposal has been Reviewed",
     "text": "Hi {name},\n\nThank you for submitting your proposal for {eventTitle}. After careful review, the proposal was not approved this time.\n\n{permissionResponseSummary}\n\nWe encourage you to review the feedback provided by the reviewers and submit a new proposal. We're excited to see how your ideas evolve and hope you’ll try again soon!\nYou can also check the details on the {communityDashboardLink}.",
-    "html": "<h1>Hi {name},</h1><p>Thank you for submitting your proposal for {eventTitle}. After careful review, the proposal was not approved this time.</p><p>{permissionResponseSummary}</p><p>We encourage you to review the feedback provided by the reviewers and submit a new proposal. We're excited to see how your ideas evolve and hope you’ll try again soon!\nYou can also check the details on the <a href='{communityDashboardLink}'>Community Dashboard</a>.</p>"
+    "html": "<h1>Hi {name},</h1><p>Thank you for submitting your proposal for {eventTitle}. After careful review, the proposal was not approved this time.</p>{permissionResponseSummary<p>We encourage you to review the feedback provided by the reviewers and submit a new proposal. We're excited to see how your ideas evolve and hope you’ll try again soon!\nYou can also check the details on the <a href='{communityDashboardLink}'>Community Dashboard</a>.</p>"
   },
   "spaceEventRulePreApprovePermissionRequestReviewCompleted": {
     "subject": "Review Completed",
     "text": "Hi {name},\n\nThe review for pre-approving the rule **{ruleName}** is now complete!\n\n{permissionResponseSummary}\n\nThank you for your time and effort in supporting the review process. Your contributions help ensure that events align with our community values and run smoothly.\n\nYou can view the details on the {communityDashboardLink}. We truly appreciate your involvement and look forward to your continued participation!",
-    "html": "<h1>Hi {name},</h1><p>The review for pre-approving the rule <strong>{ruleName}</strong> is now complete!</p><p>{permissionResponseSummary}</p><p>Thank you for your time and effort in supporting the review process. Your contributions help ensure that events align with our community values and run smoothly.</p><p>You can view the details on the <a href='{communityDashboardLink}'>Community Dashboard</a>. We truly appreciate your involvement and look forward to your continued participation!</p>"
+    "html": "<h1>Hi {name},</h1><p>The review for pre-approving the rule <strong>{ruleName}</strong> is now complete!</p>{permissionResponseSummary<p>Thank you for your time and effort in supporting the review process. Your contributions help ensure that events align with our community values and run smoothly.</p><p>You can view the details on the <a href='{communityDashboardLink}'>Community Dashboard</a>. We truly appreciate your involvement and look forward to your continued participation!</p>"
   },
   "spaceCreated": {
     "subject": "Your Space is Ready!",
@@ -162,8 +162,8 @@
   },
   "ruleCreated": {
     "subject": "New Rule Added",
-    "text": "Hi {name},\n\nYour new rule is live.\n\n{ruleDetails}\n\nYou can also view the details on the Rule Dashboard {ruleDashboardLink}.",
-    "html": "<h1>Hi {name},</h1><p>Your new rule is live.</p><p>{ruleDetails}</p><p>You can also view the details on the  <a href='{ruleDashboardLink}'>Rule Dashboard</a>.</p>"
+    "text": "Hi {name},\n\nYour new rule {ruleTitle} is live.\n\nYou can view the details on the Rule Dashboard {ruleDashboardLink}.",
+    "html": "<h1>Hi {name},</h1><p>Your new rule {ruleTitle} is live.</p><p>You can view the details on the  <a href='{ruleDashboardLink}'>Rule Dashboard</a>.</p>"
   },
   "ruleAssigned": {
     "subject": "Rule Assigned",

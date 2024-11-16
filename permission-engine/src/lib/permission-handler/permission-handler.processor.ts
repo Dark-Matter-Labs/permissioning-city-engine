@@ -24,7 +24,11 @@ import { SpaceService } from 'src/api/space/space.service';
 import { SpaceEventService } from 'src/api/space-event/space-event.service';
 import { SpaceApprovedRuleService } from 'src/api/space-approved-rule/space-approved-rule.service';
 import { RuleBlockService } from 'src/api/rule-block/rule-block.service';
-import { isInAvailabilities, formatTime } from 'src/lib/util';
+import {
+  isInAvailabilities,
+  formatTime,
+  hash as hashString,
+} from 'src/lib/util';
 import { TopicService } from 'src/api/topic/topic.service';
 
 @Processor('permission-handler')
@@ -126,32 +130,32 @@ export class PermissionHandlerProcessor {
     // compare spaceRule and spaceEventRule
     const space = await this.spaceService.findOneById(
       permissionRequest.spaceId,
-      ['spaceTopics'],
+      { relations: ['spaceTopics'] },
     );
     const spaceEvent = await this.spaceEventService.findOneById(
       permissionRequest.spaceId,
     );
     const spaceRule = await this.ruleService.findOneById(
       permissionRequest.spaceRuleId,
-      false,
     );
-    const spaceEventRule = await this.ruleService.findOneById(
+    let spaceEventRule = await this.ruleService.findOneById(
       permissionRequest.spaceEventRuleId,
-      false,
     );
-    const spaceApprovedRules = await this.spaceApprovedRuleService.findAll({
-      spaceId: permissionRequest.spaceId,
-      ruleId: permissionRequest.spaceEventRuleId,
-      isActive: true,
-    });
+    const spaceApprovedRules = await this.spaceApprovedRuleService.findAll(
+      {
+        spaceId: permissionRequest.spaceId,
+        ruleId: permissionRequest.spaceEventRuleId,
+        isActive: true,
+      },
+      { isPublic: false },
+    );
     const spacePermissioners =
       await this.spacePermissionerService.findAllBySpaceId(
         permissionRequest.spaceId,
         { isActive: true },
-        false,
+        { isPagination: false },
       );
     const spaceRuleBlocks = spaceRule.ruleBlocks;
-    const spaceEventRuleBlocks = spaceEventRule.ruleBlocks;
     /**
      * Auto Approval Conditions
      * (Topic matches the space && No Exceptions or collisions on SpaceRule) || in SpaceApprovedRule table
@@ -174,7 +178,7 @@ export class PermissionHandlerProcessor {
           ? ((
               await this.topicService.findAll(
                 { ids: spaceForbiddenTopicIds },
-                false,
+                { isPagination: false },
               )
             )?.data ?? [])
           : [];
@@ -212,7 +216,7 @@ export class PermissionHandlerProcessor {
       );
       for (const spaceRuleBlock of spaceRuleBlocks) {
         const { type, hash, content } = spaceRuleBlock;
-        const spaceEventExceptionRuleBlock = spaceEventRuleBlocks.find(
+        const spaceEventExceptionRuleBlock = spaceEventRule.ruleBlocks.find(
           (item) =>
             item.type === RuleBlockType.spaceEventException &&
             item.content.split(RuleBlockContentDivider.type)[0] === hash,
@@ -282,10 +286,38 @@ export class PermissionHandlerProcessor {
               details: `Automatic exception raised by Permissioning Engine`,
             },
           );
-          spaceEventRule.ruleBlocks.push(newRuleBlock);
-          await this.ruleService.update(spaceEventRule.id, {
+          const forkedSpaceEventRule = await this.ruleService.fork(
+            spaceEvent.organizerId,
+            {
+              id: spaceEventRule.id,
+              // TODO. translate according to spaceEvent.space.country
+              name: `${spaceEventRule.name}-exception-${type.split(':')[1]}`,
+            },
+            { isPublicOnly: false },
+          );
+
+          forkedSpaceEventRule.ruleBlocks.push(newRuleBlock);
+          await this.ruleService.update(forkedSpaceEventRule.id, {
+            hash: hashString(
+              forkedSpaceEventRule.ruleBlocks
+                .map((item) => item.hash)
+                .sort()
+                .join(),
+            ),
             ruleBlockIds: spaceEventRule.ruleBlocks.map((item) => item.id),
           });
+          spaceEventRule = forkedSpaceEventRule;
+
+          // update sapceEvent.ruleId
+          await this.spaceEventService.updateRuleId(
+            spaceEvent.id,
+            forkedSpaceEventRule.id,
+          );
+          // update permissionRequest.spaceEventRuleId
+          await this.permissionRequestService.updateSpaceEventRuleId(
+            permissionRequestId,
+            forkedSpaceEventRule.id,
+          );
         }
       }
 
@@ -297,6 +329,11 @@ export class PermissionHandlerProcessor {
       ) {
         isAutoApproval = true;
       }
+    }
+
+    // TODO. delete wildcard code after workshop
+    if (dayjs('2024-12-01 00:00:00') > dayjs()) {
+      isAutoApproval = true;
     }
 
     if (isAutoApproval === false) {
@@ -388,11 +425,14 @@ export class PermissionHandlerProcessor {
         permissionRequestId,
       );
       // save spaceApprovedRule
-      await this.spaceApprovedRuleService.create({
-        spaceId: permissionRequest.spaceId,
-        ruleId: permissionRequest.spaceEventRuleId,
-        permissionRequestId: permissionRequestId,
-      });
+      await this.spaceApprovedRuleService.create(
+        {
+          spaceId: permissionRequest.spaceId,
+          ruleId: permissionRequest.spaceEventRuleId,
+          permissionRequestId: permissionRequestId,
+        },
+        { isForce: true },
+      );
       // auto resolve permission request
       await this.permissionRequestService.updateToResolveAccepted(
         permissionRequestId,
@@ -408,15 +448,13 @@ export class PermissionHandlerProcessor {
           templateName:
             UserNotificationTemplateName.spaceEventPermissionRequestApproved,
           params: {
-            permissionRequestId,
-            spaceRuleId: permissionRequest.spaceRule.id,
-            spaceRuleName: permissionRequest.spaceRule.name,
-            spaceEventId: permissionRequest.spaceEvent.id,
-            spaceEventName: permissionRequest.spaceEvent.name,
-            spaceEventStartsAt: permissionRequest.spaceEvent.startsAt,
-            spaceEventDuration: permissionRequest.spaceEvent.duration,
-            spaceEventRuleId: permissionRequest.spaceEventRule.id,
-            spaceEventRuleName: permissionRequest.spaceEventRule.name,
+            eventId: permissionRequest.spaceEvent.id,
+            permissionRequestId: permissionRequest.id,
+            eventTitle: permissionRequest.spaceEvent.name,
+            excitements: [],
+            worries: [],
+            conditions: [],
+            externalBookingLink: spaceEvent.callbackLink,
           },
         })
         .catch((error) => {
@@ -441,15 +479,11 @@ export class PermissionHandlerProcessor {
               templateName:
                 UserNotificationTemplateName.spaceEventPermissionRequestReviewCompleted,
               params: {
-                permissionRequestId,
-                spaceRuleId: permissionRequest.spaceRule.id,
-                spaceRuleName: permissionRequest.spaceRule.name,
-                spaceEventId: permissionRequest.spaceEvent.id,
-                spaceEventName: permissionRequest.spaceEvent.name,
-                spaceEventStartsAt: permissionRequest.spaceEvent.startsAt,
-                spaceEventDuration: permissionRequest.spaceEvent.duration,
-                spaceEventRuleId: permissionRequest.spaceEventRule.id,
-                spaceEventRuleName: permissionRequest.spaceEventRule.name,
+                spaceId: permissionRequest.space.id,
+                eventTitle: permissionRequest.spaceEvent.name,
+                excitements: [],
+                worries: [],
+                conditions: [],
               },
             })
             .catch((error) => {
@@ -476,17 +510,15 @@ export class PermissionHandlerProcessor {
       await this.permissionRequestService.findOneById(permissionRequestId);
     const oldSpaceRule = await this.ruleService.findOneById(
       permissionRequest.space.ruleId,
-      false,
     );
     const newSpaceRule = await this.ruleService.findOneById(
       permissionRequest.spaceRuleId,
-      false,
     );
     const spacePermissioners =
       await this.spacePermissionerService.findAllBySpaceId(
         permissionRequest.spaceId,
         { isActive: true },
-        false,
+        { isPagination: false },
       );
 
     const spaceConsentTimeoutRuleBlock = oldSpaceRule.ruleBlocks.find(
@@ -592,17 +624,15 @@ export class PermissionHandlerProcessor {
       await this.permissionRequestService.findOneById(permissionRequestId);
     const spaceRule = await this.ruleService.findOneById(
       permissionRequest.spaceRuleId,
-      false,
     );
     const spaceEventRule = await this.ruleService.findOneById(
       permissionRequest.spaceEventRuleId,
-      false,
     );
     const spacePermissioners =
       await this.spacePermissionerService.findAllBySpaceId(
         permissionRequest.spaceId,
         { isActive: true },
-        false,
+        { isPagination: false },
       );
     const spaceConsentTimeoutRuleBlock = spaceRule.ruleBlocks.find(
       (item) => item.type === RuleBlockType.spaceConsentTimeout,
@@ -709,7 +739,7 @@ export class PermissionHandlerProcessor {
       await this.spacePermissionerService.findAllBySpaceId(
         permissionRequest.spaceId,
         { isActive: true },
-        false,
+        { isPagination: false },
       );
     const notificationTargetSpacePermissioners =
       spacePermissioners?.data?.filter((spacePermissioner) => {
@@ -717,7 +747,6 @@ export class PermissionHandlerProcessor {
       }) ?? [];
     const spaceRule = await this.ruleService.findOneById(
       permissionRequest.space.ruleId,
-      false,
     );
     const consentMethod = spaceRule.ruleBlocks.find(
       (item) => item.type === RuleBlockType.spaceConsentMethod,
@@ -816,11 +845,14 @@ export class PermissionHandlerProcessor {
         );
 
         // add to space approved rule table
-        await this.spaceApprovedRuleService.create({
-          spaceId: permissionRequest.spaceId,
-          ruleId: permissionRequest.spaceEventRuleId,
-          permissionRequestId: permissionRequestId,
-        });
+        await this.spaceApprovedRuleService.create(
+          {
+            spaceId: permissionRequest.spaceId,
+            ruleId: permissionRequest.spaceEventRuleId,
+            permissionRequestId: permissionRequestId,
+          },
+          { isForce: true },
+        );
       } else if (
         isConsent === true &&
         approvedWithConditionResponses.length > 0
@@ -859,7 +891,7 @@ export class PermissionHandlerProcessor {
             UserNotificationTemplateName.spaceRuleChangePermissionRequestApproved;
           await this.permissionRequestService.updateToResolveAccepted(
             permissionRequest.id,
-            true,
+            { isForce: true },
           );
           await this.spaceService.update(permissionRequest.spaceId, {
             ruleId: permissionRequest.spaceRuleId,
@@ -871,7 +903,7 @@ export class PermissionHandlerProcessor {
             UserNotificationTemplateName.spaceRuleChangePermissionRequestRejected;
           await this.permissionRequestService.updateToResolveRejected(
             permissionRequest.id,
-            true,
+            { isForce: true },
           );
         }
       } else if (
@@ -885,12 +917,15 @@ export class PermissionHandlerProcessor {
             UserNotificationTemplateName.spaceEventPreApprovePermissionRequestApproved;
           await this.permissionRequestService.updateToResolveAccepted(
             permissionRequest.id,
-            true,
+            { isForce: true },
           );
-          await this.spaceApprovedRuleService.create({
-            spaceId: permissionRequest.spaceId,
-            ruleId: permissionRequest.spaceEventRuleId,
-          });
+          await this.spaceApprovedRuleService.create(
+            {
+              spaceId: permissionRequest.spaceId,
+              ruleId: permissionRequest.spaceEventRuleId,
+            },
+            { isForce: true },
+          );
         } else {
           permissionRequestResolveStatus =
             PermissionRequestResolveStatus.resolveRejected;
@@ -898,7 +933,7 @@ export class PermissionHandlerProcessor {
             UserNotificationTemplateName.spaceEventPreApprovePermissionRequestRejected;
           await this.permissionRequestService.updateToResolveRejected(
             permissionRequest.id,
-            true,
+            { isForce: true },
           );
         }
       } else if (permissionRequestType === PermissionRequestTarget.spaceEvent) {
@@ -909,7 +944,7 @@ export class PermissionHandlerProcessor {
             UserNotificationTemplateName.spaceEventPermissionRequestRejected;
           await this.permissionRequestService.updateToResolveRejected(
             permissionRequest.id,
-            true,
+            { isForce: true },
           );
           await this.spaceEventService.updateToPermissionRejected(spaceEventId);
         }
@@ -998,7 +1033,7 @@ export class PermissionHandlerProcessor {
       await this.spacePermissionerService.findAllBySpaceId(
         permissionRequest.spaceId,
         { isActive: true },
-        false,
+        { isPagination: false },
       );
 
     const notificationTargetSpacePermissioners =

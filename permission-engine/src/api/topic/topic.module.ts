@@ -4,7 +4,6 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Topic } from 'src/database/entity/topic.entity';
 import { TopicService } from './topic.service';
-
 import { User } from 'src/database/entity/user.entity';
 import { UserService } from '../user/user.service';
 import { RuleBlock } from 'src/database/entity/rule-block.entity';
@@ -27,6 +26,8 @@ import { Rule } from 'src/database/entity/rule.entity';
 import { RuleService } from '../rule/rule.service';
 import { SpaceTopic } from 'src/database/entity/space-topic.entity';
 import { SpaceTopicService } from '../space-topic/space-topic.service';
+import { SpaceHistory } from 'src/database/entity/space-history.entity';
+import { SpaceHistoryService } from '../space-history/space-history.service';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { SpaceTopicService } from '../space-topic/space-topic.service';
       PermissionResponse,
       SpaceEvent,
       SpacePermissioner,
+      SpaceHistory,
     ]),
     PermissionHandlerModule,
   ],
@@ -61,6 +63,7 @@ import { SpaceTopicService } from '../space-topic/space-topic.service';
     SpaceEventService,
     SpacePermissionerService,
     PermissionHandlerService,
+    SpaceHistoryService,
   ],
 })
 export class TopicModule {}

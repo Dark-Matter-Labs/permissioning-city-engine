@@ -65,6 +65,10 @@ export class RuleBlockService {
     return this.ruleBlockRepository.findOneBy({ id });
   }
 
+  findOneByHash(hash: string): Promise<RuleBlock> {
+    return this.ruleBlockRepository.findOneBy({ hash });
+  }
+
   async remove(id: string): Promise<void> {
     await this.ruleBlockRepository.delete(id);
   }
@@ -81,19 +85,15 @@ export class RuleBlockService {
 
     const trimmedContent = content?.trim() ?? '';
     const trimmedName = name.trim();
-    // omit after 3rd item in the splitted array: which is reason
-    const contentSplitByType = trimmedContent.split(
-      RuleBlockContentDivider.type,
-    );
-    const [contentKey, contentValue] = contentSplitByType;
     const hash = Util.hash(
-      [
-        type,
-        contentSplitByType.length > 2
-          ? [contentKey, contentValue].join(RuleBlockContentDivider.type)
-          : trimmedContent,
-      ].join(RuleBlockContentDivider.type),
+      [type, trimmedContent].join(RuleBlockContentDivider.type),
     );
+
+    const existingRuleBlock = await this.findOneByHash(hash);
+
+    if (existingRuleBlock) {
+      return existingRuleBlock;
+    }
 
     switch (type) {
       case RuleBlockType.spaceGeneral:
@@ -165,7 +165,13 @@ export class RuleBlockService {
       hash,
       isPublic:
         [
+          // private spaceEventRuleBlocks will prevent the rule to be in the space-approved-rule list in event proposal UI
           RuleBlockType.spaceEventInsurance,
+          /**
+           * event rules that contain spaceEventRequireEquipment type ruleBlock will not be shown in the spaceApprovedRule list when users choose template in the UI
+           * but user will try to create a new rule with this ruleBlock combined with the selected template -> which can be really new or already exists
+           * if the already existing rule happens to be a pre-approved one -> will be auto approved
+           */
           RuleBlockType.spaceEventRequireEquipment,
           RuleBlockType.spacePrivateGuide,
         ].includes(type) === true

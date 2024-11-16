@@ -3,12 +3,18 @@ import {
   Entity,
   Column,
   PrimaryGeneratedColumn,
-  OneToMany,
-  ManyToMany,
   CreateDateColumn,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
 } from 'typeorm';
+import { SpaceHistoryType } from 'src/lib/type';
+import { Space } from './space.entity';
+import { Rule } from './rule.entity';
+import { SpacePermissioner } from './space-permissioner.entity';
 import { SpaceEvent } from './space-event.entity';
-import { Topic } from './topic.entity';
+import { PermissionRequest } from './permission-request.entity';
+import { User } from './user.entity';
 
 @Entity()
 export class SpaceHistory {
@@ -16,75 +22,91 @@ export class SpaceHistory {
   @ApiProperty({ description: 'uuid' })
   id: string;
 
-  @Column()
-  @ApiProperty({ description: 'Space name' })
-  name: string;
+  @ManyToOne(() => Space, (space) => space.spaceHistories)
+  @JoinColumn()
+  space: Space;
 
   @Column()
-  @ApiProperty({ description: 'Space owner userId in uuid' })
-  ownerId: string;
+  @ApiProperty({ description: 'SpaceHistory spaceId in uuid' })
+  spaceId: string;
+
+  @ManyToOne(() => Rule, (rule) => rule.spaceHistories)
+  @JoinColumn()
+  rule: Rule;
 
   @Column()
-  @ApiProperty({ description: 'Space zipcode' })
-  zipcode: string;
+  @ApiProperty({ description: 'SpaceHistory ruleId in uuid' })
+  ruleId: string;
+
+  @ManyToOne(() => User, (user) => user.spaceHistories)
+  @JoinColumn()
+  logger: User;
 
   @Column()
-  @ApiProperty({ description: 'Country' })
-  country: string;
+  @ApiProperty({ description: 'SpaceHistory loggerId in uuid' })
+  loggerId: string;
+
+  @Column({ type: 'uuid', nullable: true })
+  spaceHistoryId: string;
+
+  @ManyToOne(
+    () => SpaceHistory,
+    (spaceHistory) => spaceHistory.childHistories,
+    {
+      nullable: true,
+    },
+  )
+  @JoinColumn({ name: 'space_history_id' })
+  parentHistory: SpaceHistory;
+
+  @OneToMany(() => SpaceHistory, (spaceHistory) => spaceHistory.parentHistory)
+  childHistories: SpaceHistory[];
+
+  @ManyToOne(
+    () => SpacePermissioner,
+    (spacePermissioner) => spacePermissioner.spaceHistories,
+  )
+  @JoinColumn()
+  spacePermissioner: SpacePermissioner;
 
   @Column()
-  @ApiProperty({ description: 'State|Region' })
-  region: string;
+  @ApiProperty({ description: 'SpaceHistory spacePermissionerId in uuid' })
+  spacePermissionerId: string;
+
+  @ManyToOne(() => SpaceEvent, (spaceEvent) => spaceEvent.spaceHistories)
+  @JoinColumn()
+  spaceEvent: SpaceEvent;
 
   @Column()
-  @ApiProperty({ description: 'City' })
-  city: string;
+  @ApiProperty({ description: 'SpaceHistory spaceEventId in uuid' })
+  spaceEventId: string;
+
+  @ManyToOne(
+    () => PermissionRequest,
+    (permissionRequest) => permissionRequest.spaceHistories,
+  )
+  @JoinColumn()
+  permissionRequest: PermissionRequest;
 
   @Column()
-  @ApiProperty({ description: 'District' })
-  district: string;
-
-  @Column()
-  @ApiProperty({ description: 'Address' })
-  address: string;
-
-  @Column()
-  @ApiProperty({ description: 'Latitude in string' })
-  latitude: string;
-
-  @Column()
-  @ApiProperty({ description: 'Longitude in string' })
-  longitude: string;
+  @ApiProperty({ description: 'SpaceHistory permissionRequestId in uuid' })
+  permissionRequestId: string;
 
   @Column({ default: true })
-  @ApiProperty({ description: 'Is space active' })
-  isActive: boolean;
-
-  @Column()
-  @ApiProperty({ description: 'Space rule ruleId in uuid' })
-  ruleId: string;
+  @ApiProperty({ description: 'Is SpaceHistory public' })
+  isPublic: boolean;
 
   @Column()
   @ApiProperty({
-    description: 'Space consent condition: {under|over|is}_{percent}_{yes|no}',
+    description: 'SpaceHistory type',
   })
-  consentCondition: string;
+  type: SpaceHistoryType;
 
   @Column()
-  @ApiProperty({ description: 'Space description' })
+  @ApiProperty({ description: 'SpaceHistory description' })
   details: string;
 
   @CreateDateColumn()
   @ApiProperty({ description: 'Created timestamp' })
   createdAt: Date;
-
-  @Column()
-  @ApiProperty({ description: 'Updated timestamp' })
-  updatedAt: Date;
-
-  @OneToMany(() => SpaceEvent, (spaceEvent) => spaceEvent.organizer)
-  spaceEvents: SpaceEvent[];
-
-  @ManyToMany(() => Topic, (topic) => topic.spaceTopics)
-  topics: Topic[];
 }
