@@ -25,6 +25,16 @@ export class UserService {
     return this.userRepository.findOneBy({ id });
   }
 
+  async findPublicDataById(id: string): Promise<Partial<User>> {
+    const user = await this.userRepository.findOneBy({ id });
+
+    return {
+      name: user.name,
+      details: user.details,
+      type: user.type,
+    };
+  }
+
   findOneByEmail(email: string): Promise<User> {
     return this.userRepository.findOneBy({ email });
   }

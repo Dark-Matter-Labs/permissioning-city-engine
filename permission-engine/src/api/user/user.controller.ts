@@ -25,6 +25,12 @@ export class UserController {
     return this.userService.findOneByEmail(req.user.email);
   }
 
+  @Get(':id')
+  @ApiResponse({ status: 200, description: 'Get public user data', type: User })
+  findPublicData(@Param('id') id: string): Promise<Partial<User>> {
+    return this.userService.findPublicDataById(id);
+  }
+
   // TODO. validate user location information
   @Put()
   @UseGuards(JwtAuthGuard)
