@@ -343,6 +343,7 @@ export class TopicService {
       ...createTopicDto,
       id: uuidv4(),
       authorId,
+      name: createTopicDto.name.toLowerCase(),
       isActive: true,
     });
 
