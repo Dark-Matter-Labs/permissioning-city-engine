@@ -68,7 +68,7 @@ export class AuthService {
     });
 
     const createUserDto: CreateUserDto = {
-      name: profile.firstName,
+      name: [profile.firstName, profile.lastName].join(' '),
       email: profile.email,
     };
 
