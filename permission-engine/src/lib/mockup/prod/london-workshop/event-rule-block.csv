@@ -1,0 +1,10 @@
+index,type,name,content,details,example content
+Event Rule 1,space_event:general,Clean-Up,"Organizers and participants are responsible for tidying up after the session, including removing any personal belongings or waste.",,
+Event Rule 1,space_event:exception,Sunday class,space:availability^sun-11:00-15:00^Requesting availability on Sunday,"This special rule allows a yoga class to be held on Sunday to accommodate community members who prefer weekend sessions, ensuring inclusive access to the space.",
+Event Rule 1,space_event:require_equipment,Foldable seating,seating^30,,
+Event Rule 1,space_event:require_equipment,Outdoor speaker system,speaker^1,,
+Event Rule 2,space_event:general,Setup and Placement of Speakers,Speakers must be placed indoors only and positioned away from doors and windows to minimize noise impact on neighbors.,,
+Event Rule 2,space_event:exception,Noise levels,space:max_noise_level^high^It's a dance party,"Loud music is permitted for this event but must end by 6 PM to respect the neighborhood. Amplified speakers are allowed, but volumes should not exceed 75 decibels.",space:max_noise_level^high^It's a musical performance
+Event Rule 2,space_event:exception,Capacity,space:max_attendee^15^Dancing bodies require more room,The maximum capacity for a dance party is limited to 15 attendees to ensure ample space for movement and safety.,space:availability^sun-11:00-15:00^Requesting availability on Sunday
+Event Rule 2,space_event:require_equipment,,,,monitor^2
+Event Rule 2,space_event:require_equipment,,,,computer^1

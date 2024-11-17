@@ -1,0 +1,36 @@
+index,type,name,content,details
+Space Rule 1,space:guide,Entering the Space,"You are free to enter if the space looks empty. However, if someone else is using the space, please wait until your booking time is reached.",
+Space Rule 1,space:private_guide,Checking in,The venue doesn't have a lock.,
+Space Rule 1,space:consent_method,Decision Making Method,over:50:yes,
+Space Rule 1,space:consent_timeout,Deadline for Decisions,7d,
+Space Rule 1,space:pre_permission_check,Stay Water-Safe,"For events near the canal, ensure safety measures are in place. Children must be supervised at all times, and life vests are required for any water activities.",
+Space Rule 1,space:pre_permission_check,Open Doors Policy,Events that are public and encourage interaction with neighbors are prioritized. Invite the community to join your activity!,
+Space Rule 1,space:pre_permission_check,Return & Report,"Return all equipment to its designated spot. If anything breaks, let us know—we’ll work together to repair it.",
+Space Rule 1,space:pre_permission_check,Gardening Together,"If you use the garden, consider spending a few minutes watering plants or tidying up—it’s a simple way to give back.",
+Space Rule 1,space:pre_permission_check,Leave It Better Than You Found It,"After your event, ensure the space is clean and ready for the next group. Think of it as a small gift to the community.",
+Space Rule 1,space:allowed_event_access_type,Supported Event Types,"public:free;public:paid","This space is committed to supporting events that are open to the public and free of charge. Our focus is on fostering inclusivity, ensuring that anyone can participate without financial barriers."
+Space Rule 1,space:max_attendee,Maximum Capacity,150,This space accommodates up to 150 people at any given time. Event organizers must ensure the number of attendees does not exceed this limit for safety and comfort.
+Space Rule 1,space:max_noise_level,Noise Levels,high,"Loud activities such as concerts, amplified music, or large crowds are allowed, but must end by 10 PM to respect the surrounding community."
+Space Rule 1,space:availability,Opening Hours,mon-00:00-24:00;tue-00:00-24:00;wed-00:00-24:00;thu-00:00-24:00;fri-00:00-24:00;sat-00:00-24:00,Open 24 hours from Monday to Saturday. Closed on Sundays for maintenance and community rest.
+Space Rule 1,space:availability_buffer,Buffer Time Between Events,45m,Buffer time is set to 45 minutes to leave enough room for clean up.
+Space Rule 1,space:availability_unit,Minimum Booking Time,1h,
+Space Rule 1,space:max_availability_unit_count,Maximum Booking Time,6,
+Space Rule 1,space:cancel_deadline,Cancellation policy,3h,Cancellations must be made at least 3 hours before the event to keep the space available for others.
+Space Rule 2,space:excluded_topic,Family-Friendly Zone,18+,Adult-themed events are not allowed to keep the space safe and inclusive for young children.
+Space Rule 2,space:excluded_topic,Alcohol-Free Zone,alcohol,"To ensure a safe and family-friendly environment, the playhut and garden are strictly alcohol-free. Alcohol is not permitted at any event held in this space."
+Space Rule 2,space:guide,Entering the Space,You can enter the venue 10 minutes before your booking time.,
+Space Rule 2,space:private_guide,Checking in,The code for the door lock is #1234*,
+Space Rule 2,space:consent_method,Decision Making Method,over:50:yes,
+Space Rule 2,space:consent_timeout,Deadline for Decisions,2d,
+Space Rule 2,space:pre_permission_check,Everything in Its Place,"At the end of your event, return all equipment and toys to their designated spots.",
+Space Rule 2,space:pre_permission_check,Play and Care,"Use toys, tables, and chairs gently. Report any damaged items to the team so they can be fixed for future fun.",
+Space Rule 2,space:pre_permission_check,Stay Safe in the Play Area,"For outdoor activities, ensure children are supervised near the paddling pool and slide to prevent accidents. The paddling pool must only be used with adult supervision.",
+Space Rule 2,space:pre_permission_check,Adult Presence,"An adult must always be present to oversee activities, especially in the garden and play areas.",
+Space Rule 2,space:allowed_event_access_type,Supported Event Types,"public:free;private:free","This space is committed to supporting events that are open to the public and free of charge. Our focus is on fostering inclusivity, ensuring that anyone can participate without financial barriers."
+Space Rule 2,space:max_attendee,Maximum Capacity,30,This space accommodates up to 30 people at any given time. Event organizers must ensure the number of attendees does not exceed this limit for safety and comfort.
+Space Rule 2,space:max_noise_level,Noise Levels,medium,"Moderate noise, such as music at conversational volume or live speaking with microphones, is permitted."
+Space Rule 2,space:availability,Opening Hours,mon-09:00-18:00;tue-09:00-18:00;wed-09:00-18:00;thu-09:00-18:00;fri-09:00-18:00,"Open Monday to Friday, 9:00 AM to 6:00 PM. Closed on weekends."
+Space Rule 2,space:availability_buffer,Buffer Time Between Events,30m,Buffer time is set to 30 minutes to leave enough room for clean up.
+Space Rule 2,space:availability_unit,Minimum Booking Time,1h,
+Space Rule 2,space:max_availability_unit_count,Maximum Booking Time,3,
+Space Rule 2,space:cancel_deadline,Cancellation policy,12h,Cancellations must be made at least 12 hours before the event to keep the space available for others.
