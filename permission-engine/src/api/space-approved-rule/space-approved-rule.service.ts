@@ -29,8 +29,16 @@ export class SpaceApprovedRuleService {
     option: { isPublic: boolean } = { isPublic: true },
   ): Promise<{ data: Rule[]; total: number }> {
     const { isPublic } = option;
-    const { page, limit, spaceId, ruleId, topicIds, isActive, sortBy } =
-      findAllSpaceApprovedRuleDto;
+    const {
+      page,
+      limit,
+      spaceId,
+      ruleId,
+      publicHash,
+      topicIds,
+      isActive,
+      sortBy,
+    } = findAllSpaceApprovedRuleDto;
 
     const where = [];
     const params: any[] = [(page - 1) * limit, limit];
@@ -47,6 +55,12 @@ export class SpaceApprovedRuleService {
       paramIndex++;
       where.push(`sar.rule_id = $${paramIndex}`);
       params.push(ruleId);
+    }
+
+    if (publicHash != null) {
+      paramIndex++;
+      where.push(`sar.public_hash = $${paramIndex}`);
+      params.push(publicHash);
     }
 
     if (isActive != null) {
@@ -89,6 +103,7 @@ export class SpaceApprovedRuleService {
           r.id,
           r.name,
           r.hash,
+          r.public_hash,
           r.author_id,
           r.target,
           r.parent_rule_id,
@@ -134,8 +149,8 @@ export class SpaceApprovedRuleService {
 
     if (data != null) {
       result = data.map((item) => {
-        let ruleBlocks = item.row.f11;
-        let topics = item.row.f12;
+        let ruleBlocks = item.row.f12;
+        let topics = item.row.f13;
         if (ruleBlocks) {
           ruleBlocks = ruleBlocks.map((item) => {
             return {
@@ -175,13 +190,14 @@ export class SpaceApprovedRuleService {
           id: item.row.f1,
           name: item.row.f2,
           hash: item.row.f3,
-          authorId: item.row.f4,
-          target: item.row.f5,
-          parentRuleId: item.row.f6,
-          isActive: item.row.f7,
-          createdAt: item.row.f8,
-          updatedAt: item.row.f9,
-          utilizationCount: item.row.f10,
+          publicHash: item.row.f4,
+          authorId: item.row.f5,
+          target: item.row.f6,
+          parentRuleId: item.row.f7,
+          isActive: item.row.f8,
+          createdAt: item.row.f9,
+          updatedAt: item.row.f10,
+          utilizationCount: item.row.f11,
           ruleBlocks,
           topics,
         };
@@ -228,6 +244,7 @@ export class SpaceApprovedRuleService {
 
       const spaceApprovedRule = this.spaceApprovedRuleRepository.create({
         ...createSpaceApprovedRuleDto,
+        publicHash: rule.publicHash,
         isActive: true,
         isPublic,
       });
@@ -236,7 +253,7 @@ export class SpaceApprovedRuleService {
     }
   }
 
-  async update(
+  async updateIsActive(
     updateSpaceApprovedRuleDto: UpdateSpaceApprovedRuleDto,
   ): Promise<{ data: { result: boolean } }> {
     const { spaceId, ruleId, isActive } = updateSpaceApprovedRuleDto;

@@ -51,6 +51,7 @@ Ref: space_image.space_id > space.id
 Table space_approved_rule {
   space_id uuid [not null]
   rule_id uuid [not null]
+  public_hash varchar
   permission_request_id uuid
   is_active bool [not null, default: true]
   is_public bool [not null, default: true]
@@ -148,6 +149,7 @@ Table rule {
   id uuid [primary key]
   name varchar [not null]
   hash varchar [not null]
+  public_hash varchar
   author_id uuid [not null]
   target varchar [not null]
   parent_rule_id uuid

@@ -37,6 +37,10 @@ export class SpaceApprovedRule {
   @PrimaryColumn()
   permissionRequestId: string;
 
+  @Column()
+  @ApiProperty({ description: 'Space approved rule public hash' })
+  publicHash: string;
+
   @Column({ default: true })
   @ApiProperty({ description: 'Is space approved rule active' })
   isActive: boolean;

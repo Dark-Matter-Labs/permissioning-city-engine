@@ -35,13 +35,23 @@ export class SpaceApprovedRuleController {
   @Get()
   @ApiOperation({ summary: 'Get all SpaceApprovedRules by spaceId' })
   findAll(@Query() query: FindAllSpaceApprovedRuleDto) {
-    const { page, limit, spaceId, ruleId, topicIds, isActive, sortBy } = query;
+    const {
+      page,
+      limit,
+      spaceId,
+      ruleId,
+      publicHash,
+      topicIds,
+      isActive,
+      sortBy,
+    } = query;
 
     return this.spaceApprovedRuleService.findAll({
       page,
       limit,
       spaceId,
       ruleId,
+      publicHash,
       isActive,
       topicIds,
       sortBy,
@@ -93,9 +103,10 @@ export class SpaceApprovedRuleController {
       throw new ForbiddenException();
     }
 
-    const spaceApprovedRule = await this.spaceApprovedRuleService.update(
-      updateSpaceApprovedRuleDto,
-    );
+    const spaceApprovedRule =
+      await this.spaceApprovedRuleService.updateIsActive(
+        updateSpaceApprovedRuleDto,
+      );
 
     return spaceApprovedRule;
   }

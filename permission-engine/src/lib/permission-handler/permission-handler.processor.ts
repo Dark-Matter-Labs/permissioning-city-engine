@@ -144,7 +144,7 @@ export class PermissionHandlerProcessor {
     const spaceApprovedRules = await this.spaceApprovedRuleService.findAll(
       {
         spaceId: permissionRequest.spaceId,
-        ruleId: permissionRequest.spaceEventRuleId,
+        publicHash: permissionRequest.spaceEventRule.publicHash,
         isActive: true,
       },
       { isPublic: false },
@@ -163,7 +163,11 @@ export class PermissionHandlerProcessor {
     let isAutoApproval = false;
 
     // check spaceApprovedRules
-    if (spaceApprovedRules.data.find((item) => item.id === spaceEventRule.id)) {
+    if (
+      spaceApprovedRules.data.find(
+        (item) => item.publicHash === spaceEventRule.publicHash,
+      )
+    ) {
       isAutoApproval = true;
     } else {
       // check topics

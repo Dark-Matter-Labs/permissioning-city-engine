@@ -34,6 +34,12 @@ export class Rule {
   @ApiProperty({ description: 'Rule hash' })
   hash: string;
 
+  @Column()
+  @ApiProperty({
+    description: 'Rule public hash: hash result for public rule blocks',
+  })
+  publicHash: string;
+
   @ManyToOne(() => User, (user) => user.rules)
   @JoinColumn()
   author: User;
