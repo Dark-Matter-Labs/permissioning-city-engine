@@ -295,7 +295,6 @@ export class RuleService {
 
     if (result.ruleblocks) {
       result.ruleBlocks = result.ruleblocks.map((item) => {
-        console.log(item);
         return {
           id: item.id,
           name: item.name,
@@ -477,10 +476,16 @@ export class RuleService {
 
     const duplicateSpaceEventRule = (
       await this.findAll(
-        { target: RuleTarget.spaceEvent, hash, isActive: true },
         {
-          isPagination: false,
+          target: RuleTarget.spaceEvent,
+          hash,
+          isActive: true,
+          page: 1,
+          limit: 1,
+        },
+        {
           isPublicOnly: false,
+          isPagination: true,
         },
       )
     )?.data?.[0];
