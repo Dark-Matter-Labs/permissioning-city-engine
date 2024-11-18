@@ -854,6 +854,7 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
           topics,
           thumbnail,
           cover,
+          link,
         } = space;
         if (
           index &&
@@ -893,6 +894,7 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
             latitude,
             longitude,
             details,
+            link,
             topicIds,
             ruleId: workshopSpaces[getIndex(index)].rule.id,
           });
