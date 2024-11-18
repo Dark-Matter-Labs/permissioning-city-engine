@@ -84,6 +84,10 @@ export class Space {
   @ApiProperty({ description: 'Space description' })
   details: string;
 
+  @Column()
+  @ApiProperty({ description: 'Space external link' })
+  link: string;
+
   @CreateDateColumn()
   @ApiProperty({ description: 'Created timestamp' })
   createdAt: Date;

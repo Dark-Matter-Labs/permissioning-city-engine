@@ -63,6 +63,11 @@ export class UpdateSpaceDto {
   details?: string;
 
   @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({ description: 'Space external link' })
+  link?: string;
+
+  @IsOptional()
   @IsArray()
   @ArrayMaxSize(5)
   @ApiPropertyOptional({
