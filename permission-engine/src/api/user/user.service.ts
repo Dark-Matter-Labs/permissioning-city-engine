@@ -31,6 +31,7 @@ export class UserService {
     return {
       name: user.name,
       details: user.details,
+      image: user.image,
       type: user.type,
     };
   }
