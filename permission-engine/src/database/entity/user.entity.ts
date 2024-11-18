@@ -69,6 +69,10 @@ export class User {
   @ApiProperty({ description: 'Details' })
   details: string;
 
+  @Column()
+  @ApiProperty({ description: 'Profile Image' })
+  image: string;
+
   @CreateDateColumn()
   @ApiProperty({ description: 'Created timestamp' })
   createdAt: Date;

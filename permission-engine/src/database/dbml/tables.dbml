@@ -12,6 +12,7 @@ Table user {
   city varchar
   district varchar
   details text
+  image text
   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
   updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
 }

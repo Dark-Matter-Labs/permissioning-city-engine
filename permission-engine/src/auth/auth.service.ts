@@ -49,6 +49,13 @@ export class AuthService {
         }
       }
       user = (await this.userService.create(createUserDto)).data.user;
+    } else if (user.image !== createUserDto.image) {
+      // update user image if changed
+      user = (
+        await this.userService.update(createUserDto.email, {
+          image: createUserDto.image,
+        })
+      ).data.user;
     }
 
     return user;
@@ -70,6 +77,7 @@ export class AuthService {
     const createUserDto: CreateUserDto = {
       name: [profile.firstName, profile.lastName].join(' '),
       email: profile.email,
+      image: profile.picture,
     };
 
     const registeredUser = await this.findOrCreateUser(
