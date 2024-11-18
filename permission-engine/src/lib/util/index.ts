@@ -1,6 +1,6 @@
 import * as crypto from 'crypto';
 import * as cheerio from 'cheerio';
-import { RuleBlockContentDivider } from '../type';
+import { DayOfWeek, RuleBlockContentDivider } from '../type';
 
 export const hash = (str: string) => {
   return crypto.createHash('sha256').update(str).digest('hex');
@@ -18,6 +18,39 @@ export const generateRandomCode = (length = 8) => {
   }
 
   return result;
+};
+
+export const getDayIndex = (day: DayOfWeek): number => {
+  let index = 0;
+
+  switch (day) {
+    case 'sun':
+      index = 0;
+      break;
+    case 'mon':
+      index = 1;
+      break;
+    case 'tue':
+      index = 2;
+      break;
+    case 'wed':
+      index = 3;
+      break;
+    case 'thu':
+      index = 4;
+      break;
+    case 'fri':
+      index = 5;
+      break;
+    case 'sat':
+      index = 6;
+      break;
+
+    default:
+      break;
+  }
+
+  return index;
 };
 
 export const getTimeIntervals = (
@@ -109,30 +142,30 @@ export const getTimeIntervals = (
 
     if (nextDate > endDate) break;
 
-    const nextDay = nextDate.getDay();
-    let nextDayString = null;
+    const currentDay = currentDate.getDay();
+    let currentDayString = null;
 
-    switch (nextDay) {
+    switch (currentDay) {
       case 0:
-        nextDayString = 'sun';
+        currentDayString = 'sun';
         break;
       case 1:
-        nextDayString = 'mon';
+        currentDayString = 'mon';
         break;
       case 2:
-        nextDayString = 'tue';
+        currentDayString = 'tue';
         break;
       case 3:
-        nextDayString = 'wed';
+        currentDayString = 'wed';
         break;
       case 4:
-        nextDayString = 'thu';
+        currentDayString = 'thu';
         break;
       case 5:
-        nextDayString = 'fri';
+        currentDayString = 'fri';
         break;
       case 6:
-        nextDayString = 'sat';
+        currentDayString = 'sat';
         break;
 
       default:
@@ -140,7 +173,7 @@ export const getTimeIntervals = (
     }
 
     const availabilityRanges = availabilities.filter((item) =>
-      item.startsWith(nextDayString),
+      item.startsWith(currentDayString),
     );
     const reservation = unavailableRanges.find(
       (item) =>
@@ -153,8 +186,7 @@ export const getTimeIntervals = (
     }
 
     for (const availability of availabilityRanges) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const [_day, startTime, endTime] = availability.split(
+      const [day, startTime, endTime] = availability.split(
         RuleBlockContentDivider.time,
       );
       const [startHour, startMinute] = startTime.split(':');
@@ -164,7 +196,11 @@ export const getTimeIntervals = (
       const endDate = new Date(currentDate);
       endDate.setHours(parseInt(endHour), parseInt(endMinute), 0, 0);
 
-      if (startDate <= new Date(currentDate) && endDate >= new Date(nextDate)) {
+      if (
+        currentDate.getDay() === getDayIndex(day as DayOfWeek) &&
+        startDate <= new Date(currentDate) &&
+        endDate >= new Date(nextDate)
+      ) {
         if (!!reservation === false) {
           intervals.push({
             startTime: new Date(currentDate),
@@ -210,7 +246,15 @@ export const isInAvailabilities = (
   );
 
   // Get the weekday (0 = Sunday, 1 = Monday, etc.)
-  const dayNames = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+  const dayNames = [
+    DayOfWeek.sun,
+    DayOfWeek.mon,
+    DayOfWeek.tue,
+    DayOfWeek.wed,
+    DayOfWeek.thu,
+    DayOfWeek.fri,
+    DayOfWeek.sat,
+  ];
   const startDay = dayNames[startTime.getUTCDay()];
   const endDay = dayNames[endTime.getUTCDay()];
 
