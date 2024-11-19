@@ -216,10 +216,12 @@ export class SpaceApprovedRuleService {
   }
 
   async findOne(spaceId: string, ruleId: string): Promise<SpaceApprovedRule> {
-    return await this.spaceApprovedRuleRepository.query(
+    const spaceApprovedRules = await this.spaceApprovedRuleRepository.query(
       'SELECT * FROM space_approved_rule WHERE space_id = $1 AND rule_id = $2',
       [spaceId, ruleId],
     );
+
+    return spaceApprovedRules?.[0];
   }
 
   async create(
