@@ -35,6 +35,7 @@ import { countryCodeToLanguage } from 'src/lib/util/locale';
 import { SpaceEventService } from 'src/api/space-event/space-event.service';
 import { WsNotificationGateway } from 'src/lib/ws-notification/ws-notification.gateway';
 import { selectHtmlElement } from '../util';
+import { SpaceEventPermissionRequestApprovedEmail } from '../email-template/space-event-permission-request-approved-email';
 
 @Injectable()
 export class NotificationHandlerService
@@ -215,13 +216,19 @@ export class NotificationHandlerService
         //     },
         //   );
         //   break;
-        // case UserNotificationTemplateName.spaceEventPermissionRequestApproved:
-        //   email = new SpaceEventPermissionRequestApprovedEmail(this.i18n, {
-        //     language: language as Language,
-        //     name: userNotification.user.name,
-        //     spaceId: userNotification.params.spaceId,
-        //   });
-        //   break;
+        case UserNotificationTemplateName.spaceEventPermissionRequestApproved:
+          email = new SpaceEventPermissionRequestApprovedEmail(this.i18n, {
+            language: language as Language,
+            name: userNotification.user.name,
+            eventId: userNotification.params.eventId,
+            permissionRequestId: userNotification.params.permissionRequestId,
+            eventTitle: userNotification.params.eventTitle,
+            excitements: userNotification.params.excitements,
+            worries: userNotification.params.worries,
+            conditions: userNotification.params.conditions,
+            externalBookingLink: userNotification.params.externalBookingLink,
+          });
+          break;
         // case UserNotificationTemplateName.spaceEventPermissionRequestRejected:
         //   email = new SpaceEventPermissionRequestRejectedEmail(this.i18n, {
         //     language: language as Language,
