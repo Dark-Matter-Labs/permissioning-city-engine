@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import {
   PermissionProcessType,
   PermissionRequestResolveStatus,
+  PermissionRequestSortBy,
   PermissionRequestStatus,
 } from 'src/lib/type';
 import {
@@ -47,12 +48,15 @@ export class PermissionRequestService {
       spaceId,
       ruleId,
       statuses,
+      createdBefore,
       resolveStatuses,
+      sortBy,
     } = findAllPermissionRequestDto;
 
     const where = [];
     const params: any[] = [(page - 1) * limit, limit];
     let paramIndex: number = params.length;
+    let orderByClause = '';
 
     if (spaceEventId != null) {
       paramIndex++;
@@ -84,6 +88,24 @@ export class PermissionRequestService {
       params.push(resolveStatuses);
     }
 
+    if (createdBefore != null) {
+      paramIndex++;
+      where.push(`created_at <= $${paramIndex}`);
+      params.push(createdBefore);
+    }
+
+    if (sortBy != null) {
+      switch (sortBy) {
+        case PermissionRequestSortBy.timeDesc:
+          orderByClause = `ORDER BY created_at DESC`;
+          break;
+        case PermissionRequestSortBy.timeAsc:
+        default:
+          orderByClause = `ORDER BY created_at ASC`;
+          break;
+      }
+    }
+
     const whereClause = where.length > 0 ? 'WHERE' : '';
     const query = `
       WITH filtered_data AS (
@@ -94,11 +116,12 @@ export class PermissionRequestService {
           space_rule_id,
           space_event_rule_id,
           status,
+          process_type,
           created_at,
           updated_at
         FROM permission_request
         ${whereClause} ${where.join(' AND ')}
-        ORDER BY updated_at DESC
+        ${orderByClause}
       )
       SELECT COUNT(*) AS total, json_agg(filtered_data) AS data
       FROM filtered_data
@@ -121,6 +144,7 @@ export class PermissionRequestService {
           spaceRuleId: item.space_rule_id,
           spaceEventRuleId: item.space_event_rule_id,
           status: item.status,
+          processType: item.process_type,
           createdAt: item.created_at,
           updatedAt: item.updated_at,
         };
@@ -220,6 +244,7 @@ export class PermissionRequestService {
   }
 
   async create(
+    userId: string,
     createPermissionRequestDto: Partial<CreatePermissionRequestDto>,
   ): Promise<{
     data: { result: boolean; permissionRequest: PermissionRequest | null };
@@ -252,6 +277,8 @@ export class PermissionRequestService {
 
     const permissionRequest = this.permissionRequestRepository.create({
       ...dto,
+      userId,
+      processType: permissionProcessType,
       id: uuidv4(),
     });
 
@@ -262,13 +289,6 @@ export class PermissionRequestService {
     } catch (error) {
       this.logger.error('Failed to create permissionRequest', error);
       result = false;
-    }
-
-    if (result === true) {
-      await this.permissionHandlerService.addJob({
-        permissionProcessType,
-        permissionRequestId: permissionRequest.id,
-      });
     }
 
     return {
@@ -285,6 +305,19 @@ export class PermissionRequestService {
   ): Promise<{ data: { result: boolean } }> {
     const updateResult = await this.permissionRequestRepository.update(id, {
       spaceEventRuleId,
+      updatedAt: new Date(),
+    });
+
+    return {
+      data: {
+        result: updateResult.affected === 1,
+      },
+    };
+  }
+
+  async updateToQueued(id: string): Promise<{ data: { result: boolean } }> {
+    const updateResult = await this.permissionRequestRepository.update(id, {
+      status: PermissionRequestStatus.queued,
       updatedAt: new Date(),
     });
 
