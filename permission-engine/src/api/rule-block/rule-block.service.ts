@@ -455,7 +455,7 @@ export class RuleBlockService {
   }
 
   private validateSpaceEventInsurance(files: Express.Multer.File[]) {
-    if (files.length === 0) {
+    if (!files || files?.length === 0) {
       throw new BadRequestException('Should provide file for insurance');
     }
   }
