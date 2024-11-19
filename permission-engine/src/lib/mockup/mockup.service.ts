@@ -44,6 +44,7 @@ import path from 'path';
 import csv from 'csv-parser';
 import { SpaceHistory } from 'src/database/entity/space-history.entity';
 import { SpaceTopic } from 'src/database/entity/space-topic.entity';
+import { SpaceApprovedRule } from 'src/database/entity/space-approved-rule.entity';
 
 @Injectable()
 export class MockupService implements OnModuleInit, OnModuleDestroy {
@@ -68,6 +69,8 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
     private spaceTopicRepository: Repository<SpaceTopic>,
     @InjectRepository(SpaceEquipment)
     private spaceEquipmentRepository: Repository<SpaceEquipment>,
+    @InjectRepository(SpaceApprovedRule)
+    private spaceApprovedRuleRepository: Repository<SpaceApprovedRule>,
     @InjectRepository(SpaceEvent)
     private spaceEventRepository: Repository<SpaceEvent>,
     @InjectRepository(SpaceEventImage)
@@ -130,7 +133,8 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
         dayjs(migration.created_at).toString() !==
           dayjs(migration.updated_at).toString()
       ) {
-        return;
+        // comented this out for mock-up-and-down by restart feature
+        // return;
       }
 
       await this.down();
@@ -570,6 +574,18 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
         `SELECT * FROM "space" WHERE owner_id = $1`,
         [user.id],
       );
+      const spaceEvents = await this.spaceEventRepository.query(
+        `SELECT * FROM space_event WHERE space_id = ANY($1)`,
+        [spaces.map((item) => item.id)],
+      );
+      const spaceEventTopics = await this.spaceEventRepository.query(
+        `SELECT * FROM space_event_topic WHERE space_event_id = ANY($1)`,
+        [spaceEvents.map((item) => item.id)],
+      );
+      const permissionRequests = await this.permissionRequestRepository.query(
+        `SELECT * FROM permission_request WHERE space_id = ANY($1)`,
+        [spaces.map((item) => item.id)],
+      );
       const spaceHistories = await this.spaceHistoryRepository.query(
         `SELECT * FROM space_history WHERE space_id = ANY($1)`,
         [spaces.map((item) => item.id)],
@@ -608,6 +624,10 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
         `SELECT * FROM space_equipment WHERE space_id = ANY($1)`,
         [spaces.map((item) => item.id)],
       );
+      const spaceApprovedRules = await this.spaceApprovedRuleRepository.query(
+        `SELECT * FROM space_approved_rule WHERE space_id = ANY($1)`,
+        [spaces.map((item) => item.id)],
+      );
 
       await this.client
         .query(`DELETE FROM user_notification WHERE user_id = $1`, [user.id])
@@ -615,6 +635,37 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
           this.logger.error(`Failed to delete user`, error);
           throw error;
         });
+      if (permissionRequests) {
+        await this.client
+          .query(`DELETE FROM permission_request WHERE id = ANY($1)`, [
+            permissionRequests.map((item) => item.id),
+          ])
+          .catch((error) => {
+            this.logger.error(`Failed to delete permissionRequests`, error);
+            throw error;
+          });
+      }
+      if (spaceEventTopics) {
+        await this.client
+          .query(
+            `DELETE FROM space_event_topic WHERE space_event_id = ANY($1)`,
+            [spaceEvents.map((item) => item.id)],
+          )
+          .catch((error) => {
+            this.logger.error(`Failed to delete spaceEventTopics`, error);
+            throw error;
+          });
+      }
+      if (spaceEvents) {
+        await this.client
+          .query(`DELETE FROM space_event WHERE id = ANY($1)`, [
+            spaceEvents.map((item) => item.id),
+          ])
+          .catch((error) => {
+            this.logger.error(`Failed to delete spaceEvents`, error);
+            throw error;
+          });
+      }
       if (spaceHistories) {
         await this.client
           .query(`DELETE FROM space_history WHERE id = ANY($1)`, [
@@ -622,6 +673,16 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
           ])
           .catch((error) => {
             this.logger.error(`Failed to delete spaceHistories`, error);
+            throw error;
+          });
+      }
+      if (spaceApprovedRules) {
+        await this.client
+          .query(`DELETE FROM space_approved_rule WHERE space_id = ANY($1)`, [
+            spaces.map((item) => item.id),
+          ])
+          .catch((error) => {
+            this.logger.error(`Failed to delete spaceApprovedRules`, error);
             throw error;
           });
       }
@@ -1010,6 +1071,11 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
               topicIds,
             },
           );
+
+          await this.spaceApprovedRuleService.create({
+            spaceId: workshopSpaces[getIndex(index)].space.id,
+            ruleId: newSpaceEventRule.id,
+          });
 
           workshopEvents[getIndex(index)].rule = newSpaceEventRule;
         }
