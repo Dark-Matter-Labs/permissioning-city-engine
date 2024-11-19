@@ -41,9 +41,11 @@ export class SpaceEventPermissionRequestApprovedEmail extends Email {
     this.worries = option.worries;
     this.conditions = option.conditions;
     this.externalBookingLink = option.externalBookingLink;
+    this.permissionRequestId = option.permissionRequestId;
+    this.eventId = option.eventId;
     // TODO. Check routing policy in FrontEnd
-    this.resolveLink = `${this.domain}/permission/request/${this.permissionRequestId}/resolve`;
-    this.eventDashboardLink = `${this.domain}/event/${this.eventId}`;
+    this.resolveLink = `${this.domain}/permission/request/${option.permissionRequestId}/resolve`;
+    this.eventDashboardLink = `${this.domain}/event/${option.eventId}`;
 
     this.subjectPart();
     this.htmlPart();
