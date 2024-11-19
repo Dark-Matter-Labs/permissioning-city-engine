@@ -1,6 +1,14 @@
 import * as crypto from 'crypto';
 import * as cheerio from 'cheerio';
 import { DayOfWeek, RuleBlockContentDivider } from '../type';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+import abbrTimezone from 'dayjs-abbr-timezone';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.extend(abbrTimezone);
 
 export const hash = (str: string) => {
   return crypto.createHash('sha256').update(str).digest('hex');
