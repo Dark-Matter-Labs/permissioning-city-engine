@@ -45,6 +45,14 @@ export class FindAllSpaceApprovedRuleDto extends PaginationDto {
   isActive?: boolean;
 
   @IsOptional()
+  @IsBoolean()
+  @ApiPropertyOptional({
+    description: 'SpaceApprovedRule is public state',
+    type: 'boolean',
+  })
+  isPublic?: boolean;
+
+  @IsOptional()
   @Transform(({ value }) => (Array.isArray(value) ? value : value.split(',')))
   @IsArray()
   @IsUUID('4', { each: true })

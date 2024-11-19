@@ -26,9 +26,7 @@ export class SpaceApprovedRuleService {
 
   async findAll(
     findAllSpaceApprovedRuleDto: FindAllSpaceApprovedRuleDto,
-    option: { isPublic: boolean } = { isPublic: true },
   ): Promise<{ data: Rule[]; total: number }> {
-    const { isPublic } = option;
     const {
       page,
       limit,
@@ -37,6 +35,7 @@ export class SpaceApprovedRuleService {
       publicHash,
       topicIds,
       isActive,
+      isPublic,
       sortBy,
     } = findAllSpaceApprovedRuleDto;
 
@@ -67,6 +66,12 @@ export class SpaceApprovedRuleService {
       paramIndex++;
       where.push(`sar.is_active = $${paramIndex}`);
       params.push(isActive);
+    }
+
+    if (isPublic != null) {
+      paramIndex++;
+      where.push(`sar.is_public = $${paramIndex}`);
+      params.push(isPublic);
     }
 
     if (isPublic != null) {
@@ -210,11 +215,11 @@ export class SpaceApprovedRuleService {
     };
   }
 
-  findOne(spaceId: string, ruleId: string): Promise<SpaceApprovedRule> {
-    return this.spaceApprovedRuleRepository.findOne({
-      where: { spaceId, ruleId },
-      relations: ['space', 'rule'],
-    });
+  async findOne(spaceId: string, ruleId: string): Promise<SpaceApprovedRule> {
+    return await this.spaceApprovedRuleRepository.query(
+      'SELECT * FROM space_approved_rule WHERE space_id = $1 AND rule_id = $2',
+      [spaceId, ruleId],
+    );
   }
 
   async create(

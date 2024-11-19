@@ -43,6 +43,7 @@ export class SpaceApprovedRuleController {
       publicHash,
       topicIds,
       isActive,
+      isPublic,
       sortBy,
     } = query;
 
@@ -54,6 +55,7 @@ export class SpaceApprovedRuleController {
       publicHash,
       isActive,
       topicIds,
+      isPublic,
       sortBy,
     });
   }
