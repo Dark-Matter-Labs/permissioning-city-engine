@@ -134,6 +134,11 @@ export enum SpaceApprovedRuleSortBy {
   timeDesc = 'time-desc',
 }
 
+export enum PermissionRequestSortBy {
+  timeAsc = 'time-asc',
+  timeDesc = 'time-desc',
+}
+
 /**
  * <RuleBlock.content divider rules>
  * Array divider: ';'
@@ -319,6 +324,8 @@ export type SpaceAvailability = {
 export enum PermissionRequestStatus {
   // created
   pending = 'pending',
+  // job queued
+  queued = 'queued',
   // assign permissioners
   assigned = 'assigned',
   assignFailed = 'assign_failed',
