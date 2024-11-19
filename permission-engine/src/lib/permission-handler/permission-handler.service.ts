@@ -8,7 +8,11 @@ import {
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
-import { PermissionHandlerJobData, PermissionProcessType } from 'src/lib/type';
+import {
+  PermissionHandlerJobData,
+  PermissionProcessType,
+  PermissionRequestStatus,
+} from 'src/lib/type';
 import { ConfigService } from '@nestjs/config';
 import { Logger } from '../logger/logger.service';
 import { DataSource, QueryRunner } from 'typeorm';
@@ -126,6 +130,14 @@ export class PermissionHandlerService
     });
   }
 
+  async findPendingPermissionRequests() {
+    return await this.permissionRequestService.findAll({
+      statuses: [PermissionRequestStatus.pending],
+      page: 1,
+      limit: this.fetchCount,
+    });
+  }
+
   async run() {
     await this.handlePermissionRequests();
   }
@@ -137,25 +149,61 @@ export class PermissionHandlerService
       await queryRunner.startTransaction();
 
       const timeoutReachedPermissionRequests =
-        await this.findTimeoutReachedPermissionRequests();
+        (await this.findTimeoutReachedPermissionRequests())?.data ?? [];
 
-      timeoutReachedPermissionRequests?.data?.map(async (permissionRequest) => {
+      for (const permissionRequest of timeoutReachedPermissionRequests) {
         try {
           await this.addJob({
             permissionProcessType:
               PermissionProcessType.permissionResponseReviewCompleted,
             permissionRequestId: permissionRequest.id,
-          });
+          })
+            .then(async () => {
+              await this.permissionRequestService.updateToQueued(
+                permissionRequest.id,
+              );
+            })
+            .catch((error) => {
+              this.logger.error(error.message, error);
+              throw error;
+            });
         } catch (error) {
           this.logger.error(
             `Failed to add permissionResponseReviewCompleted job`,
             error,
           );
         }
-      });
+      }
+
+      const pendingPermissionRequests =
+        (await this.findPendingPermissionRequests())?.data ?? [];
+
+      for (const permissionRequest of pendingPermissionRequests) {
+        try {
+          await this.addJob({
+            permissionProcessType: permissionRequest.processType,
+            permissionRequestId: permissionRequest.id,
+          })
+            .then(async () => {
+              await this.permissionRequestService.updateToQueued(
+                permissionRequest.id,
+              );
+            })
+            .catch((error) => {
+              this.logger.error(error.message, error);
+              throw error;
+            });
+        } catch (error) {
+          this.logger.error(
+            `Failed to add permissionResponseReviewCompleted job`,
+            error,
+          );
+        }
+      }
       await queryRunner.commitTransaction();
     } catch (error) {
       await queryRunner.rollbackTransaction();
+      this.logger.error(error.message, error);
     } finally {
       await queryRunner.release();
     }
