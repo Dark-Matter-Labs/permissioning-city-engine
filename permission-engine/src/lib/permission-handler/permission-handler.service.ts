@@ -95,7 +95,7 @@ export class PermissionHandlerService
   }
 
   private async start() {
-    while (this.isActive === true) {
+    while (this.isActive === true && this.isDaemonMode === true) {
       const daemonId = await this.redis.get(this.daemonKey);
 
       if (daemonId !== this.daemonId) {

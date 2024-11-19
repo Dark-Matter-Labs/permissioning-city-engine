@@ -115,7 +115,7 @@ export class NotificationHandlerService
   }
 
   private async start() {
-    while (this.isActive === true) {
+    while (this.isActive === true && this.isDaemonMode === true) {
       const daemonId = await this.redis.get(this.daemonKey);
 
       if (daemonId !== this.daemonId) {
@@ -344,7 +344,7 @@ export class NotificationHandlerService
 
       if (email) {
         // internal & external -> notify via web socket
-        await this.updateUserNotificationToQueued(userNotification.id);
+        await this.updateUserNotificationContent(userNotification.id, email);
         this.notifyUser(
           userNotification.userId,
           JSON.stringify({

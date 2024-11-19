@@ -25,11 +25,11 @@ export class NotificationHandlerProcessor {
 
         // 1. parse job.data into AWS SES send email object type
         // 2. Send email by calling SESService.send() method
-        const { to, email } = job.data;
+        const { to, email, userNotificationId } = job.data;
         const sendResult = await this.sesService.send(to, email);
 
         await this.userNotificationService
-          .updateToNoticeSent(job.data.userNotificationId, sendResult.MessageId)
+          .updateToNoticeSent(userNotificationId, sendResult.MessageId)
           .then(() => {
             resolve(sendResult.MessageId);
           });
