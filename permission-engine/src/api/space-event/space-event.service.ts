@@ -27,6 +27,14 @@ import { v4 as uuidv4 } from 'uuid';
 import { Logger } from 'src/lib/logger/logger.service';
 import { PermissionRequestService } from '../permission-request/permission-request.service';
 import { RuleService } from '../rule/rule.service';
+import { SpaceService } from '../space/space.service';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+import abbrTimezone from 'dayjs-abbr-timezone';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.extend(abbrTimezone);
 
 @Injectable()
 export class SpaceEventService {
@@ -35,6 +43,7 @@ export class SpaceEventService {
     private spaceEventRepository: Repository<SpaceEvent>,
     private readonly permissionRequestService: PermissionRequestService,
     private readonly ruleService: RuleService,
+    private readonly spaceService: SpaceService,
     private readonly logger: Logger,
   ) {}
 
@@ -221,7 +230,7 @@ export class SpaceEventService {
     createSpaceEventDto: CreateSpaceEventDto,
   ): Promise<SpaceEvent> {
     const { duration, startsAt, topicIds } = createSpaceEventDto;
-    const start = dayjs(new Date(startsAt));
+    const start = dayjs(startsAt);
     const match = duration.match(/^(\d+)([dwMyhms]+)$/);
     const numberPart = parseInt(match[1], 10);
     const stringPart: dayjs.ManipulateType = match[2] as dayjs.ManipulateType;
@@ -420,9 +429,18 @@ export class SpaceEventService {
   ): Promise<{ data: { result: boolean } }> {
     const spaceEvent = await this.spaceEventRepository.findOneBy({ id });
 
+    if (spaceEvent.status === SpaceEventStatus.permissionGranted) {
+      return {
+        data: {
+          result: true,
+        },
+      };
+    }
+
     if (
-      [SpaceEventStatus.permissionRequested].includes(spaceEvent.status) ===
-      false
+      [SpaceEventStatus.pending, SpaceEventStatus.permissionRequested].includes(
+        spaceEvent.status,
+      ) === false
     ) {
       throw new ForbiddenException(
         `Cannot grant permission for ${spaceEvent.status} SpaceEvent.`,
