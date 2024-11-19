@@ -31,6 +31,8 @@ CREATE TABLE "space" (
   "is_active" bool NOT NULL DEFAULT true,
   "rule_id" uuid NOT NULL,
   "details" text,
+  "link" text,
+  "timezone" varchar NOT NULL DEFAULT (Europe/London),
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
   "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
 );
@@ -173,6 +175,7 @@ CREATE TABLE "permission_request" (
   "space_event_id" uuid,
   "space_rule_id" uuid NOT NULL,
   "space_event_rule_id" uuid,
+  "process_type" varchar NOT NULL DEFAULT 'space-event-permission-request-created',
   "status" varchar NOT NULL DEFAULT 'pending',
   "resolve_status" varchar,
   "resolve_details" text,
