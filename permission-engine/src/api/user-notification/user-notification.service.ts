@@ -16,9 +16,10 @@ export class UserNotificationService {
   ) {}
 
   async findAll(
+    userId: string,
     findAllUserNotificationDto: FindAllUserNotificationDto,
   ): Promise<{ data: UserNotification[]; total: number }> {
-    const { page, limit, userId, statuses } = findAllUserNotificationDto;
+    const { page, limit, statuses } = findAllUserNotificationDto;
 
     const where: FindOptionsWhere<UserNotification> = {};
 
@@ -48,7 +49,7 @@ export class UserNotificationService {
         },
         {
           status: UserNotificationStatus.queued,
-          updatedAt: LessThanOrEqual(dayjs().subtract(5, 'm').toDate()),
+          updatedAt: LessThanOrEqual(dayjs().subtract(30, 's').toDate()),
           type: UserNotificationType.external,
         },
       ],

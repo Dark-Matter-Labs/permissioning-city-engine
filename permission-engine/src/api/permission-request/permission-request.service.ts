@@ -15,13 +15,14 @@ import {
 } from './dto';
 import { PermissionRequest } from 'src/database/entity/permission-request.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { LessThanOrEqual, Repository } from 'typeorm';
 import { Space } from 'src/database/entity/space.entity';
 import { SpaceEvent } from 'src/database/entity/space-event.entity';
 import { generateRandomCode } from 'src/lib/util';
 import { Logger } from 'src/lib/logger/logger.service';
 import { PermissionHandlerService } from 'src/lib/permission-handler/permission-handler.service';
 import { RuleService } from '../rule/rule.service';
+import dayjs from 'dayjs';
 
 @Injectable()
 export class PermissionRequestService {
@@ -211,6 +212,24 @@ export class PermissionRequestService {
       data: result,
       total: parseInt(total),
     };
+  }
+
+  async findAllPending(limit: number = 100): Promise<PermissionRequest[]> {
+    return await this.permissionRequestRepository.find({
+      where: [
+        {
+          status: PermissionRequestStatus.pending,
+        },
+        {
+          status: PermissionRequestStatus.queued,
+          updatedAt: LessThanOrEqual(dayjs().subtract(30, 's').toDate()),
+        },
+      ],
+      order: {
+        createdAt: 'ASC',
+      },
+      take: limit,
+    });
   }
 
   findOneById(id: string): Promise<PermissionRequest> {

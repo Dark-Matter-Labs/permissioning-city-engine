@@ -131,11 +131,7 @@ export class PermissionHandlerService
   }
 
   async findPendingPermissionRequests() {
-    return await this.permissionRequestService.findAll({
-      statuses: [PermissionRequestStatus.pending],
-      page: 1,
-      limit: this.fetchCount,
-    });
+    return await this.permissionRequestService.findAllPending(this.fetchCount);
   }
 
   async run() {
@@ -176,7 +172,7 @@ export class PermissionHandlerService
       }
 
       const pendingPermissionRequests =
-        (await this.findPendingPermissionRequests())?.data ?? [];
+        (await this.findPendingPermissionRequests()) ?? [];
 
       for (const permissionRequest of pendingPermissionRequests) {
         try {

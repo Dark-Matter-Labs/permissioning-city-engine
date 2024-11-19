@@ -49,14 +49,13 @@ export class PermissionHandlerProcessor {
 
   @Process({ concurrency: 1 })
   async handlePermissionProcess(job: Job<any>) {
+    if (process.env.ENGINE_MODE !== 'daemon') {
+      return;
+    }
     // Job processing logic
     await new Promise<void>(async (resolve, reject) => {
       try {
-        if (process.env.ENGINE_MODE === 'daemon') {
-          this.logger.log('Handling permission:', job.data);
-        } else {
-          reject();
-        }
+        this.logger.log('Handling permission:', job.data);
 
         switch (job.data.permissionProcessType) {
           case PermissionProcessType.spaceEventPermissionRequestCreated:

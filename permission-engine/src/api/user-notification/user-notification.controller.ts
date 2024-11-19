@@ -29,15 +29,16 @@ export class UserNotificationController {
   @Get()
   @ApiOperation({ summary: 'Get UserNotification by userId' })
   @UseGuards(JwtAuthGuard)
-  findAll(
+  async findAll(
+    @Req() req,
     @Query() query: FindAllUserNotificationDto,
   ): Promise<{ data: UserNotification[]; total: number }> {
-    const { page, limit, userId, statuses } = query;
+    const user = await this.userService.findOneByEmail(req.user.email);
+    const { page, limit, statuses } = query;
 
-    return this.userNotificationService.findAll({
+    return this.userNotificationService.findAll(user.id, {
       page,
       limit,
-      userId,
       statuses,
     });
   }
