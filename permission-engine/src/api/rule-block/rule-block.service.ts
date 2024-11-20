@@ -405,38 +405,43 @@ export class RuleBlockService {
         `content must be in format: {spaceRuleBlockHash}${RuleBlockContentDivider.type}{desiredValue}${RuleBlockContentDivider.type}{reason}`,
       );
     } else {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { type, content } = spaceRuleBlock;
 
       if (type === RuleBlockType.spaceAllowedEventAccessType) {
-        this.validateSpaceAllowedEventAccessType(desiredValue);
-
-        const allowedEventAccessTypes = content.split(
-          RuleBlockContentDivider.array,
-        );
-
-        while (allowedEventAccessTypes.length > 0) {
-          const eventAccessType = allowedEventAccessTypes.pop();
-          if (
-            desiredValue
-              .split(RuleBlockContentDivider.array)
-              .includes(eventAccessType) === true
-          ) {
-            throw new BadRequestException(
-              `${eventAccessType} is already allowed`,
-            );
-          }
-        }
+        // TODO. commented out for workshop
+        // this.validateSpaceAllowedEventAccessType(desiredValue);
+        // const allowedEventAccessTypes = content.split(
+        //   RuleBlockContentDivider.array,
+        // );
+        // while (allowedEventAccessTypes.length > 0) {
+        //   const eventAccessType = allowedEventAccessTypes.pop();
+        //   if (
+        //     desiredValue
+        //       .split(RuleBlockContentDivider.array)
+        //       .includes(eventAccessType) === true
+        //   ) {
+        //     throw new BadRequestException(
+        //       `${eventAccessType} is already allowed`,
+        //     );
+        //   }
+        // }
       } else if (type === RuleBlockType.spaceMaxAttendee) {
       } else if (type === RuleBlockType.spaceMaxNoiseLevel) {
-        this.validateNoiseLevel(desiredValue);
+        // TODO. commented out for workshop
+        // this.validateNoiseLevel(desiredValue);
       } else if (type === RuleBlockType.spaceAvailability) {
-        this.validateSpaceAvailability(desiredValue);
+        // TODO. commented out for workshop
+        // this.validateSpaceAvailability(desiredValue);
       } else if (type === RuleBlockType.spaceAvailabilityUnit) {
-        this.validateSpaceAvailabilityUnit(desiredValue);
+        // TODO. commented out for workshop
+        // this.validateSpaceAvailabilityUnit(desiredValue);
       } else if (type === RuleBlockType.spaceMaxAvailabilityUnitCount) {
-        this.validateSpaceAvailabilityUnitCount(desiredValue);
+        // TODO. commented out for workshop
+        // this.validateSpaceAvailabilityUnitCount(desiredValue);
       } else if (type === RuleBlockType.spaceAvailabilityBuffer) {
-        this.validateSpaceAvailabilityBuffer(desiredValue);
+        // TODO. commented out for workshop
+        // this.validateSpaceAvailabilityBuffer(desiredValue);
       } else if (type === RuleBlockType.spacePrePermissionCheck) {
         if (desiredValue !== 'false') {
           throw new BadRequestException(
@@ -449,9 +454,10 @@ export class RuleBlockService {
       } else if (type === RuleBlockType.spaceExcludedTopic) {
       } else if (type === RuleBlockType.spaceCancelDeadline) {
       } else {
-        throw new BadRequestException(
-          `Unsupported exception target type: ${type}`,
-        );
+        // TODO. commented out for workshop
+        // throw new BadRequestException(
+        //   `Unsupported exception target type: ${type}`,
+        // );
       }
     }
   }
