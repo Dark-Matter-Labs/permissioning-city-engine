@@ -8,11 +8,7 @@ import {
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
-import {
-  PermissionHandlerJobData,
-  PermissionProcessType,
-  PermissionRequestStatus,
-} from 'src/lib/type';
+import { PermissionHandlerJobData, PermissionProcessType } from 'src/lib/type';
 import { ConfigService } from '@nestjs/config';
 import { Logger } from '../logger/logger.service';
 import { DataSource, QueryRunner } from 'typeorm';
@@ -153,16 +149,10 @@ export class PermissionHandlerService
             permissionProcessType:
               PermissionProcessType.permissionResponseReviewCompleted,
             permissionRequestId: permissionRequest.id,
-          })
-            .then(async () => {
-              await this.permissionRequestService.updateToQueued(
-                permissionRequest.id,
-              );
-            })
-            .catch((error) => {
-              this.logger.error(error.message, error);
-              throw error;
-            });
+          }).catch((error) => {
+            this.logger.error(error.message, error);
+            throw error;
+          });
         } catch (error) {
           this.logger.error(
             `Failed to add permissionResponseReviewCompleted job`,

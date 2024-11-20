@@ -415,37 +415,26 @@ export class NotificationHandlerService
 
   // check endsAt reached space events
   async handleSpaceEvents() {
-    const queryRunner: QueryRunner = this.dataSource.createQueryRunner();
-    try {
-      await queryRunner.startTransaction();
+    const endsAtReachedSpaceEvents = await this.findEndsAtReachedSpaceEvents();
 
-      const endsAtReachedSpaceEvents =
-        await this.findEndsAtReachedSpaceEvents();
-
-      endsAtReachedSpaceEvents?.data?.map(async (spaceEvent) => {
-        try {
-          await this.spaceEventService.updateToClosed(spaceEvent.id);
-          await this.userNotificationService.create({
-            userId: spaceEvent.organizerId,
-            target: UserNotificationTarget.eventOrgnaizer,
-            type: UserNotificationType.external,
-            templateName: UserNotificationTemplateName.spaceEventClosed,
-            params: {},
-          });
-        } catch (error) {
-          this.logger.error(
-            `Failed to add close spaceEvent: ${spaceEvent.id}`,
-            error,
-          );
-          throw error;
-        }
-      });
-      await queryRunner.commitTransaction();
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-    } finally {
-      await queryRunner.release();
-    }
+    endsAtReachedSpaceEvents?.data?.map(async (spaceEvent) => {
+      try {
+        await this.spaceEventService.updateToClosed(spaceEvent.id);
+        await this.userNotificationService.create({
+          userId: spaceEvent.organizerId,
+          target: UserNotificationTarget.eventOrgnaizer,
+          type: UserNotificationType.external,
+          templateName: UserNotificationTemplateName.spaceEventClosed,
+          params: {},
+        });
+      } catch (error) {
+        this.logger.error(
+          `Failed to add close spaceEvent: ${spaceEvent.id}`,
+          error,
+        );
+        throw error;
+      }
+    });
   }
 
   notifyUser(userId: string, message: string) {
