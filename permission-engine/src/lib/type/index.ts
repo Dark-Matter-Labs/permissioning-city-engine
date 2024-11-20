@@ -128,15 +128,24 @@ export enum SpaceEventStatus {
   completeWithIssueResolved = 'complete_with_issue_resolved', // issue raised by the event organizer was resolved
 }
 
-export enum SpaceApprovedRuleSortBy {
-  popularity = 'popularity',
+export enum TimeSortBy {
   timeAsc = 'time-asc',
   timeDesc = 'time-desc',
 }
 
-export enum PermissionRequestSortBy {
-  timeAsc = 'time-asc',
-  timeDesc = 'time-desc',
+export enum SpaceApprovedRuleSortBy {
+  popularity = 'popularity',
+  timeAsc = TimeSortBy.timeAsc,
+  timeDesc = TimeSortBy.timeDesc,
+}
+
+export enum SpaceEventRuleSortBy {
+  startsAtAsc = 'starts-at-asc',
+  startsAtDesc = 'starts-at-desc',
+  endsAtAsc = 'ends-at-asc',
+  endsAtDesc = 'ends-at-desc',
+  timeAsc = TimeSortBy.timeAsc,
+  timeDesc = TimeSortBy.timeDesc,
 }
 
 /**

@@ -2,7 +2,7 @@ import { IsOptional, IsUUID, IsString, IsArray, IsDate } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
   PermissionRequestResolveStatus,
-  PermissionRequestSortBy,
+  TimeSortBy,
   PermissionRequestStatus,
 } from 'src/lib/type';
 import { PaginationDto } from 'src/lib/dto';
@@ -58,8 +58,8 @@ export class FindAllPermissionRequestDto extends PaginationDto {
   @IsOptional()
   @IsString()
   @ApiPropertyOptional({
-    description: `SpaceApprovedRule sort by: ${[PermissionRequestSortBy.timeAsc, PermissionRequestSortBy.timeDesc].join('|')}`,
+    description: `SpaceApprovedRule sort by: ${[TimeSortBy.timeAsc, TimeSortBy.timeDesc].join('|')}`,
     type: 'string',
   })
-  sortBy?: PermissionRequestSortBy = PermissionRequestSortBy.timeAsc;
+  sortBy?: TimeSortBy = TimeSortBy.timeAsc;
 }

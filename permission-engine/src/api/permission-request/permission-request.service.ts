@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import {
   PermissionProcessType,
   PermissionRequestResolveStatus,
-  PermissionRequestSortBy,
+  TimeSortBy,
   PermissionRequestStatus,
 } from 'src/lib/type';
 import {
@@ -97,10 +97,10 @@ export class PermissionRequestService {
 
     if (sortBy != null) {
       switch (sortBy) {
-        case PermissionRequestSortBy.timeDesc:
+        case TimeSortBy.timeDesc:
           orderByClause = `ORDER BY created_at DESC`;
           break;
-        case PermissionRequestSortBy.timeAsc:
+        case TimeSortBy.timeAsc:
         default:
           orderByClause = `ORDER BY created_at ASC`;
           break;
