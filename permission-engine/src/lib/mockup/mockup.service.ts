@@ -134,7 +134,7 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
           dayjs(migration.updated_at).toString()
       ) {
         // comented this out for mock-up-and-down by restart feature
-        // return;
+        return;
       }
 
       await this.down();
