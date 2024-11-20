@@ -570,6 +570,10 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
         `SELECT * FROM "user" ORDER BY created_at ASC LIMIT 1`,
       );
 
+      if (!user) {
+        return;
+      }
+
       const spaces = await this.spaceRepository.query(
         `SELECT * FROM "space" WHERE owner_id = $1`,
         [user.id],
@@ -793,6 +797,11 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
     const [user] = await this.userRepository.query(
       `SELECT * FROM "user" ORDER BY created_at ASC LIMIT 1`,
     );
+
+    if (!user) {
+      return;
+    }
+
     try {
       const spaceRuleBlockCsv = await this.parseCsv(
         'prod/london-workshop/space-rule-block.csv',

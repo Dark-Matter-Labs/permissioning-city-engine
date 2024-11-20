@@ -32,7 +32,7 @@ CREATE TABLE "space" (
   "rule_id" uuid NOT NULL,
   "details" text,
   "link" text,
-  "timezone" varchar NOT NULL DEFAULT (Europe/London),
+  "timezone" varchar NOT NULL DEFAULT 'Europe/London',
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
   "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
 );
