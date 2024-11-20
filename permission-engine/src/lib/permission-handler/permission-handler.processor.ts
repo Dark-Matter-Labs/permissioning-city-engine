@@ -291,7 +291,11 @@ export class PermissionHandlerProcessor {
             {
               name: `Exception on space rule: ${spaceRule.name}`,
               type: RuleBlockType.spaceEventException,
-              content: [hash, desiredValue].join(RuleBlockContentDivider.type),
+              content: [
+                hash,
+                desiredValue,
+                `Automatic exception for ${spaceRule.name}`,
+              ].join(RuleBlockContentDivider.type),
               details: `Automatic exception raised by Permissioning Engine`,
             },
           );
