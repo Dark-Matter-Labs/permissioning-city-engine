@@ -422,7 +422,7 @@ export class RuleService {
       throw new BadRequestException();
     }
 
-    if (!ruleBlockIds) {
+    if (!ruleBlockIds || ruleBlockIds?.length === 0) {
       throw new BadRequestException(
         `Need to contain at least 1 item in ruleBlockIds`,
       );
@@ -462,7 +462,7 @@ export class RuleService {
       throw new BadRequestException();
     }
 
-    if (ruleBlockIds) {
+    if (ruleBlockIds && ruleBlockIds?.length > 0) {
       ruleBlocks = await this.ruleBlockRepository.find({
         where: { id: In(ruleBlockIds) },
       });

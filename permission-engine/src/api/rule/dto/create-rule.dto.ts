@@ -34,7 +34,7 @@ export class CreateRuleDto {
   @IsOptional()
   @IsUUID('4', { each: true })
   @IsArray()
-  @ArrayMinSize(1)
+  @ArrayMinSize(0)
   @ArrayMaxSize(100)
   @ApiProperty({ description: 'Array of ruleBlockIds', nullable: true })
   ruleBlockIds?: string[];
