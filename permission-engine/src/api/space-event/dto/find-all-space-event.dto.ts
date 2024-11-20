@@ -6,7 +6,7 @@ import {
   IsUUID,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { SpaceEventStatus } from 'src/lib/type';
+import { SpaceEventStatus, SpaceEventRuleSortBy } from 'src/lib/type';
 import { PaginationDto } from 'src/lib/dto';
 import { Transform } from 'class-transformer';
 
@@ -90,4 +90,19 @@ export class FindAllSpaceEventDto extends PaginationDto {
     type: String,
   })
   name?: string;
+
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({
+    description: `SpaceApprovedRule sort by: ${[
+      SpaceEventRuleSortBy.timeAsc,
+      SpaceEventRuleSortBy.timeDesc,
+      SpaceEventRuleSortBy.startsAtAsc,
+      SpaceEventRuleSortBy.startsAtDesc,
+      SpaceEventRuleSortBy.endsAtAsc,
+      SpaceEventRuleSortBy.endsAtDesc,
+    ].join('|')}`,
+    type: 'string',
+  })
+  sortBy?: SpaceEventRuleSortBy = SpaceEventRuleSortBy.startsAtAsc;
 }

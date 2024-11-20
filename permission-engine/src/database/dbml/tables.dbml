@@ -33,7 +33,7 @@ Table space {
   rule_id uuid [not null]
   details text
   link text
-  timezone varchar [not null, default: `Europe/London`]
+  timezone varchar [not null, default: 'Europe/London']
   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
   updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
 }

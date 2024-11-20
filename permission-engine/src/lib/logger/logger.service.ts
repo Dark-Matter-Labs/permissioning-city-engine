@@ -35,15 +35,15 @@ export class Logger implements LoggerService {
     this.logger.error(message, { trace });
   }
 
-  warn(message: string) {
-    this.logger.warn(message);
+  warn(message: string, ...meta: any[]) {
+    this.logger.warn(message, ...meta);
   }
 
-  debug(message: string) {
-    this.logger.debug(message);
+  debug(message: string, ...meta: any[]) {
+    this.logger.debug(message, ...meta);
   }
 
-  verbose(message: string) {
-    this.logger.verbose(message);
+  verbose(message: string, ...meta: any[]) {
+    this.logger.verbose(message, ...meta);
   }
 }

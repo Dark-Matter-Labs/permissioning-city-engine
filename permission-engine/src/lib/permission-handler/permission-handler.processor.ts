@@ -47,11 +47,15 @@ export class PermissionHandlerProcessor {
     private readonly logger: Logger,
   ) {}
 
-  @Process({ concurrency: 1 })
+  @Process({ name: 'permission-handler-job', concurrency: 1 })
   async handlePermissionProcess(job: Job<any>) {
+    this.logger.log('PermisisonHandlerJob received');
+
     if (process.env.ENGINE_MODE !== 'daemon') {
+      this.logger.log('Not a daemon');
       return;
     }
+
     // Job processing logic
     await new Promise<void>(async (resolve, reject) => {
       try {
@@ -794,6 +798,11 @@ export class PermissionHandlerProcessor {
     const permissionRequest =
       await this.permissionRequestService.findOneById(permissionRequestId);
     const { permissionResponses, spaceEventId } = permissionRequest;
+
+    if (!permissionResponses || !permissionResponses?.[0]) {
+      return;
+    }
+
     const { timeoutAt } = permissionResponses[0];
     const reviewedResponses = permissionResponses.filter(
       (item) =>

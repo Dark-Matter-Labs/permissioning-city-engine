@@ -49,7 +49,7 @@ export class UserNotificationService {
         },
         {
           status: UserNotificationStatus.queued,
-          updatedAt: LessThanOrEqual(dayjs().subtract(30, 's').toDate()),
+          createdAt: LessThanOrEqual(dayjs().subtract(1, 'm').toDate()),
           type: UserNotificationType.external,
         },
       ],

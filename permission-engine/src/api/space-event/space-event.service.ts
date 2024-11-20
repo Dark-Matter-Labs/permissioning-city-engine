@@ -22,6 +22,7 @@ import {
   PermissionRequestStatus,
   RuleBlockType,
   SpaceEventStatus,
+  SpaceEventRuleSortBy,
 } from 'src/lib/type';
 import { v4 as uuidv4 } from 'uuid';
 import { Logger } from 'src/lib/logger/logger.service';
@@ -64,12 +65,14 @@ export class SpaceEventService {
       startsAfter,
       endsBefore,
       name,
+      sortBy,
     } = findAllSpaceEventDto;
     const { isPagination } = option;
     const where = [];
     const params: any[] =
       isPagination === true ? [(page - 1) * limit, limit] : [];
     let paramIndex: number = params.length;
+    let orderByClause = `ORDER BY starts_at ASC`;
 
     where.push(`space_event.is_active = true`);
 
@@ -134,6 +137,31 @@ export class SpaceEventService {
       where.push(`space_event.name LIKE $${paramIndex}`);
       params.push(`%${name}%`);
     }
+
+    if (sortBy != null) {
+      switch (sortBy) {
+        case SpaceEventRuleSortBy.timeAsc:
+          orderByClause = `ORDER BY created_at ASC`;
+          break;
+        case SpaceEventRuleSortBy.timeDesc:
+          orderByClause = `ORDER BY created_at DESC`;
+          break;
+        case SpaceEventRuleSortBy.endsAtAsc:
+          orderByClause = `ORDER BY ends_at ASC`;
+          break;
+        case SpaceEventRuleSortBy.endsAtDesc:
+          orderByClause = `ORDER BY ends_at DESC`;
+          break;
+        case SpaceEventRuleSortBy.startsAtDesc:
+          orderByClause = `ORDER BY starts_at DESC`;
+          break;
+        case SpaceEventRuleSortBy.startsAtAsc:
+        default:
+          orderByClause = `ORDER BY starts_at ASC`;
+          break;
+      }
+    }
+
     const whereClause = where.length > 0 ? 'WHERE' : '';
     const query = `
       WITH filtered_data AS (
@@ -161,6 +189,7 @@ export class SpaceEventService {
         ON space_event.id = space_event_image.space_event_id
         ${whereClause} ${where.join(' AND ')}
         GROUP BY space_event.id
+        ${orderByClause}
       )
       SELECT COUNT(*) AS total, json_agg(filtered_data) AS data
       FROM filtered_data

@@ -12,7 +12,7 @@ export class NotificationHandlerProcessor {
     private readonly logger: Logger,
   ) {}
 
-  @Process({ concurrency: 1 })
+  @Process({ name: 'notification-handler-job', concurrency: 1 })
   async handleNotificationProcess(job: Job<any>) {
     if (process.env.ENGINE_MODE !== 'daemon') {
       return;
