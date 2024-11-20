@@ -445,7 +445,9 @@ export class RuleBlockService {
         }
       } else if (type === RuleBlockType.spacePostEventCheck) {
       } else if (type === RuleBlockType.spaceGeneral) {
+      } else if (type === RuleBlockType.spaceGuide) {
       } else if (type === RuleBlockType.spaceExcludedTopic) {
+      } else if (type === RuleBlockType.spaceCancelDeadline) {
       } else {
         throw new BadRequestException(
           `Unsupported exception target type: ${type}`,
