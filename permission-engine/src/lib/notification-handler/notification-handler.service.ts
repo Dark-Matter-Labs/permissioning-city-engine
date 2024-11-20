@@ -108,7 +108,7 @@ export class NotificationHandlerService
   }
 
   async addJob(data: NotificationHandlerJobData) {
-    await this.queue.add(data, {
+    return await this.queue.add('notification-handler-job', data, {
       attempts: 3, // Retry 3 times if the job fails
       backoff: 5000, // Wait 5 seconds before retrying
     });
@@ -391,6 +391,25 @@ export class NotificationHandlerService
   }
 
   async run() {
+    const jobCounts = await this.queue.getJobCounts();
+    this.logger.debug('notification-handler-job jobCounts', jobCounts);
+    const delayedJobs = await this.queue.getDelayed();
+    this.logger.debug('notification-handler-job Delayed Jobs:', delayedJobs);
+    const failedJobs = await this.queue.getFailed();
+    failedJobs.forEach((job) => {
+      try {
+        throw new Error(
+          `notification-handler-job Failed Job: ${JSON.stringify({
+            id: job.id,
+            data: job.data,
+            failedReason: job.failedReason,
+          })}`,
+        );
+      } catch (error) {
+        this.logger.error(error.message, error);
+      }
+    });
+
     await this.handleSpaceEvents();
     await this.handlePendingNotifications();
   }

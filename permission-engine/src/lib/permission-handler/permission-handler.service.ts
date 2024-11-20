@@ -7,11 +7,11 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
-import { Queue } from 'bull';
+import { Job, Queue } from 'bull';
 import { PermissionHandlerJobData, PermissionProcessType } from 'src/lib/type';
 import { ConfigService } from '@nestjs/config';
 import { Logger } from '../logger/logger.service';
-import { DataSource, QueryRunner } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { PermissionRequestService } from 'src/api/permission-request/permission-request.service';
 import { RedisService } from '@liaoliaots/nestjs-redis';
 import Redis from 'ioredis';
@@ -83,8 +83,8 @@ export class PermissionHandlerService
     }
   }
 
-  async addJob(data: PermissionHandlerJobData) {
-    await this.queue.add(data, {
+  async addJob(data: PermissionHandlerJobData): Promise<Job> {
+    return await this.queue.add('permission-handler-job', data, {
       attempts: 3, // Retry 3 times if the job fails
       backoff: 5000, // Wait 5 seconds before retrying
     });
@@ -131,15 +131,31 @@ export class PermissionHandlerService
   }
 
   async run() {
+    const jobCounts = await this.queue.getJobCounts();
+    this.logger.debug('permission-handler-job jobCounts', jobCounts);
+    const delayedJobs = await this.queue.getDelayed();
+    this.logger.debug('permission-handler-job Delayed Jobs:', delayedJobs);
+    const failedJobs = await this.queue.getFailed();
+    failedJobs.forEach((job) => {
+      try {
+        throw new Error(
+          `permission-handler-job Failed Job: ${JSON.stringify({
+            id: job.id,
+            data: job.data,
+            failedReason: job.failedReason,
+          })}`,
+        );
+      } catch (error) {
+        this.logger.error(error.message, error);
+      }
+    });
+
     await this.handlePermissionRequests();
   }
 
   // check timeout reached permission responses
   async handlePermissionRequests() {
-    const queryRunner: QueryRunner = this.dataSource.createQueryRunner();
     try {
-      await queryRunner.startTransaction();
-
       const timeoutReachedPermissionRequests =
         (await this.findTimeoutReachedPermissionRequests())?.data ?? [];
 
@@ -164,6 +180,12 @@ export class PermissionHandlerService
       const pendingPermissionRequests =
         (await this.findPendingPermissionRequests()) ?? [];
 
+      this.logger.log(
+        [
+          'permission-handler:',
+          pendingPermissionRequests.map((item) => item.id).join(','),
+        ].join(' '),
+      );
       for (const permissionRequest of pendingPermissionRequests) {
         try {
           await this.addJob({
@@ -186,12 +208,8 @@ export class PermissionHandlerService
           );
         }
       }
-      await queryRunner.commitTransaction();
     } catch (error) {
-      await queryRunner.rollbackTransaction();
       this.logger.error(error.message, error);
-    } finally {
-      await queryRunner.release();
     }
   }
 }
