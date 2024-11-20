@@ -51,11 +51,6 @@ export class PermissionHandlerProcessor {
   async handlePermissionProcess(job: Job<any>) {
     this.logger.log('PermisisonHandlerJob received');
 
-    if (process.env.ENGINE_MODE !== 'daemon') {
-      this.logger.log('Not a daemon');
-      return;
-    }
-
     // Job processing logic
     await new Promise<void>(async (resolve, reject) => {
       try {

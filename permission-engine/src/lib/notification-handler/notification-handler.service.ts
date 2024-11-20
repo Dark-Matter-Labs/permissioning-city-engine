@@ -348,7 +348,8 @@ export class NotificationHandlerService
         this.notifyUser(
           userNotification.userId,
           JSON.stringify({
-            ...email,
+            subject: email.subject,
+            text: email.text,
             html: selectHtmlElement(email.html, '.content'),
           }),
         );
@@ -392,9 +393,17 @@ export class NotificationHandlerService
 
   async run() {
     const jobCounts = await this.queue.getJobCounts();
-    this.logger.debug('notification-handler-job jobCounts', jobCounts);
+
+    if (jobCounts) {
+      this.logger.debug('notification-handler-job jobCounts', jobCounts);
+    }
+
     const delayedJobs = await this.queue.getDelayed();
-    this.logger.debug('notification-handler-job Delayed Jobs:', delayedJobs);
+
+    if (delayedJobs && delayedJobs.length > 0) {
+      this.logger.debug('notification-handler-job Delayed Jobs:', delayedJobs);
+    }
+
     const failedJobs = await this.queue.getFailed();
     failedJobs.forEach((job) => {
       try {
