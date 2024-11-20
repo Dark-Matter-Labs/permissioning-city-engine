@@ -251,9 +251,9 @@ const createSpaceRuleBlockDtos: Partial<CreateRuleBlockDto>[] = [
   },
   {
     id: uuidv4(),
-    name: 'test space pre-permission check alcholic drink [space1,space2,space3,space4]',
+    name: 'test space pre-permission check alcoholic drink [space1,space2,space3,space4]',
     type: RuleBlockType.spacePrePermissionCheck,
-    content: 'Will alcholic drinks be served at the event?^false',
+    content: 'Will alcoholic drinks be served at the event?^false',
   },
 ];
 
@@ -381,13 +381,13 @@ const createSpaceEquipmentDtos: Partial<CreateSpaceEquipmentDto>[] = [
 const createSpaceEventRuleBlockDtos: Partial<CreateRuleBlockDto>[] = [
   {
     id: uuidv4(),
-    name: 'test Alcholic drink Service [event2, event4]',
+    name: 'test Alcoholic drink Service [event2, event4]',
     type: RuleBlockType.spaceEventException,
     content: `${hash(
       [
-        createSpaceRuleBlockDtos.find((item) => item.name.includes('alcholic'))
+        createSpaceRuleBlockDtos.find((item) => item.name.includes('alcoholic'))
           .type,
-        createSpaceRuleBlockDtos.find((item) => item.name.includes('alcholic'))
+        createSpaceRuleBlockDtos.find((item) => item.name.includes('alcoholic'))
           .content,
       ].join(RuleBlockContentDivider.type),
     )}^false^It is a bartender's show`,

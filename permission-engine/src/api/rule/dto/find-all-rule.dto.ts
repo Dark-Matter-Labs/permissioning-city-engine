@@ -59,4 +59,12 @@ export class FindAllRuleDto extends PaginationDto {
     type: String,
   })
   hash?: string;
+
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({
+    description: 'Rule publicHash',
+    type: String,
+  })
+  publicHash?: string;
 }

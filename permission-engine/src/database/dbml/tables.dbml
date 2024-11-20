@@ -12,6 +12,7 @@ Table user {
   city varchar
   district varchar
   details text
+  image text
   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
   updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
 }
@@ -31,6 +32,8 @@ Table space {
   is_active bool [not null, default: true]
   rule_id uuid [not null]
   details text
+  link text
+  timezone varchar [not null, default: `Europe/London`]
   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
   updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
 }
@@ -50,6 +53,7 @@ Ref: space_image.space_id > space.id
 Table space_approved_rule {
   space_id uuid [not null]
   rule_id uuid [not null]
+  public_hash varchar
   permission_request_id uuid
   is_active bool [not null, default: true]
   is_public bool [not null, default: true]
@@ -147,6 +151,7 @@ Table rule {
   id uuid [primary key]
   name varchar [not null]
   hash varchar [not null]
+  public_hash varchar
   author_id uuid [not null]
   target varchar [not null]
   parent_rule_id uuid
@@ -201,6 +206,7 @@ Table permission_request {
   space_event_id uuid [note: 'when space_event_id is null, the permission_request is for the space rule revision']
   space_rule_id uuid [not null]
   space_event_rule_id uuid [note: 'when space_event_rule_id is null, the permission_request is for the space rule revision']
+  process_type varchar [not null, default: 'space-event-permission-request-created']
   status varchar [not null, default: 'pending', note: 'pending, assigned, assign_failed, review_approved, review_approved_with_condition']
   resolve_status varchar [note: 'resolve_rejected, resolve_accepted, resolve_dropped']
   resolve_details text

@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS "user" (
   "city" varchar,
   "district" varchar,
   "details" text,
+  "image" text,
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
   "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
 );
@@ -30,6 +31,8 @@ CREATE TABLE IF NOT EXISTS "space" (
   "is_active" bool NOT NULL DEFAULT true,
   "rule_id" uuid NOT NULL,
   "details" text,
+  "link" text,
+  "timezone" varchar NOT NULL DEFAULT (Europe/London),
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
   "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
 );
@@ -46,6 +49,7 @@ CREATE TABLE IF NOT EXISTS "space_image" (
 CREATE TABLE IF NOT EXISTS "space_approved_rule" (
   "space_id" uuid NOT NULL,
   "rule_id" uuid NOT NULL,
+  "public_hash" varchar,
   "permission_request_id" uuid,
   "is_active" bool NOT NULL DEFAULT true,
   "is_public" bool NOT NULL DEFAULT true,
@@ -127,6 +131,7 @@ CREATE TABLE IF NOT EXISTS "rule" (
   "id" uuid PRIMARY KEY,
   "name" varchar NOT NULL,
   "hash" varchar NOT NULL,
+  "public_hash" varchar,
   "author_id" uuid NOT NULL,
   "target" varchar NOT NULL,
   "parent_rule_id" uuid,
@@ -170,6 +175,7 @@ CREATE TABLE IF NOT EXISTS "permission_request" (
   "space_event_id" uuid,
   "space_rule_id" uuid NOT NULL,
   "space_event_rule_id" uuid,
+  "process_type" varchar NOT NULL DEFAULT 'space-event-permission-request-created',
   "status" varchar NOT NULL DEFAULT 'pending',
   "resolve_status" varchar,
   "resolve_details" text,

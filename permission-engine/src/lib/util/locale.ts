@@ -23,3 +23,13 @@ export const countryCodeToLanguage = (countryCode: string) => {
 
   return languageCode;
 };
+
+export const countryNameToCode = (name: string): string | null => {
+  const allCountries = CountryLanguage.getCountries();
+
+  return (
+    allCountries.find((item) =>
+      [item.name, item.code_2, item.code_3, item.numCode].includes(name),
+    )?.code_2 ?? null
+  );
+};

@@ -20,6 +20,7 @@ CREATE INDEX IF NOT EXISTS space_idx_lognitude ON "space" (longitude)
 WHERE is_active = true;
 CREATE INDEX IF NOT EXISTS space_idx_rule_id ON "space" (rule_id)
 WHERE is_active = true;
+CREATE UNIQUE INDEX IF NOT EXISTS space_idx_name_country_region_city ON "space" (name, country, region, city);
 
 -- rule_block
 CREATE INDEX IF NOT EXISTS rule_block_idx_type_content ON "rule_block" (content)
@@ -39,3 +40,4 @@ CREATE UNIQUE INDEX IF NOT EXISTS topic_idx_name_country_region_city ON "topic" 
 -- space_approved_rule
 CREATE INDEX IF NOT EXISTS space_approved_rule_idx_space_id ON "space_approved_rule" (space_id);
 CREATE INDEX IF NOT EXISTS space_approved_rule_idx_rule_id ON "space_approved_rule" (rule_id);
+CREATE INDEX IF NOT EXISTS space_approved_rule_idx_public_hash ON "space_approved_rule" (public_hash);

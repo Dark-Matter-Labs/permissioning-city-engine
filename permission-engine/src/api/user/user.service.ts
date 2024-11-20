@@ -31,6 +31,7 @@ export class UserService {
     return {
       name: user.name,
       details: user.details,
+      image: user.image,
       type: user.type,
     };
   }
@@ -95,17 +96,22 @@ export class UserService {
   async update(
     email: string,
     updateUserDto: UpdateUserDto,
-  ): Promise<{ data: { result: boolean } }> {
+  ): Promise<{ data: { result: boolean; user: User } }> {
     const user = await this.findOneByEmail(email);
-
+    const updatedAt = new Date();
     const updateResult = await this.userRepository.update(user.id, {
       ...updateUserDto,
-      updatedAt: new Date(),
+      updatedAt,
     });
 
     return {
       data: {
         result: updateResult.affected === 1,
+        user: {
+          ...user,
+          ...updateUserDto,
+          updatedAt,
+        },
       },
     };
   }

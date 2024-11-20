@@ -29,12 +29,28 @@ export class FindAllSpaceApprovedRuleDto extends PaginationDto {
   ruleId?: string;
 
   @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({
+    description: 'SpaceApprovedRule publicHash',
+    type: String,
+  })
+  publicHash?: string;
+
+  @IsOptional()
   @IsBoolean()
   @ApiPropertyOptional({
     description: 'SpaceApprovedRule active state',
     type: 'boolean',
   })
   isActive?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  @ApiPropertyOptional({
+    description: 'SpaceApprovedRule is public state',
+    type: 'boolean',
+  })
+  isPublic?: boolean;
 
   @IsOptional()
   @Transform(({ value }) => (Array.isArray(value) ? value : value.split(',')))

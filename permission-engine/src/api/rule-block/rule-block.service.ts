@@ -104,6 +104,7 @@ export class RuleBlockService {
       case RuleBlockType.spaceEventBenefit:
       case RuleBlockType.spaceEventRisk:
       case RuleBlockType.spaceEventSelfRiskAssesment:
+      case RuleBlockType.spacePrePermissionCheck:
         break;
       case RuleBlockType.spaceExcludedTopic:
         await this.validateSpaceExcludedTopic(trimmedContent);
@@ -137,9 +138,6 @@ export class RuleBlockService {
         break;
       case RuleBlockType.spaceAvailabilityBuffer:
         this.validateSpaceAvailabilityBuffer(trimmedContent);
-        break;
-      case RuleBlockType.spacePrePermissionCheck:
-        this.validateSpacePrePermissionCheck(trimmedContent);
         break;
       case RuleBlockType.spaceEventRequireEquipment:
         await this.validateSpaceEventRequireEquipment(trimmedContent);
@@ -429,15 +427,14 @@ export class RuleBlockService {
           }
         }
       } else if (type === RuleBlockType.spaceMaxAttendee) {
-        this.validateSpaceMaxAttendee(desiredValue);
-
-        if (new BigNumber(content).gte(desiredValue)) {
-          throw new BadRequestException(`${desiredValue} is already allowed`);
-        }
+      } else if (type === RuleBlockType.spaceMaxNoiseLevel) {
+        this.validateNoiseLevel(desiredValue);
       } else if (type === RuleBlockType.spaceAvailability) {
         this.validateSpaceAvailability(desiredValue);
       } else if (type === RuleBlockType.spaceAvailabilityUnit) {
         this.validateSpaceAvailabilityUnit(desiredValue);
+      } else if (type === RuleBlockType.spaceMaxAvailabilityUnitCount) {
+        this.validateSpaceAvailabilityUnitCount(desiredValue);
       } else if (type === RuleBlockType.spaceAvailabilityBuffer) {
         this.validateSpaceAvailabilityBuffer(desiredValue);
       } else if (type === RuleBlockType.spacePrePermissionCheck) {
@@ -448,6 +445,7 @@ export class RuleBlockService {
         }
       } else if (type === RuleBlockType.spacePostEventCheck) {
       } else if (type === RuleBlockType.spaceGeneral) {
+      } else if (type === RuleBlockType.spaceExcludedTopic) {
       } else {
         throw new BadRequestException(
           `Unsupported exception target type: ${type}`,
@@ -457,7 +455,7 @@ export class RuleBlockService {
   }
 
   private validateSpaceEventInsurance(files: Express.Multer.File[]) {
-    if (files.length === 0) {
+    if (!files || files?.length === 0) {
       throw new BadRequestException('Should provide file for insurance');
     }
   }

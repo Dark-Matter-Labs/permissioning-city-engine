@@ -22,6 +22,8 @@ import { SpacePermissionerService } from '../space-permissioner/space-permission
 import { Logger } from 'src/lib/logger/logger.service';
 import { SpaceTopicService } from '../space-topic/space-topic.service';
 import { SpaceHistoryService } from '../space-history/space-history.service';
+import { getCountry } from 'countries-and-timezones';
+import { countryNameToCode } from 'src/lib/util/locale';
 
 @Injectable()
 export class SpaceService {
@@ -96,7 +98,12 @@ export class SpaceService {
     ownerId: string,
     createSpaceDto: CreateSpaceDto,
   ): Promise<Space> {
-    const { topicIds } = createSpaceDto;
+    const { topicIds, country } = createSpaceDto;
+    const coutryCode = countryNameToCode(country);
+    const countryTimezoneData = getCountry(coutryCode);
+    if (countryTimezoneData) {
+      createSpaceDto.timezone = countryTimezoneData.timezones[0];
+    }
     const space = this.spaceRepository.create({
       ...createSpaceDto,
       id: uuidv4(),

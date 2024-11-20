@@ -31,4 +31,8 @@ export class CreateUserDto {
   @MaxLength(200)
   @ApiPropertyOptional({ description: 'Details' })
   details?: string;
+
+  @IsOptional()
+  @ApiPropertyOptional({ description: 'Profile Image' })
+  image?: string;
 }

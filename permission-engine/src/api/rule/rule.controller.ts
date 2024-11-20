@@ -41,7 +41,16 @@ export class RuleController {
   @ApiOperation({ summary: 'Get all rules' })
   async findAll(@Req() req, @Query() query: FindAllRuleDto) {
     const user = await this.userService.findOneByEmail(req.user.email);
-    const { page, limit, target, authorId, parentRuleId, hash, ids } = query;
+    const {
+      page,
+      limit,
+      target,
+      authorId,
+      parentRuleId,
+      hash,
+      publicHash,
+      ids,
+    } = query;
 
     return this.ruleService.findAll(
       {
@@ -51,6 +60,7 @@ export class RuleController {
         authorId,
         parentRuleId,
         hash,
+        publicHash,
         ids,
       },
       {

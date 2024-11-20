@@ -210,7 +210,10 @@ export class SpaceController {
     @UploadedFiles() uploadedFiles: { images: Express.MulterS3.File[] },
     @Body() createSpaceDto: CreateSpaceDto,
   ): Promise<Space> {
-    const { images } = uploadedFiles;
+    let images = [];
+    if (uploadedFiles) {
+      images = uploadedFiles.images;
+    }
     const maxImageCount = 5;
     const user = await this.userService.findOneByEmail(req.user.email);
     const space = await this.spaceService.create(user.id, createSpaceDto);
@@ -288,7 +291,10 @@ export class SpaceController {
     @UploadedFiles() uploadedFiles: { images: Express.MulterS3.File[] },
     @Body() updateSpaceDto: UpdateSpaceDto,
   ) {
-    const { images } = uploadedFiles;
+    let images = [];
+    if (uploadedFiles) {
+      images = uploadedFiles.images;
+    }
     const maxImageCount = 5;
     const user = await this.userService.findOneByEmail(req.user.email);
     const space = await this.spaceService.findOneById(id, {
@@ -378,7 +384,10 @@ export class SpaceController {
     @Param('type') type: SpaceImageType,
     @UploadedFiles() uploadedFiles: { images: Express.MulterS3.File[] },
   ) {
-    const { images } = uploadedFiles;
+    let images = [];
+    if (uploadedFiles) {
+      images = uploadedFiles.images;
+    }
     const maxImageCount = 5;
 
     if (images.length > 1) {

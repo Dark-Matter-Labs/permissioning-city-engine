@@ -61,6 +61,10 @@ export class UpdateUserDto {
   details?: string;
 
   @IsOptional()
+  @ApiPropertyOptional({ description: 'Profile Image' })
+  image?: string;
+
+  @IsOptional()
   @IsBoolean()
   @ApiPropertyOptional({ description: 'User isActive status', type: Boolean })
   isActive?: boolean;

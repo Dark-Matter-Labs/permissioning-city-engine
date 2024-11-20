@@ -99,6 +99,7 @@ export class PermissionRequestController {
     }
 
     return this.permissionRequestService.create(
+      user.id,
       createSpaceEventRulePreApprovePermissionRequestDto,
     );
   }
@@ -114,8 +115,6 @@ export class PermissionRequestController {
     const user = await this.userService.findOneByEmail(req.user.email);
     const { spaceId } = createSpaceRuleChangePermissionRequestDto;
 
-    // space rule change permission request
-
     const isSpacePermissioner =
       await this.spacePermissionerService.isSpacePermissioner(spaceId, user.id);
 
@@ -124,6 +123,7 @@ export class PermissionRequestController {
     }
 
     return this.permissionRequestService.create(
+      user.id,
       createSpaceRuleChangePermissionRequestDto,
     );
   }
@@ -138,22 +138,25 @@ export class PermissionRequestController {
     const user = await this.userService.findOneByEmail(req.user.email);
     const { spaceEventId } = createPermissionRequestDto;
 
-    if (spaceEventId != null) {
-      // space event permission request
-      const spaceEvent = await this.spaceEventService.findOneById(spaceEventId);
-
-      if (spaceEvent.spaceId == null) {
-        throw new BadRequestException('spaceId not assigned to spaceEvent');
-      }
-
-      if (spaceEvent.organizerId !== user.id) {
-        throw new ForbiddenException('user must be an event organizer');
-      }
-    } else {
+    if (spaceEventId == null) {
       throw new BadRequestException();
     }
 
-    return this.permissionRequestService.create(createPermissionRequestDto);
+    // space event permission request
+    const spaceEvent = await this.spaceEventService.findOneById(spaceEventId);
+
+    if (spaceEvent.spaceId == null) {
+      throw new BadRequestException('spaceId not assigned to spaceEvent');
+    }
+
+    if (spaceEvent.organizerId !== user.id) {
+      throw new ForbiddenException('user must be an event organizer');
+    }
+
+    return this.permissionRequestService.create(user.id, {
+      ...createPermissionRequestDto,
+      spaceId: spaceEvent.spaceId,
+    });
   }
 
   @Put(':id/cancel')

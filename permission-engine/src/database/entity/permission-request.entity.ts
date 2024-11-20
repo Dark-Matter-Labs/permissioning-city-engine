@@ -9,6 +9,7 @@ import {
   OneToMany,
 } from 'typeorm';
 import {
+  PermissionProcessType,
   PermissionRequestResolveStatus,
   PermissionRequestStatus,
 } from 'src/lib/type';
@@ -68,6 +69,13 @@ export class PermissionRequest {
   @Column()
   @ApiProperty({ description: 'PermissionRequest status', default: 'pending' })
   status: PermissionRequestStatus;
+
+  @Column()
+  @ApiProperty({
+    description: 'PermissionRequest process type',
+    default: PermissionProcessType.spaceEventPermissionRequestCreated,
+  })
+  processType: PermissionProcessType;
 
   @Column()
   @ApiProperty({

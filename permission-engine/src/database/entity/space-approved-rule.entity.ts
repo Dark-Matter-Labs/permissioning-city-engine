@@ -14,17 +14,17 @@ import { PermissionRequest } from './permission-request.entity';
 @Entity()
 export class SpaceApprovedRule {
   @ManyToOne(() => Space, (space) => space.spaceApprovedRules)
-  @JoinColumn()
+  @JoinColumn({ name: 'space_id' })
   space: Space;
 
-  @PrimaryColumn()
+  @PrimaryColumn({ name: 'space_id' })
   spaceId: string;
 
   @ManyToOne(() => Rule, (rule) => rule.spaceApprovedRules)
-  @JoinColumn()
+  @JoinColumn({ name: 'rule_id' })
   rule: Rule;
 
-  @PrimaryColumn()
+  @PrimaryColumn({ name: 'rule_id' })
   ruleId: string;
 
   @ManyToOne(
@@ -36,6 +36,10 @@ export class SpaceApprovedRule {
 
   @PrimaryColumn()
   permissionRequestId: string;
+
+  @Column()
+  @ApiProperty({ description: 'Space approved rule public hash' })
+  publicHash: string;
 
   @Column({ default: true })
   @ApiProperty({ description: 'Is space approved rule active' })

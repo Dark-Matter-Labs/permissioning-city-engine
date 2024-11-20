@@ -26,13 +26,25 @@ import { SpaceImage } from 'src/database/entity/space-image.entity';
 import { SpacePermissioner } from 'src/database/entity/space-permissioner.entity';
 import { Space } from 'src/database/entity/space.entity';
 import { Logger } from 'src/lib/logger/logger.service';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { UserNotification } from 'src/database/entity/user-notification.entity';
 import { User } from 'src/database/entity/user.entity';
 import { mockup } from './mockup';
-import { RuleBlockType } from 'src/lib/type';
+import {
+  RuleBlockContentDivider,
+  RuleBlockType,
+  RuleTarget,
+  SpaceImageType,
+} from 'src/lib/type';
 import { SpaceApprovedRuleService } from 'src/api/space-approved-rule/space-approved-rule.service';
 import { TopicService } from 'src/api/topic/topic.service';
+import dayjs from 'dayjs';
+import fs from 'fs';
+import path from 'path';
+import csv from 'csv-parser';
+import { SpaceHistory } from 'src/database/entity/space-history.entity';
+import { SpaceTopic } from 'src/database/entity/space-topic.entity';
+import { SpaceApprovedRule } from 'src/database/entity/space-approved-rule.entity';
 
 @Injectable()
 export class MockupService implements OnModuleInit, OnModuleDestroy {
@@ -41,6 +53,7 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
   private prefix: string = 'test';
 
   constructor(
+    private readonly dataSource: DataSource,
     private readonly configService: ConfigService,
     @InjectRepository(User)
     private userRepository: Repository<User>,
@@ -50,8 +63,14 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
     private spaceRepository: Repository<Space>,
     @InjectRepository(SpaceImage)
     private spaceImageRepository: Repository<SpaceImage>,
+    @InjectRepository(SpaceHistory)
+    private spaceHistoryRepository: Repository<SpaceHistory>,
+    @InjectRepository(SpaceTopic)
+    private spaceTopicRepository: Repository<SpaceTopic>,
     @InjectRepository(SpaceEquipment)
     private spaceEquipmentRepository: Repository<SpaceEquipment>,
+    @InjectRepository(SpaceApprovedRule)
+    private spaceApprovedRuleRepository: Repository<SpaceApprovedRule>,
     @InjectRepository(SpaceEvent)
     private spaceEventRepository: Repository<SpaceEvent>,
     @InjectRepository(SpaceEventImage)
@@ -90,9 +109,37 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
       this.client = await this.pool.connect();
     }
 
-    if (process.env.NODE_ENV === 'dev' && process.env.ENGINE_MODE === 'api') {
+    if (
+      process.env.MOCKUP_DATA !== 'true' &&
+      process.env.NODE_ENV === 'dev' &&
+      process.env.ENGINE_MODE === 'api'
+    ) {
       await this.down();
       await this.up();
+    }
+
+    if (
+      process.env.MOCKUP_DATA === 'true' &&
+      process.env.ENGINE_MODE === 'api'
+    ) {
+      const {
+        rows: [migration],
+      } = await this.client.query(
+        `SELECT * FROM migration WHERE name LIKE '%insert-workshop-data.sql' AND is_successful = true LIMIT 1`,
+      );
+
+      if (
+        migration &&
+        dayjs(migration.created_at).toString() !==
+          dayjs(migration.updated_at).toString()
+      ) {
+        // comented this out for mock-up-and-down by restart feature
+        // return;
+      }
+
+      await this.down();
+      await this.downProd();
+      await this.upProd();
     }
   }
 
@@ -101,6 +148,7 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
       this.client.release();
     }
   }
+
   async down() {
     try {
       await this.client.query('BEGIN');
@@ -494,6 +542,552 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
       this.logger.log(`mockup: Successfully mocked up test data`);
     } catch (error) {
       this.logger.error(`mockup: Failed to mock up test data`, error);
+    }
+  }
+
+  async parseCsv(filePath: string): Promise<any[]> {
+    if (process.env.NODE_ENV === 'dev') {
+      filePath = `/app/src/lib/mockup/${filePath}`;
+    } else {
+      filePath = path.join(__dirname, filePath);
+    }
+
+    return new Promise((resolve, reject) => {
+      const results: any[] = [];
+
+      // Use csv-parser to parse the file
+      fs.createReadStream(filePath)
+        .pipe(csv())
+        .on('data', (data) => results.push(data))
+        .on('end', () => resolve(results))
+        .on('error', (err) => reject(err));
+    });
+  }
+
+  async downProd() {
+    try {
+      const [user] = await this.userRepository.query(
+        `SELECT * FROM "user" ORDER BY created_at ASC LIMIT 1`,
+      );
+
+      const spaces = await this.spaceRepository.query(
+        `SELECT * FROM "space" WHERE owner_id = $1`,
+        [user.id],
+      );
+      const spaceEvents = await this.spaceEventRepository.query(
+        `SELECT * FROM space_event WHERE space_id = ANY($1)`,
+        [spaces.map((item) => item.id)],
+      );
+      const spaceEventTopics = await this.spaceEventRepository.query(
+        `SELECT * FROM space_event_topic WHERE space_event_id = ANY($1)`,
+        [spaceEvents.map((item) => item.id)],
+      );
+      const permissionRequests = await this.permissionRequestRepository.query(
+        `SELECT * FROM permission_request WHERE space_id = ANY($1)`,
+        [spaces.map((item) => item.id)],
+      );
+      const spaceHistories = await this.spaceHistoryRepository.query(
+        `SELECT * FROM space_history WHERE space_id = ANY($1)`,
+        [spaces.map((item) => item.id)],
+      );
+      const spaceImages = await this.spaceImageRepository.query(
+        `SELECT * FROM space_image WHERE space_id = ANY($1)`,
+        [spaces.map((item) => item.id)],
+      );
+      const spacePermissioners = await this.spacePermissionerRepository.query(
+        `SELECT * FROM space_permissioner WHERE space_id = ANY($1)`,
+        [spaces.map((item) => item.id)],
+      );
+      const spaceTopics = await this.spaceTopicRepository.query(
+        `SELECT * FROM space_topic WHERE space_id = ANY($1)`,
+        [spaces.map((item) => item.id)],
+      );
+      const ruleBlocks = await this.ruleBlockRepository.query(
+        `SELECT * FROM rule_block WHERE author_id = $1`,
+        [user.id],
+      );
+      const rules = await this.ruleBlockRepository.query(
+        `SELECT * FROM rule WHERE author_id = $1`,
+        [user.id],
+      );
+      const ruleTopics = await this.spaceHistoryRepository.query(
+        `SELECT * FROM rule_topic WHERE rule_id = ANY($1)`,
+        [rules.map((item) => item.id)],
+      );
+      const ruleRuleBlocks = (
+        await this.client.query(
+          `SELECT * FROM rule_rule_block WHERE rule_id = ANY($1)`,
+          [rules.map((item) => item.id)],
+        )
+      )?.rows;
+      const spaceEquipments = await this.spaceEquipmentRepository.query(
+        `SELECT * FROM space_equipment WHERE space_id = ANY($1)`,
+        [spaces.map((item) => item.id)],
+      );
+      const spaceApprovedRules = await this.spaceApprovedRuleRepository.query(
+        `SELECT * FROM space_approved_rule WHERE space_id = ANY($1)`,
+        [spaces.map((item) => item.id)],
+      );
+
+      await this.client
+        .query(`DELETE FROM user_notification WHERE user_id = $1`, [user.id])
+        .catch((error) => {
+          this.logger.error(`Failed to delete user`, error);
+          throw error;
+        });
+      if (permissionRequests) {
+        await this.client
+          .query(`DELETE FROM permission_request WHERE id = ANY($1)`, [
+            permissionRequests.map((item) => item.id),
+          ])
+          .catch((error) => {
+            this.logger.error(`Failed to delete permissionRequests`, error);
+            throw error;
+          });
+      }
+      if (spaceEventTopics) {
+        await this.client
+          .query(
+            `DELETE FROM space_event_topic WHERE space_event_id = ANY($1)`,
+            [spaceEvents.map((item) => item.id)],
+          )
+          .catch((error) => {
+            this.logger.error(`Failed to delete spaceEventTopics`, error);
+            throw error;
+          });
+      }
+      if (spaceEvents) {
+        await this.client
+          .query(`DELETE FROM space_event WHERE id = ANY($1)`, [
+            spaceEvents.map((item) => item.id),
+          ])
+          .catch((error) => {
+            this.logger.error(`Failed to delete spaceEvents`, error);
+            throw error;
+          });
+      }
+      if (spaceHistories) {
+        await this.client
+          .query(`DELETE FROM space_history WHERE id = ANY($1)`, [
+            spaceHistories.map((item) => item.id),
+          ])
+          .catch((error) => {
+            this.logger.error(`Failed to delete spaceHistories`, error);
+            throw error;
+          });
+      }
+      if (spaceApprovedRules) {
+        await this.client
+          .query(`DELETE FROM space_approved_rule WHERE space_id = ANY($1)`, [
+            spaces.map((item) => item.id),
+          ])
+          .catch((error) => {
+            this.logger.error(`Failed to delete spaceApprovedRules`, error);
+            throw error;
+          });
+      }
+      if (spaceImages) {
+        await this.client
+          .query(`DELETE FROM space_image WHERE id = ANY($1)`, [
+            spaceImages.map((item) => item.id),
+          ])
+          .catch((error) => {
+            this.logger.error(`Failed to delete spaceImages`, error);
+            throw error;
+          });
+      }
+      if (spacePermissioners) {
+        await this.client
+          .query(`DELETE FROM space_permissioner WHERE id = ANY($1)`, [
+            spacePermissioners.map((item) => item.id),
+          ])
+          .catch((error) => {
+            this.logger.error(`Failed to delete spacePermissioners`, error);
+            throw error;
+          });
+      }
+      if (spaceTopics) {
+        await this.client
+          .query(`DELETE FROM space_topic WHERE space_id = ANY($1)`, [
+            spaces.map((item) => item.id),
+          ])
+          .catch((error) => {
+            this.logger.error(`Failed to delete spaceTopics`, error);
+            throw error;
+          });
+      }
+      if (ruleTopics) {
+        await this.client
+          .query(`DELETE FROM rule_topic WHERE rule_id = ANY($1)`, [
+            rules.map((item) => item.id),
+          ])
+          .catch((error) => {
+            this.logger.error(`Failed to delete ruleTopics`, error);
+            throw error;
+          });
+      }
+      if (spaceEquipments) {
+        await this.client
+          .query(`DELETE FROM space_equipment WHERE id = ANY($1)`, [
+            spaceEquipments.map((item) => item.id),
+          ])
+          .catch((error) => {
+            this.logger.error(`Failed to delete spaceEquipments`, error);
+            throw error;
+          });
+      }
+      if (spaces) {
+        await this.client
+          .query(`DELETE FROM space WHERE id = ANY($1)`, [
+            spaces.map((item) => item.id),
+          ])
+          .catch((error) => {
+            this.logger.error(`Failed to delete spaces`, error);
+            throw error;
+          });
+      }
+      if (ruleRuleBlocks) {
+        await this.client
+          .query(`DELETE FROM rule_rule_block WHERE rule_id = ANY($1)`, [
+            rules.map((item) => item.id),
+          ])
+          .catch((error) => {
+            this.logger.error(`Failed to delete ruleRuleBlocks`, error);
+            throw error;
+          });
+      }
+      if (rules) {
+        await this.client
+          .query(`DELETE FROM rule WHERE id = ANY($1)`, [
+            rules.map((item) => item.id),
+          ])
+          .catch((error) => {
+            this.logger.error(`Failed to delete rules`, error);
+            throw error;
+          });
+      }
+      if (ruleBlocks) {
+        await this.client
+          .query(`DELETE FROM rule_block WHERE id = ANY($1)`, [
+            ruleBlocks.map((item) => item.id),
+          ])
+          .catch((error) => {
+            this.logger.error(`Failed to delete ruleBlocks`, error);
+            throw error;
+          });
+      }
+
+      this.logger.log(`mockup: Successfully mocked down workshop data`);
+    } catch (error) {
+      this.logger.error(`mockup: Failed to mock down workshop data`, error);
+    }
+  }
+
+  async upProd() {
+    function getIndex(str) {
+      const numberPart = str.match(/\d+/); // This will match the first sequence of digits
+
+      return parseInt(numberPart?.[0]) - 1;
+    }
+
+    const [user] = await this.userRepository.query(
+      `SELECT * FROM "user" ORDER BY created_at ASC LIMIT 1`,
+    );
+    try {
+      const spaceRuleBlockCsv = await this.parseCsv(
+        'prod/london-workshop/space-rule-block.csv',
+      );
+      const spaceRuleCsv = await this.parseCsv(
+        'prod/london-workshop/space-rule.csv',
+      );
+      const spaceCsv = await this.parseCsv('prod/london-workshop/space.csv');
+      const spaceEventRuleBlockCsv = await this.parseCsv(
+        'prod/london-workshop/event-rule-block.csv',
+      );
+      const spaceEventRuleCsv = await this.parseCsv(
+        'prod/london-workshop/event-rule.csv',
+      );
+      const spaceEquipmentCsv = await this.parseCsv(
+        'prod/london-workshop/space-equipment.csv',
+      );
+
+      const workshopSpaces = [
+        {
+          space: { id: '' },
+          ruleBlocks: [],
+          rule: { id: '' },
+          spaceEquipments: [],
+          spaceImages: { thumbnail: {}, cover: {} },
+        },
+        {
+          space: { id: '' },
+          ruleBlocks: [],
+          rule: {},
+          spaceEquipments: [],
+          spaceImages: { thumbnail: {}, cover: {} },
+        },
+      ];
+
+      const workshopEvents = [
+        {
+          event: { id: '' },
+          ruleBlocks: [],
+          rule: { id: '' },
+        },
+        {
+          event: { id: '' },
+          ruleBlocks: [],
+          rule: { id: '' },
+        },
+      ];
+
+      // insert spaceRuleBlock
+      for (const spaceRuleBlock of spaceRuleBlockCsv) {
+        const { index, name, type, details } = spaceRuleBlock;
+        let { content } = spaceRuleBlock;
+        if (name && type && content) {
+          if (type === RuleBlockType.spaceExcludedTopic) {
+            const {
+              data: [topic],
+            } = await this.topicService.findAll({
+              names: [content.trim()],
+              page: 1,
+              limit: 1,
+            });
+
+            if (topic) {
+              content = topic.id;
+            }
+          }
+
+          const ruleBlock = await this.ruleBlockService.create(user.id, {
+            name: name,
+            type: type,
+            content: content,
+            details: details,
+          });
+
+          workshopSpaces[getIndex(index)].ruleBlocks.push(ruleBlock);
+        }
+      }
+      // insert spaceRule
+      for (const spaceRule of spaceRuleCsv) {
+        const { index, name, topics } = spaceRule;
+        if (index && name && topics) {
+          const topicNames = topics
+            .split(', ')
+            .map((item) => item.toLowerCase());
+
+          const ruleTopics = await this.topicService.findAll({
+            names: topicNames,
+            page: 1,
+            limit: 20,
+          });
+          const topicIds = ruleTopics.data.map((item) => item.id);
+          const ruleBlockIds = workshopSpaces[getIndex(index)].ruleBlocks.map(
+            (item) => item.id,
+          );
+
+          const spaceRule = await this.ruleService.createSpaceRule(user.id, {
+            name,
+            target: RuleTarget.space,
+            ruleBlockIds,
+            topicIds,
+          });
+
+          workshopSpaces[getIndex(index)].rule = spaceRule;
+        }
+      }
+      // insert space
+      for (const space of spaceCsv) {
+        const {
+          index,
+          name,
+          zipcode,
+          country,
+          city,
+          region,
+          district,
+          address,
+          latitude,
+          longitude,
+          details,
+          topics,
+          thumbnail,
+          cover,
+          link,
+        } = space;
+        if (
+          index &&
+          name &&
+          zipcode &&
+          country &&
+          city &&
+          region &&
+          district &&
+          address &&
+          latitude &&
+          longitude &&
+          details &&
+          topics &&
+          thumbnail &&
+          cover
+        ) {
+          const topicNames = topics
+            .split(', ')
+            .map((item) => item.toLowerCase());
+
+          const spaceTopics = await this.topicService.findAll({
+            names: topicNames,
+            page: 1,
+            limit: 20,
+          });
+          const topicIds = spaceTopics.data.map((item) => item.id);
+
+          const newSpace = await this.spaceService.create(user.id, {
+            name,
+            zipcode,
+            country,
+            city,
+            region,
+            district,
+            address,
+            latitude,
+            longitude,
+            details,
+            link,
+            topicIds,
+            ruleId: workshopSpaces[getIndex(index)].rule.id,
+          });
+
+          workshopSpaces[getIndex(index)].space = newSpace;
+
+          const spaceThumbnailImage = await this.spaceImageService.create({
+            spaceId: newSpace.id,
+            type: SpaceImageType.thumbnail,
+            link: thumbnail,
+          });
+          const spaceCoverImage = await this.spaceImageService.create({
+            spaceId: newSpace.id,
+            type: SpaceImageType.cover,
+            link: cover,
+          });
+          workshopSpaces[getIndex(index)].spaceImages.thumbnail =
+            spaceThumbnailImage;
+          workshopSpaces[getIndex(index)].spaceImages.cover = spaceCoverImage;
+        }
+      }
+
+      // insert spaceEquipment
+      for (const spaceEquipment of spaceEquipmentCsv) {
+        const { index, name, type, quantity, details } = spaceEquipment;
+        if (index && name && type && quantity) {
+          const newSpaceEquipment = await this.spaceEquipmentService.create({
+            spaceId: workshopSpaces[getIndex(index)].space.id,
+            name,
+            type,
+            quantity,
+            details,
+          });
+
+          workshopSpaces[getIndex(index)].spaceEquipments.push(
+            newSpaceEquipment,
+          );
+        }
+      }
+
+      // insert spaceEventRuleBlock
+      for (const spaceEventRuleBlock of spaceEventRuleBlockCsv) {
+        const { index, name, type, details } = spaceEventRuleBlock;
+        let { content } = spaceEventRuleBlock;
+        if (name && type && content) {
+          if (type === RuleBlockType.spaceEventException) {
+            const [ruleBlockType, desiredValue, reason] = content.split(
+              RuleBlockContentDivider.type,
+            );
+            const spaceRuleBlock = workshopSpaces[
+              getIndex(index)
+            ].ruleBlocks.find((item) => item.type === ruleBlockType);
+
+            content = [spaceRuleBlock.hash, desiredValue, reason].join(
+              RuleBlockContentDivider.type,
+            );
+          }
+          if (type === RuleBlockType.spaceEventRequireEquipment) {
+            const spaceEquipment = workshopSpaces[
+              getIndex(index)
+            ].spaceEquipments.find(
+              (item) =>
+                item.name.trim().toLowerCase() === name.trim().toLowerCase(),
+            );
+
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const [_, quantity] = content.split(RuleBlockContentDivider.type);
+
+            content = [spaceEquipment.id, quantity].join(
+              RuleBlockContentDivider.type,
+            );
+          }
+
+          const newRuleBlock = await this.ruleBlockService
+            .create(user.id, {
+              name: name,
+              type: type,
+              content: content,
+              details: details,
+            })
+            .catch((error) => {
+              throw error;
+            });
+
+          workshopEvents[getIndex(index)].ruleBlocks.push(newRuleBlock);
+        }
+      }
+
+      // insert spaceEventRule
+      for (const spaceEventRule of spaceEventRuleCsv) {
+        const { index, name, topics } = spaceEventRule;
+        if (index && name && topics) {
+          const topicNames = topics
+            .split(', ')
+            .map((item) => item.toLowerCase());
+
+          const ruleTopics = await this.topicService.findAll({
+            names: topicNames,
+            page: 1,
+            limit: 20,
+          });
+          const topicIds = ruleTopics.data.map((item) => item.id);
+          const ruleBlockIds = workshopEvents[getIndex(index)].ruleBlocks.map(
+            (item) => item.id,
+          );
+
+          const newSpaceEventRule = await this.ruleService.createSpaceEventRule(
+            user.id,
+            {
+              name,
+              target: RuleTarget.spaceEvent,
+              ruleBlockIds,
+              topicIds,
+            },
+          );
+
+          await this.spaceApprovedRuleService.create({
+            spaceId: workshopSpaces[getIndex(index)].space.id,
+            ruleId: newSpaceEventRule.id,
+          });
+
+          workshopEvents[getIndex(index)].rule = newSpaceEventRule;
+        }
+      }
+
+      await this.client.query(
+        `UPDATE migration SET updated_at = NOW() WHERE name LIKE '%insert-workshop-data.sql' AND is_successful = true`,
+      );
+
+      this.logger.log(`mockup: Successfully mocked up workshop data`);
+    } catch (error) {
+      this.logger.error(`mockup: Failed to insert workshop data`, error);
     }
   }
 }

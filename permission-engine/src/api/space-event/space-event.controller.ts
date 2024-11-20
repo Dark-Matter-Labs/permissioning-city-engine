@@ -132,7 +132,10 @@ export class SpaceEventController {
     @UploadedFiles() uploadedFiles: { images: Express.MulterS3.File[] },
     @Body() createSpaceEventDto: CreateSpaceEventDto,
   ) {
-    const { images } = uploadedFiles;
+    let images = [];
+    if (uploadedFiles) {
+      images = uploadedFiles.images;
+    }
     const user = await this.userService.findOneByEmail(req.user.email);
     const spaceEvent = await this.spaceEventService.create(
       user.id,
@@ -182,7 +185,10 @@ export class SpaceEventController {
   ) {
     const user = await this.userService.findOneByEmail(req.user.email);
     const spaceEvent = await this.spaceEventService.findOneById(id);
-    const { images } = uploadedFiles;
+    let images = [];
+    if (uploadedFiles) {
+      images = uploadedFiles.images;
+    }
 
     if (spaceEvent.organizerId !== user.id) {
       throw new ForbiddenException();
@@ -274,7 +280,10 @@ export class SpaceEventController {
     @Param('type') type: SpaceEventImageType,
     @UploadedFiles() uploadedFiles: { images: Express.MulterS3.File[] },
   ) {
-    const { images } = uploadedFiles;
+    let images = [];
+    if (uploadedFiles) {
+      images = uploadedFiles.images;
+    }
     const maxImageCount = 5;
 
     if (images.length > 1) {
@@ -442,7 +451,10 @@ export class SpaceEventController {
   ) {
     const user = await this.userService.findOneByEmail(req.user.email);
     const spaceEvent = await this.spaceEventService.findOneById(id);
-    const { images } = uploadedFiles;
+    let images = [];
+    if (uploadedFiles) {
+      images = uploadedFiles.images;
+    }
     const oldImages = spaceEvent.spaceEventImages ?? [];
 
     if (spaceEvent.organizerId !== user.id) {
@@ -559,7 +571,10 @@ export class SpaceEventController {
       );
     }
 
-    const { images } = uploadedFiles;
+    let images = [];
+    if (uploadedFiles) {
+      images = uploadedFiles.images;
+    }
     const oldImages = spaceEvent.spaceEventImages ?? [];
 
     if (spaceEvent.organizerId !== user.id) {
@@ -644,7 +659,10 @@ export class SpaceEventController {
       );
     }
 
-    const { images } = uploadedFiles;
+    let images = [];
+    if (uploadedFiles) {
+      images = uploadedFiles.images;
+    }
     const oldImages = spaceEvent.spaceEventImages ?? [];
 
     if (spaceEvent.organizerId !== user.id) {

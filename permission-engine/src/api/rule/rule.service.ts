@@ -15,6 +15,7 @@ import * as Util from 'src/lib/util';
 import { v4 as uuidv4 } from 'uuid';
 import { Logger } from 'src/lib/logger/logger.service';
 import { FindAllMatchedRuleDto } from '../space/dto';
+import dayjs from 'dayjs';
 
 @Injectable()
 export class RuleService {
@@ -41,8 +42,17 @@ export class RuleService {
       isPublicOnly: true,
     },
   ): Promise<{ data: Rule[]; total: number }> {
-    const { page, limit, target, authorId, parentRuleId, hash, ids, isActive } =
-      findAllRuleDto;
+    const {
+      page,
+      limit,
+      target,
+      authorId,
+      parentRuleId,
+      hash,
+      publicHash,
+      ids,
+      isActive,
+    } = findAllRuleDto;
     const { isPagination, isPublicOnly, queryUserId } = option;
     const where: FindOptionsWhere<Rule> = { isActive: true };
 
@@ -60,6 +70,10 @@ export class RuleService {
 
     if (hash != null) {
       where.hash = hash;
+    }
+
+    if (publicHash != null) {
+      where.publicHash = publicHash;
     }
 
     if (ids != null) {
@@ -149,6 +163,7 @@ export class RuleService {
           r.id,
           r.name,
           r.hash,
+          r.public_hash,
           r.author_id,
           r.target,
           r.parent_rule_id,
@@ -189,6 +204,7 @@ export class RuleService {
           id: item.id,
           name: item.name,
           hash: item.hash,
+          publicHash: item.public_hash,
           authorId: item.author_id,
           target: item.target,
           parentRuleId: item.parent_rule_id,
@@ -235,6 +251,7 @@ export class RuleService {
           r.id,
           r.name,
           r.hash,
+          r.public_hash,
           r.author_id,
           r.target,
           r.parent_rule_id,
@@ -278,7 +295,6 @@ export class RuleService {
 
     if (result.ruleblocks) {
       result.ruleBlocks = result.ruleblocks.map((item) => {
-        console.log(item);
         return {
           id: item.id,
           name: item.name,
@@ -318,6 +334,7 @@ export class RuleService {
       id: result.id,
       name: result.name,
       hash: result.hash,
+      publicHash: result.public_hash,
       authorId: result.author_id,
       target: result.target,
       parentRuleId: result.parent_rule_id,
@@ -368,6 +385,7 @@ export class RuleService {
     createRuleDto: CreateRuleDto,
     ruleBlocks: RuleBlock[],
     hash: string,
+    publicHash?: string,
   ): Promise<Rule> {
     const { topicIds } = createRuleDto;
     const rule = this.ruleRepository.create({
@@ -376,6 +394,7 @@ export class RuleService {
       authorId,
       ruleBlocks,
       hash,
+      publicHash: publicHash ?? hash,
     });
 
     await this.ruleRepository.save(rule);
@@ -403,7 +422,7 @@ export class RuleService {
       throw new BadRequestException();
     }
 
-    if (!ruleBlockIds) {
+    if (!ruleBlockIds || ruleBlockIds?.length === 0) {
       throw new BadRequestException(
         `Need to contain at least 1 item in ruleBlockIds`,
       );
@@ -413,10 +432,21 @@ export class RuleService {
       where: { id: In(ruleBlockIds) },
     });
     const hash = this.generateRuleHash(ruleBlocks.map((item) => item.hash));
+    const publicHash = this.generateRuleHash(
+      ruleBlocks
+        .filter((item) => item.isPublic === true)
+        .map((item) => item.hash),
+    );
 
     this.validateSpaceRuleBlockSet(ruleBlocks);
 
-    return await this.create(authorId, createRuleDto, ruleBlocks, hash);
+    return await this.create(
+      authorId,
+      createRuleDto,
+      ruleBlocks,
+      hash,
+      publicHash,
+    );
   }
 
   async createSpaceEventRule(
@@ -427,24 +457,35 @@ export class RuleService {
     const emptyHash: string = Util.hash('');
     let ruleBlocks: RuleBlock[] = [];
     let hash: string = emptyHash;
-
+    let publicHash = hash;
     if (target !== RuleTarget.spaceEvent) {
       throw new BadRequestException();
     }
 
-    if (ruleBlockIds) {
+    if (ruleBlockIds && ruleBlockIds?.length > 0) {
       ruleBlocks = await this.ruleBlockRepository.find({
         where: { id: In(ruleBlockIds) },
       });
       hash = this.generateRuleHash(ruleBlocks.map((item) => item.hash));
+      publicHash = this.generateRuleHash(
+        ruleBlocks
+          .filter((item) => item.isPublic === true)
+          .map((item) => item.hash),
+      );
     }
 
     const duplicateSpaceEventRule = (
       await this.findAll(
-        { target: RuleTarget.spaceEvent, hash, isActive: true },
         {
-          isPagination: false,
+          target: RuleTarget.spaceEvent,
+          hash,
+          isActive: true,
+          page: 1,
+          limit: 1,
+        },
+        {
           isPublicOnly: false,
+          isPagination: true,
         },
       )
     )?.data?.[0];
@@ -457,7 +498,13 @@ export class RuleService {
       this.validateSpaceEventRuleBlockSet(ruleBlocks);
     }
 
-    return await this.create(authorId, createRuleDto, ruleBlocks, hash);
+    return await this.create(
+      authorId,
+      createRuleDto,
+      ruleBlocks,
+      hash,
+      publicHash,
+    );
   }
 
   async fork(
@@ -481,6 +528,7 @@ export class RuleService {
         (ruleBlock) => ruleBlock.isPublic === true,
       );
       rule.ruleBlocks = publicRuleBlocks;
+      rule.hash = rule.publicHash;
     }
 
     const newRule = this.ruleRepository.create({
@@ -531,6 +579,13 @@ export class RuleService {
 
     const hash = Util.hash(
       ruleBlocks
+        .map((item) => item.hash)
+        .sort()
+        .join(),
+    );
+    const publicHash = Util.hash(
+      ruleBlocks
+        .filter((item) => item.isPublic === true)
         .map((item) => item.hash)
         .sort()
         .join(),
@@ -587,7 +642,7 @@ export class RuleService {
       id: uuidv4(),
       parentRuleId: rule.id,
       authorId: rule.authorId,
-      name: `${rule.name}-${Date.now()}`,
+      name: `${rule.name}-${dayjs().format('YYYY-MM-DD')}`,
       ruleBlocks: rule.ruleBlocks,
     });
 
@@ -606,6 +661,7 @@ export class RuleService {
         ...rule,
         name: name ?? rule.name,
         hash,
+        publicHash,
         ruleBlocks,
       })
       .catch((error) => {
@@ -660,6 +716,13 @@ export class RuleService {
         .sort()
         .join(),
     );
+    const publicHash = Util.hash(
+      ruleBlocks
+        .filter((item) => item.isPublic === true)
+        .map((item) => item.hash)
+        .sort()
+        .join(),
+    );
 
     if (target === RuleTarget.space) {
       this.validateSpaceRuleBlockSet(ruleBlocks);
@@ -677,12 +740,12 @@ export class RuleService {
         ...rule,
         name: name ?? rule.name,
         hash,
+        publicHash,
         ruleBlocks,
       })
       .catch((error) => {
         this.logger.error('Failed to save rule', error);
         result = false;
-        return null;
       });
 
     return {
