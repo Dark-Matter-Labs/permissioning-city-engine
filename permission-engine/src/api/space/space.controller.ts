@@ -100,10 +100,20 @@ export class SpaceController {
     @Param('id') id: string,
     @Query() query: FindSpaceAvailabilityDto,
   ): Promise<{ data: SpaceAvailability[] }> {
-    const { startDate, endDate } = query;
+    let { startDate, endDate } = query;
     const space = await this.spaceService.findOneById(id);
     if (!space) {
       throw new BadRequestException(`There is no space with id: ${id}`);
+    }
+    if (!startDate) {
+      startDate = new Date().toISOString();
+    }
+    if (!endDate) {
+      endDate = new Date(
+        new Date().getFullYear(),
+        new Date().getMonth() + 1,
+        0,
+      ).toISOString();
     }
     const spaceRule = await this.ruleService.findOneById(space.ruleId);
     const spaceEvents =
