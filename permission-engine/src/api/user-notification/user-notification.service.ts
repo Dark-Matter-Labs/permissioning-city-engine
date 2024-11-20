@@ -7,6 +7,7 @@ import { CreateUserNotificationDto, FindAllUserNotificationDto } from './dto';
 import { v4 as uuidv4 } from 'uuid';
 import { EmailTemplate } from 'src/lib/email-template';
 import dayjs from 'dayjs';
+import { selectHtmlElement } from 'src/lib/util';
 
 @Injectable()
 export class UserNotificationService {
@@ -31,6 +32,9 @@ export class UserNotificationService {
 
     const [data, total] = await this.userNotificationRepository.findAndCount({
       where,
+      order: {
+        createdAt: 'DESC',
+      },
       skip: (page - 1) * limit,
       take: limit,
     });
@@ -102,6 +106,12 @@ export class UserNotificationService {
     id: string,
     email: EmailTemplate,
   ): Promise<{ data: { result: boolean } }> {
+    const { html } = email;
+
+    if (html) {
+      email.html = selectHtmlElement(email.html, '.content');
+    }
+
     const updateResult = await this.userNotificationRepository.update(id, {
       subjectPart: email?.subject ?? '',
       textPart: email?.text ?? '',
