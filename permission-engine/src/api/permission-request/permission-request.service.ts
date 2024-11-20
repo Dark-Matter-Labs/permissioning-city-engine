@@ -222,7 +222,7 @@ export class PermissionRequestService {
         },
         {
           status: PermissionRequestStatus.queued,
-          updatedAt: LessThanOrEqual(dayjs().subtract(30, 's').toDate()),
+          createdAt: LessThanOrEqual(dayjs().subtract(30, 's').toDate()),
         },
       ],
       order: {
