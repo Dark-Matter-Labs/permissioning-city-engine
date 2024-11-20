@@ -73,6 +73,8 @@ export const getTimeIntervals = (
     bufferMillis?: number;
   }[],
 ) => {
+  const MAX_INTERVALS = 100000;
+  const MAX_ITERATIONS = 31 * 24 * 60 * 60 * 1000;
   const intervals = [];
   let currentDate = new Date(
     startDate.getFullYear(),
@@ -114,6 +116,22 @@ export const getTimeIntervals = (
       throw new Error('Invalid unit type. Use "m", "h", or "d".');
   }
 
+  if (
+    (finalDate.getTime() - startDate.getTime()) / unitMillis >
+    MAX_ITERATIONS
+  ) {
+    throw new Error('Date range too large to process');
+  }
+
+  const availabilityMap = new Map<string, string[]>();
+  availabilities.forEach((item) => {
+    const [day] = item.split(RuleBlockContentDivider.time);
+    if (!availabilityMap.has(day)) {
+      availabilityMap.set(day, []);
+    }
+    availabilityMap.get(day).push(item);
+  });
+
   unavailableRanges.map((item) => {
     const { buffer } = item;
     const bufferAmount = parseInt(buffer.slice(0, -1), 10); // Extract the number (30, 1, etc.)
@@ -135,16 +153,24 @@ export const getTimeIntervals = (
   });
 
   let isReservedDay = false;
+  // TODO. fix buffer behavior -> current logic is not correct
   let reservationBufferMillies = 0;
 
   // Loop through the date range and create the intervals
   while (currentDate < finalDate) {
     let nextDate = new Date(currentDate.getTime() + unitMillis);
 
+    if (intervals.length > MAX_INTERVALS) {
+      throw new Error(
+        'Too many intervals generated. Reduce the date range or unit size.',
+      );
+    }
+
+    // TODO. fix buffer behavior -> current logic is not correct
     // reset buffer offset for new date
     if (isReservedDay === true && currentDate.getDate() < nextDate.getDate()) {
       isReservedDay = false;
-      currentDate = new Date(currentDate.getTime() - reservationBufferMillies);
+      // currentDate = new Date(currentDate.getTime() - reservationBufferMillies);
       nextDate = new Date(currentDate.getTime() + unitMillis);
     }
 
@@ -180,16 +206,17 @@ export const getTimeIntervals = (
         break;
     }
 
-    const availabilityRanges = availabilities.filter((item) =>
-      item.startsWith(currentDayString),
-    );
+    const availabilityRanges = availabilityMap.get(currentDayString) || [];
     const reservation = unavailableRanges.find(
       (item) =>
         new Date(item.startTime) <= new Date(currentDate) &&
         new Date(new Date(item.endTime).getTime() + item.bufferMillis) >=
           new Date(nextDate),
     );
+
     if (!!reservation) {
+      // TODO. fix buffer behavior -> current logic is not correct
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       reservationBufferMillies += reservation?.bufferMillis ?? 0;
     }
 
@@ -288,8 +315,8 @@ export const isInAvailabilities = (
 };
 
 export const selectHtmlElement = (html: string, selector: string): string => {
-  const $ = cheerio.load(html);
-
+  const body = html?.split('<body>')?.[1]?.split('</body>')?.[0] ?? html;
+  const $ = cheerio.load(body.trim());
   const selectedElement = $(selector).html();
 
   return selectedElement;
