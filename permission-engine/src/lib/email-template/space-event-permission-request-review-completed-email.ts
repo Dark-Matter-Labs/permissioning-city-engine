@@ -92,7 +92,7 @@ export class SpaceEventPermissionRequestReviewCompletedEmail extends Email {
 
   textPart() {
     const permissionResponseSummary = this.i18n.translate(
-      'summary.permissionResponseSummary.html',
+      'summary.permissionResponseSummary.text',
       {
         lang: this.language,
         args: {
