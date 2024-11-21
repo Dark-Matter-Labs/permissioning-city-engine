@@ -103,6 +103,7 @@ export class PermissionHandlerProcessor {
             break;
         }
       } catch (error) {
+        // TODO. updateToAssignFailed for suitable cases
         reject(error);
       }
     });
