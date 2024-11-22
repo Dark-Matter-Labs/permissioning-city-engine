@@ -134,7 +134,7 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
           dayjs(migration.updated_at).toString()
       ) {
         // comented this out for mock-up-and-down by restart feature
-        // return;
+        return;
       }
 
       await this.down();
@@ -639,6 +639,16 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
           this.logger.error(`Failed to delete user`, error);
           throw error;
         });
+      if (spaceApprovedRules) {
+        await this.client
+          .query(`DELETE FROM space_approved_rule WHERE space_id = ANY($1)`, [
+            spaces.map((item) => item.id),
+          ])
+          .catch((error) => {
+            this.logger.error(`Failed to delete spaceApprovedRules`, error);
+            throw error;
+          });
+      }
       if (permissionRequests) {
         await this.client
           .query(`DELETE FROM permission_request WHERE id = ANY($1)`, [
@@ -677,16 +687,6 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
           ])
           .catch((error) => {
             this.logger.error(`Failed to delete spaceHistories`, error);
-            throw error;
-          });
-      }
-      if (spaceApprovedRules) {
-        await this.client
-          .query(`DELETE FROM space_approved_rule WHERE space_id = ANY($1)`, [
-            spaces.map((item) => item.id),
-          ])
-          .catch((error) => {
-            this.logger.error(`Failed to delete spaceApprovedRules`, error);
             throw error;
           });
       }

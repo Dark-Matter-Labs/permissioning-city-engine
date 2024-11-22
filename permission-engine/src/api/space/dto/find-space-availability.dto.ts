@@ -10,7 +10,7 @@ export class FindSpaceAvailabilityDto {
   startDate?: string = new Date(
     new Date().getFullYear(),
     new Date().getMonth(),
-    1,
+    new Date().getDate(),
   ).toISOString();
 
   @IsNotEmpty()

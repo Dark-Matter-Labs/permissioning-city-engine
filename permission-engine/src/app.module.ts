@@ -96,8 +96,10 @@ import { SpaceHistoryModule } from './api/space-history/space-history.module';
       },
       loader: I18nJsonLoader,
     }),
-    NotificationHandlerModule,
-    PermissionHandlerModule,
+    ...(process.env.ENGINE_MODE === 'daemon'
+      ? [NotificationHandlerModule]
+      : []),
+    ...(process.env.ENGINE_MODE === 'daemon' ? [PermissionHandlerModule] : []),
     AuthModule,
     EmailModule,
     UserNotificationModule,
@@ -131,8 +133,6 @@ export class AppModule implements OnModuleInit {
     private readonly logger: Logger,
     private readonly databaseService: DatabaseService,
     private readonly redisService: RedisService,
-    private readonly notificationHandlerService: NotificationHandlerService,
-    private readonly permissionHandlerService: PermissionHandlerService,
     private readonly mockupService: MockupService,
   ) {
     try {

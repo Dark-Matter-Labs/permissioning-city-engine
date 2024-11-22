@@ -132,9 +132,17 @@ export class PermissionHandlerService
 
   async run() {
     const jobCounts = await this.queue.getJobCounts();
-    this.logger.debug('permission-handler-job jobCounts', jobCounts);
+
+    if (jobCounts) {
+      this.logger.debug('permission-handler-job jobCounts', jobCounts);
+    }
+
     const delayedJobs = await this.queue.getDelayed();
-    this.logger.debug('permission-handler-job Delayed Jobs:', delayedJobs);
+
+    if (delayedJobs && delayedJobs.length > 0) {
+      this.logger.debug('permission-handler-job Delayed Jobs:', delayedJobs);
+    }
+
     const failedJobs = await this.queue.getFailed();
     failedJobs.forEach((job) => {
       try {

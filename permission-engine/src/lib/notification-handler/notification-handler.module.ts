@@ -84,4 +84,8 @@ import { SpaceHistoryService } from 'src/api/space-history/space-history.service
   ],
   exports: [NotificationHandlerService],
 })
-export class NotificationHandlerModule {}
+export class NotificationHandlerModule {
+  constructor(
+    private readonly notificationHandlerService: NotificationHandlerService,
+  ) {}
+}

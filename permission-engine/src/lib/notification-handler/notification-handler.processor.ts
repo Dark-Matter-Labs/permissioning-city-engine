@@ -14,9 +14,6 @@ export class NotificationHandlerProcessor {
 
   @Process({ name: 'notification-handler-job', concurrency: 1 })
   async handleNotificationProcess(job: Job<any>) {
-    if (process.env.ENGINE_MODE !== 'daemon') {
-      return;
-    }
     // Job processing logic
     return await new Promise<string>(async (resolve, reject) => {
       try {

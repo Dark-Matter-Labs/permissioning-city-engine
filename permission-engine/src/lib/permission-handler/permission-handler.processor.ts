@@ -51,11 +51,6 @@ export class PermissionHandlerProcessor {
   async handlePermissionProcess(job: Job<any>) {
     this.logger.log('PermisisonHandlerJob received');
 
-    if (process.env.ENGINE_MODE !== 'daemon') {
-      this.logger.log('Not a daemon');
-      return;
-    }
-
     // Job processing logic
     await new Promise<void>(async (resolve, reject) => {
       try {
@@ -108,6 +103,7 @@ export class PermissionHandlerProcessor {
             break;
         }
       } catch (error) {
+        // TODO. updateToAssignFailed for suitable cases
         reject(error);
       }
     });
@@ -296,7 +292,11 @@ export class PermissionHandlerProcessor {
             {
               name: `Exception on space rule: ${spaceRule.name}`,
               type: RuleBlockType.spaceEventException,
-              content: [hash, desiredValue].join(RuleBlockContentDivider.type),
+              content: [
+                hash,
+                desiredValue,
+                `Automatic exception for ${spaceRule.name}`,
+              ].join(RuleBlockContentDivider.type),
               details: `Automatic exception raised by Permissioning Engine`,
             },
           );

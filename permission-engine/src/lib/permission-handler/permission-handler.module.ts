@@ -84,4 +84,8 @@ import { SpaceHistoryService } from 'src/api/space-history/space-history.service
   ],
   exports: [PermissionHandlerService, BullModule],
 })
-export class PermissionHandlerModule {}
+export class PermissionHandlerModule {
+  constructor(
+    private readonly permissionHandlerService: PermissionHandlerService,
+  ) {}
+}

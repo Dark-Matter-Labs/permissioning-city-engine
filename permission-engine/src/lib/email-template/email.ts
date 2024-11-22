@@ -62,11 +62,7 @@ export class Email implements EmailTemplate {
               }
           </style>
       </head>
-      <body>
-        <div class="content">
-          ${html}
-        </div>
-      </body>
+        <body><div class="content">${html}</div></body>
       </html>
     `;
   }
