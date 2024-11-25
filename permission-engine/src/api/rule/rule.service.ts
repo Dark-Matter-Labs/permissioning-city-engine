@@ -299,7 +299,6 @@ export class RuleService {
           id: item.id,
           name: item.name,
           hash: item.hash,
-          author: item.author,
           authorId: item.author_id,
           type: item.type,
           content: item.content,
