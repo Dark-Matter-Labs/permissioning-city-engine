@@ -116,28 +116,58 @@ export class SpaceApprovedRuleService {
           r.created_at,
           r.updated_at,
           sar.utilization_count,
-          ARRAY_AGG(DISTINCT rb),
-          ARRAY_AGG(DISTINCT t)
+          (
+            SELECT 
+            json_agg(json_build_object(
+              'id', rb.id,
+              'name', rb.name,
+              'hash', rb.hash,
+              'author_id', rb.author_id,
+              'type', rb.type,
+              'content', rb.content,
+              'details', rb.details,
+              'is_public', rb.is_public,
+              'created_at', rb.created_at,
+              'updated_at', rb.updated_at
+            ))
+            FROM 
+              rule_block rb,
+              rule_rule_block rrb,
+              rule r
+            WHERE
+              rb.id = rrb.rule_block_id
+            AND
+              rrb.rule_id = sar.rule_id
+          ),
+          (
+            SELECT 
+            json_agg(json_build_object(
+              'id', t.id,
+              'author_id', t.author_id,
+              'name', t.name,
+              'icon', t.icon,
+              'country', t.country,
+              'region', t.region,
+              'city', t.city,
+              'details', t.details,
+              'is_active', t.is_active,
+              'created_at', t.created_at,
+              'updated_at', t.updated_at
+            ))
+            FROM 
+              topic t,
+              rule_topic rt
+            WHERE
+              t.id = rt.topic_id
+            AND
+              rt.rule_id = sar.rule_id
+          )
         ) FROM
-         space_approved_rule sar,
-         rule r,
-         rule_topic rt,
-         topic t,
-         rule_rule_block rrb,
-         rule_block rb
-        WHERE
-          sar.rule_id = r.id
-        AND
-          r.id = rt.rule_id
-        AND
-          t.id = rt.topic_id
-        AND
-          r.id = rrb.rule_id
-        AND
-          rrb.rule_block_id = rb.id
-        ${where.length > 0 ? ' AND ' : ''}
+          space_approved_rule sar
+          LEFT JOIN rule r ON r.id = sar.rule_id
+        ${where.length > 0 ? ' WHERE ' : ''}
         ${where.join(' AND ')}
-        GROUP BY r.id, sar.utilization_count, sar.created_at
+        GROUP BY r.id, sar.rule_id, sar.utilization_count, sar.created_at
         ${orderByClause}
       )
       SELECT COUNT(*) AS total, json_agg(filtered_data) AS data
@@ -162,7 +192,6 @@ export class SpaceApprovedRuleService {
               id: item.id,
               name: item.name,
               hash: item.hash,
-              author: item.author,
               authorId: item.author_id,
               type: item.type,
               content: item.content,
