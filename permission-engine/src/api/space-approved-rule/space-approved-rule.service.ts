@@ -145,6 +145,7 @@ export class SpaceApprovedRuleService {
               'id', t.id,
               'author_id', t.author_id,
               'name', t.name,
+              'translation', t.translation,
               'icon', t.icon,
               'country', t.country,
               'region', t.region,
@@ -169,10 +170,15 @@ export class SpaceApprovedRuleService {
         ${where.join(' AND ')}
         GROUP BY r.id, sar.rule_id, sar.utilization_count, sar.created_at
         ${orderByClause}
+      ),
+      paginated_data AS (
+        SELECT * FROM filtered_data
+        LIMIT $2 OFFSET $1
       )
-      SELECT COUNT(*) AS total, json_agg(filtered_data) AS data
-      FROM filtered_data
-      LIMIT $2 OFFSET $1;
+      SELECT 
+        (SELECT COUNT(*) FROM filtered_data) AS total,
+        json_agg(paginated_data) AS data
+      FROM paginated_data;
     `;
 
     const [{ data, total }] = await this.spaceApprovedRuleRepository.query(
@@ -208,6 +214,7 @@ export class SpaceApprovedRuleService {
               id: item.id,
               authorId: item.author_id,
               name: item.name,
+              translation: item.translation,
               icon: item.icon,
               country: item.country,
               region: item.region,

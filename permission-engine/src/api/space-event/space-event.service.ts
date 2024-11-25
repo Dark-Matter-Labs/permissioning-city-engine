@@ -190,10 +190,15 @@ export class SpaceEventService {
         ${whereClause} ${where.join(' AND ')}
         GROUP BY space_event.id
         ${orderByClause}
+      ),
+      paginated_data AS (
+        SELECT * FROM filtered_data
+        ${isPagination === true ? 'LIMIT $2 OFFSET $1' : ''}
       )
-      SELECT COUNT(*) AS total, json_agg(filtered_data) AS data
-      FROM filtered_data
-      ${isPagination === true ? 'LIMIT $2 OFFSET $1' : ''};
+      SELECT 
+        (SELECT COUNT(*) FROM filtered_data) AS total,
+        json_agg(paginated_data) AS data
+      FROM paginated_data;
     `;
 
     const [{ data, total }] = await this.spaceEventRepository.query(

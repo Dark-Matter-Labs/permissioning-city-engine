@@ -64,10 +64,15 @@ export class SpaceEquipmentService {
         ) FROM space_equipment
         WHERE 
           ${where.join(' AND ')}
+      ),
+      paginated_data AS (
+        SELECT * FROM filtered_data
+        LIMIT $2 OFFSET $1
       )
-      SELECT COUNT(*) AS total, json_agg(filtered_data) AS data
-      FROM filtered_data
-      LIMIT $2 OFFSET $1;
+      SELECT 
+        (SELECT COUNT(*) FROM filtered_data) AS total,
+        json_agg(paginated_data) AS data
+      FROM paginated_data;
     `;
 
     const [{ data, total }] = await this.spaceEquipmentRepository.query(
@@ -138,10 +143,15 @@ export class SpaceEquipmentService {
         ) FROM space_equipment
         WHERE 
           ${where.join(' AND ')}
+      ),
+      paginated_data AS (
+        SELECT * FROM filtered_data
+        LIMIT $2 OFFSET $1
       )
-      SELECT COUNT(*) AS total, json_agg(filtered_data) AS data
-      FROM filtered_data
-      LIMIT $2 OFFSET $1;
+      SELECT 
+        (SELECT COUNT(*) FROM filtered_data) AS total,
+        json_agg(paginated_data) AS data
+      FROM paginated_data;
     `;
 
     const [{ data, total }] = await this.spaceEquipmentRepository.query(

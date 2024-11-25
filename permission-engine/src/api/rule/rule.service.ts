@@ -189,10 +189,15 @@ export class RuleService {
         ${buildWhereClause(where)}
         GROUP BY r.id
         HAVING COUNT(DISTINCT rb.id) >= $${paramIndex}
+      ),
+      paginated_data AS (
+        SELECT * FROM filtered_data
+        LIMIT $2 OFFSET $1
       )
-      SELECT COUNT(*) AS total, json_agg(filtered_data) AS data
-      FROM filtered_data
-      LIMIT $2 OFFSET $1;
+      SELECT 
+        (SELECT COUNT(*) FROM filtered_data) AS total,
+        json_agg(paginated_data) AS data
+      FROM paginated_data;
     `;
 
     const [{ data, total }] = await this.ruleRepository.query(query, params);
