@@ -8,6 +8,7 @@ import { FindOneOptions, Not, Repository } from 'typeorm';
 import { Space } from '../../database/entity/space.entity';
 import {
   CreateSpaceDto,
+  FindAllSpaceDto,
   ReportSpaceIssueDto,
   ResolveSpaceIssueDto,
   UpdateSpaceDto,
@@ -42,9 +43,204 @@ export class SpaceService {
     private readonly logger: Logger,
   ) {}
 
-  // TODO. implement dynamic search in the future
-  findAll(): Promise<Space[]> {
-    return this.spaceRepository.find();
+  async findAll(
+    findAllSpaceDto: FindAllSpaceDto,
+  ): Promise<{ data: Space[]; total: number }> {
+    const {
+      page,
+      limit,
+      ownerId,
+      ruleId,
+      topicIds,
+      name,
+      timezone,
+      country,
+      region,
+      city,
+      district,
+      address,
+    } = findAllSpaceDto;
+    const where = [];
+    const params: any[] = [(page - 1) * limit, limit];
+    let paramIndex: number = params.length;
+    // TODO. support sortBy param
+
+    where.push(`s.is_active = true`);
+
+    if (ownerId != null) {
+      paramIndex++;
+      where.push(`s.organizer_id = $${paramIndex}`);
+      params.push(ownerId);
+    }
+
+    if (ruleId != null) {
+      paramIndex++;
+      where.push(`s.rule_id = $${paramIndex}`);
+      params.push(ruleId);
+    }
+
+    if (topicIds != null) {
+      paramIndex++;
+      where.push(`t.id = ANY($${paramIndex})`);
+      params.push(topicIds);
+    }
+
+    if (timezone != null) {
+      paramIndex++;
+      where.push(`s.timezone = $${paramIndex}`);
+      params.push(timezone);
+    }
+
+    if (country != null) {
+      paramIndex++;
+      where.push(`s.country = $${paramIndex}`);
+      params.push(country);
+    }
+
+    if (region != null) {
+      paramIndex++;
+      where.push(`s.region = $${paramIndex}`);
+      params.push(region);
+    }
+
+    if (city != null) {
+      paramIndex++;
+      where.push(`s.city = $${paramIndex}`);
+      params.push(city);
+    }
+
+    if (district != null) {
+      paramIndex++;
+      where.push(`s.district = $${paramIndex}`);
+      params.push(district);
+    }
+
+    if (address != null) {
+      paramIndex++;
+      where.push(`s.address LIKE $${paramIndex}`);
+      params.push(`%${address}%`);
+    }
+
+    if (name != null) {
+      paramIndex++;
+      where.push(`s.name LIKE $${paramIndex}`);
+      params.push(`%${name}%`);
+    }
+
+    const query = `
+      WITH filtered_data AS (
+        SELECT (
+          s.id,
+          s.owner_id,
+          s.name,
+          s.zipcode,
+          s.country,
+          s.city,
+          s.region,
+          s.district,
+          s.address,
+          s.latitude,
+          s.longitude,
+          s.is_active,
+          s.rule_id,
+          s.details,
+          s.link,
+          s.timezone,
+          s.created_at,
+          s.updated_at,
+          (
+            SELECT 
+            json_agg(json_build_object(
+              'id', t.id,
+              'author_id', t.author_id,
+              'name', t.name,
+              'icon', t.icon,
+              'country', t.country,
+              'region', t.region,
+              'city', t.city,
+              'details', t.details,
+              'is_active', t.is_active,
+              'created_at', t.created_at,
+              'updated_at', t.updated_at
+            ))
+            FROM 
+              topic t,
+              space_topic st
+            WHERE
+              t.id = st.topic_id
+            AND
+              st.space_id = s.id
+          )
+        ) FROM 
+          space s,
+          space_topic st,
+          topic t
+        WHERE
+          s.id = st.space_id
+        AND
+          st.topic_id = t.id
+        AND
+        ${where.join(' AND ')}
+        GROUP BY s.id
+      )
+      SELECT COUNT(*) AS total, json_agg(filtered_data) AS data
+      FROM filtered_data
+      LIMIT $2 OFFSET $1
+    `;
+
+    const [{ data, total }] = await this.spaceRepository.query(query, params);
+
+    let result = [];
+
+    if (data != null) {
+      result = data.map((item) => {
+        let topics = item.row.f19;
+        if (topics) {
+          topics = topics.map((item) => {
+            console.log(item);
+            return {
+              id: item.id,
+              authorId: item.author_id,
+              name: item.name,
+              icon: item.icon,
+              country: item.country,
+              region: item.region,
+              city: item.city,
+              details: item.details,
+              isActive: item.is_active,
+              createdAt: item.created_at,
+              updatedAt: item.updated_at,
+            };
+          });
+        }
+        return {
+          id: item.row.f1,
+          ownerId: item.row.f2,
+          name: item.row.f3,
+          zipcode: item.row.f4,
+          country: item.row.f5,
+          city: item.row.f6,
+          region: item.row.f7,
+          district: item.row.f8,
+          address: item.row.f9,
+          latitude: item.row.f10,
+          longitude: item.row.f11,
+          isActive: item.row.f12,
+          ruleId: item.row.f13,
+          details: item.row.f14,
+          link: item.row.f15,
+          timezone: item.row.f16,
+          createdAt: item.row.f17,
+          updatedAt: item.row.f18,
+          topics,
+        };
+      });
+    }
+
+    return {
+      data: result,
+      total: parseInt(total),
+    };
   }
 
   findOneById(

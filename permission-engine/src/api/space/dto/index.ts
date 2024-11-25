@@ -1,5 +1,6 @@
 import { CreateSpaceDto } from './create-space.dto';
 import { FindAllMatchedRuleDto } from './find-all-matched-rule.dto';
+import { FindAllSpaceDto } from './find-all-space.dto';
 import { FindSpaceAvailabilityDto } from './find-space-availability.dto';
 import { ReportSpaceIssueDto } from './report-space-issue.dto';
 import { ResolveSpaceIssueDto } from './resolve-space-issue.dto';
@@ -14,4 +15,5 @@ export {
   ReportSpaceIssueDto,
   ResolveSpaceIssueDto,
   SetSpaceImageDto,
+  FindAllSpaceDto,
 };

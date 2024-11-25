@@ -20,6 +20,7 @@ import { CreateSpaceDto } from './dto/create-space.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import {
   FindAllMatchedRuleDto,
+  FindAllSpaceDto,
   FindSpaceAvailabilityDto,
   ReportSpaceIssueDto,
   ResolveSpaceIssueDto,
@@ -82,8 +83,10 @@ export class SpaceController {
 
   @Get()
   @ApiOperation({ summary: 'Get all spaces' })
-  findAll(): Promise<Space[]> {
-    return this.spaceService.findAll();
+  findAll(
+    @Query() query: FindAllSpaceDto,
+  ): Promise<{ data: Space[]; total: number }> {
+    return this.spaceService.findAll(query);
   }
 
   @Get(':id')
