@@ -509,6 +509,15 @@ export class PermissionHandlerProcessor {
           );
           return false;
         });
+      // insert into space approved rules
+
+      await this.spaceApprovedRuleService.create(
+        {
+          spaceId: permissionRequest.spaceId,
+          ruleId: permissionRequest.spaceEventRuleId,
+        },
+        { isForce: true },
+      );
 
       // notice auto approval
       // notify event organizer
