@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindManyOptions, FindOptionsWhere, In, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { CreateTopicDto, FindAllTopicDto, UpdateTopicDto } from './dto';
 import { v4 as uuidv4 } from 'uuid';
 import { Logger } from 'src/lib/logger/logger.service';
@@ -27,46 +27,109 @@ export class TopicService {
     const { page, limit, isActive, names, ids, country, region, city } =
       findAllTopicDto;
     const { isPagination } = option;
-    const where: FindOptionsWhere<Topic> = {};
+    const where = [];
+    const params: any[] =
+      isPagination === true ? [(page - 1) * limit, limit] : [];
+    let paramIndex: number = params.length;
 
     if (ids != null) {
-      where.id = In(ids);
+      paramIndex++;
+      where.push(`id = ANY($${paramIndex})`);
+      params.push(ids);
     }
-
-    if (names != null) {
-      where.name = In(names);
-    }
-
     if (country != null) {
-      where.country = country;
+      paramIndex++;
+      where.push(`country = $${paramIndex}`);
+      params.push(country);
     }
 
     if (region != null) {
-      where.region = region;
+      paramIndex++;
+      where.push(`region = $${paramIndex}`);
+      params.push(region);
     }
 
     if (city != null) {
-      where.city = city;
+      paramIndex++;
+      where.push(`city = $${paramIndex}`);
+      params.push(city);
     }
 
     if (isActive != null) {
-      where.isActive = isActive;
+      paramIndex++;
+      where.push(`is_active = $${paramIndex}`);
+      params.push(isActive);
     }
 
-    let queryOption: FindManyOptions<Topic> = { where };
-    if (isPagination === true) {
-      queryOption = {
-        ...queryOption,
-        skip: (page - 1) * limit,
-        take: limit,
-      };
+    if (names != null) {
+      const namesOr = [];
+      names.forEach((name) => {
+        paramIndex++;
+        namesOr.push(`name LIKE $${paramIndex}`);
+        namesOr.push(`translation LIKE $${paramIndex}`);
+        params.push(`%${name}%`);
+      });
+      where.push(`(${namesOr.join(' OR ')})`);
     }
 
-    const [data, total] = await this.topicRepository.findAndCount(queryOption);
+    const query = `
+      WITH filtered_data AS (
+        SELECT (
+          id,
+          author_id,
+          name,
+          translation,
+          icon,
+          country,
+          region,
+          city,
+          details,
+          is_active,
+          created_at,
+          updated_at
+        ) FROM topic
+        ${where.length > 0 ? ' WHERE ' : ''} 
+        ${where.join(' AND ')}
+      ),
+      paginated_data AS (
+        SELECT * FROM filtered_data
+        ${isPagination === true ? 'LIMIT $2 OFFSET $1' : ''}
+      )
+      SELECT 
+        (SELECT COUNT(*) FROM filtered_data) AS total,
+        json_agg(paginated_data) AS data
+      FROM paginated_data;
+    `;
 
+    const [{ data, total }] = await this.topicRepository.query(query, params);
+    let result = [];
+
+    if (data != null) {
+      result = data.map((item) => {
+        let translation = item.row.f4;
+        if (translation) {
+          translation = JSON.parse(translation);
+        }
+
+        return {
+          id: item.row.f1,
+          authorId: item.row.f2,
+          name: item.row.f3,
+          translation,
+          icon: item.row.f5,
+          country: item.row.f6,
+          region: item.row.f7,
+          city: item.row.f8,
+          details: item.row.f9,
+          isActive: item.row.f10,
+          createdAt: item.row.f11,
+          updatedAt: item.row.f12,
+        };
+      });
+    }
     return {
-      data: data ?? [],
-      total,
+      data: result,
+      total: parseInt(total),
     };
   }
 
@@ -96,7 +159,8 @@ export class TopicService {
             t.details,
             t.is_active,
             t.created_at,
-            t.updated_at
+            t.updated_at,
+            t.translation
         ) FROM topic t, space_topic st
         WHERE t.id = st.topic_id AND ${where.join(' AND ')}
         GROUP BY t.id
@@ -123,6 +187,7 @@ export class TopicService {
           isActive: item.row.f9,
           createdAt: item.row.f10,
           updatedAt: item.row.f11,
+          translation: item.row.f12,
         };
       });
     }
@@ -159,7 +224,8 @@ export class TopicService {
             t.details,
             t.is_active,
             t.created_at,
-            t.updated_at
+            t.updated_at,
+            t.translation
         ) FROM topic t, space_event_topic set
         WHERE t.id = set.topic_id AND ${where.join(' AND ')}
         GROUP BY t.id
@@ -186,6 +252,7 @@ export class TopicService {
           isActive: item.row.f9,
           createdAt: item.row.f10,
           updatedAt: item.row.f11,
+          translation: item.row.f12,
         };
       });
     }
@@ -222,7 +289,9 @@ export class TopicService {
             t.details,
             t.is_active,
             t.created_at,
-            t.updated_at
+            t.updated_at,
+            t.translation
+            t.updated_at,
         ) FROM topic t, rule_topic rt
         WHERE t.id = rt.topic_id AND ${where.join(' AND ')}
         GROUP BY t.id
@@ -249,6 +318,7 @@ export class TopicService {
           isActive: item.row.f9,
           createdAt: item.row.f10,
           updatedAt: item.row.f11,
+          translation: item.row.f12,
         };
       });
     }
@@ -285,7 +355,8 @@ export class TopicService {
             t.details,
             t.is_active,
             t.created_at,
-            t.updated_at
+            t.updated_at,
+            t.translation
         ) FROM topic t, user_topic ut
         WHERE t.id = ut.topic_id AND ${where.join(' AND ')}
         GROUP BY t.id
@@ -312,6 +383,7 @@ export class TopicService {
           isActive: item.row.f9,
           createdAt: item.row.f10,
           updatedAt: item.row.f11,
+          translation: item.row.f12,
         };
       });
     }
@@ -339,11 +411,13 @@ export class TopicService {
     authorId: string,
     createTopicDto: CreateTopicDto,
   ): Promise<Topic> {
+    const { translation } = createTopicDto;
     const topic = this.topicRepository.create({
       ...createTopicDto,
       id: uuidv4(),
       authorId,
       name: createTopicDto.name.toLowerCase(),
+      translation: translation ? JSON.stringify(translation) : null,
       isActive: true,
     });
 
@@ -354,8 +428,10 @@ export class TopicService {
     id: string,
     updateTopicDto: UpdateTopicDto,
   ): Promise<{ data: { result: boolean } }> {
+    const { translation } = updateTopicDto;
     const updateResult = await this.topicRepository.update(id, {
       ...updateTopicDto,
+      translation: translation ? JSON.stringify(translation) : null,
       updatedAt: new Date(),
     });
 

@@ -1,9 +1,18 @@
-import { IsOptional, IsUUID, IsString, IsBoolean } from 'class-validator';
+import {
+  IsOptional,
+  IsUUID,
+  IsString,
+  IsBoolean,
+  IsArray,
+} from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { PaginationDto } from 'src/lib/dto';
+import { Transform } from 'class-transformer';
 
 export class FindAllTopicDto extends PaginationDto {
   @IsOptional()
+  @Transform(({ value }) => (Array.isArray(value) ? value : value.split(',')))
+  @IsArray()
   @IsUUID('4', { each: true })
   @ApiPropertyOptional({
     description: 'Topic ids in uuid',
@@ -11,7 +20,9 @@ export class FindAllTopicDto extends PaginationDto {
   ids?: string[];
 
   @IsOptional()
-  @IsString()
+  @Transform(({ value }) => (Array.isArray(value) ? value : value.split(',')))
+  @IsArray()
+  @IsString({ each: true })
   @ApiPropertyOptional({
     description: 'Topic names',
   })

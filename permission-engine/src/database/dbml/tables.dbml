@@ -86,6 +86,7 @@ Table topic {
   id uuid [primary key]
   author_id uuid
   name varchar [not null]
+  translation text
   icon varchar [not null, default: '✨', note: 'unicode emoji']
   country varchar [not null, default: 'common']
   region varchar [not null, default: 'common']

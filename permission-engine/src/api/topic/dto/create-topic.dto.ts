@@ -1,5 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsObject,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 
 export class CreateTopicDto {
   @IsNotEmpty()
@@ -28,4 +34,12 @@ export class CreateTopicDto {
   @MaxLength(1000)
   @ApiProperty({ description: 'Topic details', required: true })
   details: string;
+
+  @IsOptional()
+  @IsObject()
+  @ApiPropertyOptional({
+    description: 'Topic translation in json',
+    nullable: true,
+  })
+  translation?: Record<string, any>;
 }

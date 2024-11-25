@@ -26,14 +26,7 @@ export class TopicController {
   @Get()
   @ApiOperation({ summary: 'Get all topics' })
   findAll(@Query() query: FindAllTopicDto) {
-    const { page, limit, ids, names } = query;
-
-    return this.topicService.findAll({
-      page,
-      limit,
-      ids,
-      names,
-    });
+    return this.topicService.findAll(query, { isPagination: true });
   }
 
   @Get('space/:spaceId')
