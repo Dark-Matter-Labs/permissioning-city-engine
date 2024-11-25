@@ -166,6 +166,7 @@ export class SpaceApprovedRuleService {
         ) FROM
           space_approved_rule sar
           LEFT JOIN rule r ON r.id = sar.rule_id
+          LEFT JOIN rule_topic rt ON rt.rule_id = sar.rule_id
         ${where.length > 0 ? ' WHERE ' : ''}
         ${where.join(' AND ')}
         GROUP BY r.id, sar.rule_id, sar.utilization_count, sar.created_at

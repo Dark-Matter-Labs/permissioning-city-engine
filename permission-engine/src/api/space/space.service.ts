@@ -203,7 +203,6 @@ export class SpaceService {
         let topics = item.row.f19;
         if (topics) {
           topics = topics.map((item) => {
-            console.log(item);
             return {
               id: item.id,
               authorId: item.author_id,

@@ -291,7 +291,6 @@ export class TopicService {
             t.created_at,
             t.updated_at,
             t.translation
-            t.updated_at,
         ) FROM topic t, rule_topic rt
         WHERE t.id = rt.topic_id AND ${where.join(' AND ')}
         GROUP BY t.id
