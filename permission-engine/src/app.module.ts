@@ -1,6 +1,6 @@
 import path from 'path';
 import Redis from 'ioredis';
-import { Module, OnModuleInit } from '@nestjs/common';
+import { Module, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { RedisService } from '@liaoliaots/nestjs-redis';
 import { BullModule } from '@nestjs/bull';
 import { AppService } from './app.service';
@@ -26,9 +26,7 @@ import { SpacePermissionerModule } from './api/space-permissioner/space-permissi
 import { UserNotificationModule } from './api/user-notification/user-notification.module';
 import { RuleBlockModule } from './api/rule-block/rule-block.module';
 import { SpaceEquipmentModule } from './api/space-equipment/space-equipment.module';
-import { NotificationHandlerService } from './lib/notification-handler/notification-handler.service';
 import { PermissionResponseModule } from './api/permission-response/permission-response.module';
-import { PermissionHandlerService } from './lib/permission-handler/permission-handler.service';
 import { PermissionHandlerModule } from './lib/permission-handler/permission-handler.module';
 import { EmailModule } from './api/email/email.module';
 import { MockupService } from './lib/mockup/mockup.service';
@@ -42,6 +40,9 @@ import { UserNotification } from './database/entity/user-notification.entity';
 import { User } from './database/entity/user.entity';
 import { UserNotificationService } from './api/user-notification/user-notification.service';
 import { SpaceHistoryModule } from './api/space-history/space-history.module';
+import { SlackService } from './lib/slack/slack.service';
+import { SlackModule } from './lib/slack/slack.module';
+import dayjs from 'dayjs';
 
 @Module({
   imports: [
@@ -116,6 +117,7 @@ import { SpaceHistoryModule } from './api/space-history/space-history.module';
     PermissionRequestModule,
     PermissionResponseModule,
     MockupModule,
+    SlackModule,
   ],
   controllers: [AppController],
   providers: [
@@ -126,7 +128,7 @@ import { SpaceHistoryModule } from './api/space-history/space-history.module';
     UserNotificationService,
   ],
 })
-export class AppModule implements OnModuleInit {
+export class AppModule implements OnModuleInit, OnModuleDestroy {
   private readonly redis: Redis | null;
 
   constructor(
@@ -134,6 +136,7 @@ export class AppModule implements OnModuleInit {
     private readonly databaseService: DatabaseService,
     private readonly redisService: RedisService,
     private readonly mockupService: MockupService,
+    private readonly slackService: SlackService,
   ) {
     try {
       this.redis = this.redisService.getOrThrow();
@@ -142,5 +145,25 @@ export class AppModule implements OnModuleInit {
     }
   }
 
-  async onModuleInit() {}
+  async onModuleInit() {
+    await this.slackService.sendMessage(
+      [
+        dayjs().format('YYYY-MM-DD HH:mm:ss'),
+        `[${process.env.NODE_ENV}]`,
+        ['`permissoin-engine-', process.env.ENGINE_MODE, '`'].join(''),
+        `is up and running`,
+      ].join(' '),
+    );
+  }
+
+  async onModuleDestroy() {
+    await this.slackService.sendMessage(
+      [
+        dayjs().format('YYYY-MM-DD HH:mm:ss'),
+        `[${process.env.NODE_ENV}]`,
+        ['`permissoin-engine-', process.env.ENGINE_MODE, '`'].join(''),
+        `has went down`,
+      ].join(' '),
+    );
+  }
 }
