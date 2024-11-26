@@ -203,11 +203,19 @@ export class SpaceService {
         let topics = item.row.f19;
         if (topics) {
           topics = topics.map((item) => {
+            let { translation } = item;
+
+            if (translation) {
+              try {
+                translation = JSON.parse(translation);
+              } catch (e) {}
+            }
+
             return {
               id: item.id,
               authorId: item.author_id,
               name: item.name,
-              translation: item.translation,
+              translation,
               icon: item.icon,
               country: item.country,
               region: item.region,

@@ -107,6 +107,7 @@ export class TopicService {
     if (data != null) {
       result = data.map((item) => {
         let translation = item.row.f4;
+
         if (translation) {
           translation = JSON.parse(translation);
         }
@@ -175,6 +176,12 @@ export class TopicService {
 
     if (data != null) {
       result = data.map((item) => {
+        let translation = item.row.f12;
+
+        if (translation) {
+          translation = JSON.parse(translation);
+        }
+
         return {
           id: item.row.f1,
           authorId: item.row.f2,
@@ -187,7 +194,7 @@ export class TopicService {
           isActive: item.row.f9,
           createdAt: item.row.f10,
           updatedAt: item.row.f11,
-          translation: item.row.f12,
+          translation,
         };
       });
     }
@@ -240,6 +247,14 @@ export class TopicService {
 
     if (data != null) {
       result = data.map((item) => {
+        let translation = item.row.f12;
+
+        if (translation) {
+          try {
+            translation = JSON.parse(translation);
+          } catch (e) {}
+        }
+
         return {
           id: item.row.f1,
           authorId: item.row.f2,
@@ -252,7 +267,7 @@ export class TopicService {
           isActive: item.row.f9,
           createdAt: item.row.f10,
           updatedAt: item.row.f11,
-          translation: item.row.f12,
+          translation,
         };
       });
     }
@@ -305,6 +320,12 @@ export class TopicService {
 
     if (data != null) {
       result = data.map((item) => {
+        let translation = item.row.f12;
+
+        if (translation) {
+          translation = JSON.parse(translation);
+        }
+
         return {
           id: item.row.f1,
           authorId: item.row.f2,
@@ -317,7 +338,7 @@ export class TopicService {
           isActive: item.row.f9,
           createdAt: item.row.f10,
           updatedAt: item.row.f11,
-          translation: item.row.f12,
+          translation,
         };
       });
     }
