@@ -91,7 +91,11 @@ export class RuleBlockService {
 
     const existingRuleBlock = await this.findOneByHash(hash);
 
-    if (existingRuleBlock && !details && !files) {
+    if (
+      existingRuleBlock &&
+      (!details || (details && details === existingRuleBlock.details)) &&
+      !files
+    ) {
       return existingRuleBlock;
     }
 
