@@ -93,6 +93,7 @@ export class RuleBlockService {
 
     if (
       existingRuleBlock &&
+      name === existingRuleBlock.name &&
       (!details || (details && details === existingRuleBlock.details)) &&
       !files
     ) {
