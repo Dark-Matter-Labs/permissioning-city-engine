@@ -257,7 +257,7 @@ export class SpaceService {
     };
   }
 
-  findOneById(
+  async findOneById(
     id: string,
     option: { relations?: string[] } = {},
   ): Promise<Space> {
@@ -270,10 +270,25 @@ export class SpaceService {
       queryOption.relations = relations;
     }
 
-    return this.spaceRepository.findOne(queryOption);
+    const space = await this.spaceRepository.findOne(queryOption);
+    if (space.spaceTopics && space.spaceTopics.length > 0) {
+      space.spaceTopics = space.spaceTopics.map((spaceTopic) => {
+        let { topic } = spaceTopic;
+        let { translation } = topic;
+        try {
+          translation = JSON.parse(translation);
+        } catch (error) {}
+
+        topic = { ...topic, translation };
+
+        return { ...spaceTopic, topic };
+      });
+    }
+
+    return space;
   }
 
-  async findRuleById(id: string): Promise<Rule> {
+  async findRuleBySpaceId(id: string): Promise<Rule> {
     const space = await this.spaceRepository.findOneBy({ id });
     const rule = await this.ruleRepository.findOne({
       where: { id: space.ruleId },
@@ -393,7 +408,7 @@ export class SpaceService {
   }
 
   async findPostEventCheckRuleBlocks(id: string): Promise<RuleBlock[]> {
-    const rule = await this.findRuleById(id);
+    const rule = await this.findRuleBySpaceId(id);
 
     return rule.ruleBlocks.filter(
       (item) => item.type === RuleBlockType.spacePostEventCheck,
