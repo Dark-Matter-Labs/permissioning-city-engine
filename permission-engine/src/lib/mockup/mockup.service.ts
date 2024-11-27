@@ -122,24 +122,26 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
       process.env.MOCKUP_DATA === 'true' &&
       process.env.ENGINE_MODE === 'api'
     ) {
-      const {
-        rows: [migration],
-      } = await this.client.query(
-        `SELECT * FROM migration WHERE name LIKE '%insert-workshop-data.sql' AND is_successful = true LIMIT 1`,
+      const { rows: migrations } = await this.client.query(
+        `SELECT * FROM migration WHERE name LIKE '%-insert-workshop-data.sql' AND is_successful = true`,
       );
 
-      if (
-        migration &&
-        dayjs(migration.created_at).toString() !==
-          dayjs(migration.updated_at).toString()
-      ) {
-        // comented this out for mock-up-and-down by restart feature
-        return;
-      }
-
       await this.down();
-      await this.downProd();
-      await this.upProd();
+
+      for (const migration of migrations) {
+        if (
+          migration &&
+          dayjs(migration.created_at).toString() !==
+            dayjs(migration.updated_at).toString()
+        ) {
+          // comented this out for mock-up-and-down by restart feature
+          continue;
+        }
+
+        const workshopName = migration.name.split('_')[1].split('-insert')[0];
+
+        await this.upProd(workshopName);
+      }
     }
   }
 
@@ -787,68 +789,56 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async upProd() {
+  async upProd(workshopName: string) {
     function getIndex(str) {
       const numberPart = str.match(/\d+/); // This will match the first sequence of digits
 
       return parseInt(numberPart?.[0]) - 1;
     }
 
-    const [user] = await this.userRepository.query(
-      `SELECT * FROM "user" ORDER BY created_at ASC LIMIT 1`,
-    );
-
-    if (!user) {
-      return;
-    }
-
     try {
+      const [user] = await this.userRepository.query(
+        `SELECT * FROM "user" ORDER BY created_at ASC LIMIT 1`,
+      );
+
+      if (!user) {
+        return;
+      }
+
       const spaceRuleBlockCsv = await this.parseCsv(
-        'prod/london-workshop/space-rule-block.csv',
+        `prod/${workshopName}/space-rule-block.csv`,
       );
       const spaceRuleCsv = await this.parseCsv(
-        'prod/london-workshop/space-rule.csv',
+        `prod/${workshopName}/space-rule.csv`,
       );
-      const spaceCsv = await this.parseCsv('prod/london-workshop/space.csv');
+      const spaceCsv = await this.parseCsv(`prod/${workshopName}/space.csv`);
       const spaceEventRuleBlockCsv = await this.parseCsv(
-        'prod/london-workshop/event-rule-block.csv',
+        `prod/${workshopName}/event-rule-block.csv`,
       );
       const spaceEventRuleCsv = await this.parseCsv(
-        'prod/london-workshop/event-rule.csv',
+        `prod/${workshopName}/event-rule.csv`,
       );
       const spaceEquipmentCsv = await this.parseCsv(
-        'prod/london-workshop/space-equipment.csv',
+        `prod/${workshopName}/space-equipment.csv`,
       );
 
-      const workshopSpaces = [
-        {
+      const workshopSpaces = spaceCsv.map(() => {
+        return {
           space: { id: '' },
           ruleBlocks: [],
           rule: { id: '' },
           spaceEquipments: [],
           spaceImages: { thumbnail: {}, cover: {} },
-        },
-        {
-          space: { id: '' },
-          ruleBlocks: [],
-          rule: {},
-          spaceEquipments: [],
-          spaceImages: { thumbnail: {}, cover: {} },
-        },
-      ];
+        };
+      });
 
-      const workshopEvents = [
-        {
+      const workshopEvents = spaceEventRuleCsv.map(() => {
+        return {
           event: { id: '' },
           ruleBlocks: [],
           rule: { id: '' },
-        },
-        {
-          event: { id: '' },
-          ruleBlocks: [],
-          rule: { id: '' },
-        },
-      ];
+        };
+      });
 
       // insert spaceRuleBlock
       for (const spaceRuleBlock of spaceRuleBlockCsv) {
@@ -884,15 +874,23 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
         const { index, name, topics } = spaceRule;
         if (index && name && topics) {
           const topicNames = topics
-            .split(', ')
-            .map((item) => item.toLowerCase());
+            .split(',')
+            .map((item) => item.trim().toLowerCase());
 
           const ruleTopics = await this.topicService.findAll({
             names: topicNames,
             page: 1,
             limit: 20,
           });
-          const topicIds = ruleTopics.data.map((item) => item.id);
+          const topicIds = ruleTopics.data
+            .filter((item) => {
+              return (
+                topicNames.includes(item.name) ||
+                topicNames.includes(item.translation['en']) ||
+                topicNames.includes(item.translation['ko'])
+              );
+            })
+            .map((item) => item.id);
           const ruleBlockIds = workshopSpaces[getIndex(index)].ruleBlocks.map(
             (item) => item.id,
           );
@@ -1058,15 +1056,23 @@ export class MockupService implements OnModuleInit, OnModuleDestroy {
         const { index, name, topics } = spaceEventRule;
         if (index && name && topics) {
           const topicNames = topics
-            .split(', ')
-            .map((item) => item.toLowerCase());
+            .split(',')
+            .map((item) => item.trim().toLowerCase());
 
           const ruleTopics = await this.topicService.findAll({
             names: topicNames,
             page: 1,
             limit: 20,
           });
-          const topicIds = ruleTopics.data.map((item) => item.id);
+          const topicIds = ruleTopics.data
+            .filter((item) => {
+              return (
+                topicNames.includes(item.name) ||
+                topicNames.includes(item.translation['en']) ||
+                topicNames.includes(item.translation['ko'])
+              );
+            })
+            .map((item) => item.id);
           const ruleBlockIds = workshopEvents[getIndex(index)].ruleBlocks.map(
             (item) => item.id,
           );

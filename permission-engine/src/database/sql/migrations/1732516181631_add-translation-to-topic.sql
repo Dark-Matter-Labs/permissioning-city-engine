@@ -19,7 +19,6 @@ INSERT INTO "topic" (id, name, country, region, city, translation) VALUES
   (uuid_generate_v4(), 'yoga', 'common', 'common', 'common', '{ "en": "yoga", "ko": "요가" }'),
   (uuid_generate_v4(), 'meditation', 'common', 'common', 'common', '{ "en": "meditation", "ko": "명상" }'),
   (uuid_generate_v4(), 'fitness', 'common', 'common', 'common', '{ "en": "fitness", "ko": "피트니스" }'),
-  (uuid_generate_v4(), 'sports', 'common', 'common', 'common', '{ "en": "sports", "ko": "스포츠" }'),
   (uuid_generate_v4(), 'outdoor activities', 'common', 'common', 'common', '{ "en": "outdoor activities", "ko": "야외 활동" }'),
   (uuid_generate_v4(), 'book club', 'common', 'common', 'common', '{ "en": "book club", "ko": "독서 모임" }'),
   (uuid_generate_v4(), 'workshops', 'common', 'common', 'common', '{ "en": "workshops", "ko": "워크숍" }'),

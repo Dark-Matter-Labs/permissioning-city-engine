@@ -1,0 +1,1 @@
+-- migration 1732671404212_daegu-workshop-insert-workshop-data

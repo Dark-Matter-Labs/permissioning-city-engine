@@ -1,0 +1,36 @@
+index,name,type,quantity,details
+1,정원,facility,1,
+1,야외 벤치,facility,4,
+1,야외 테이블,general,10,
+1,야외 의자,general,10,
+1,전원 공금선,general,1,
+1,빔 프로젝터,video,1,
+1,스피커 시스템,audio,2,
+2,전시 레일,facility,4,
+2,냉장고,facility,1,
+2,냉동고,facility,1,
+2,쇼케이스,facility,4,
+2,화장실,facility,1,
+2,스피커 시스템,audio,2,
+2,주방,kitchen,1,
+2,액자 걸이,general,50,
+2,4인용 테이블,furniture,5,
+2,8인용 테이블,furniture,2,
+2,의자,general,40,
+3,냉장고,facility,1,
+3,냉동고,facility,1,
+3,화장실,facility,1,
+3,주방,kitchen,1,
+3,4인용 테이블,furniture,10,
+3,8인용 테이블,furniture,4,
+3,의자,general,80,
+4,화장실,facility,2
+4,야외 무대,facility,1
+4,부스 천막,general,10
+4,접이식 테이블,general,10
+4,접이식 의자,general,40
+5,야외 무대,facility,1
+5,화장실,facility,4
+5,부스 천막,general,20
+5,접이식 테이블,general,20
+5,접이식 의자,general,80

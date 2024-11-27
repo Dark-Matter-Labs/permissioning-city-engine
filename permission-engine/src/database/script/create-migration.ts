@@ -21,6 +21,11 @@ if (commands[input]) {
   console.log(commands[input]);
   process.exit();
 }
+if (input.endsWith('-insert-workshop-data')) {
+  console.log(
+    `[Warning] migrations ends with '-insert-workshop-data' will be used for inserting workshop data`,
+  );
+}
 
 fs.writeFileSync(
   `src/database/sql/migrations/${timestamp}_${input}.sql`,
