@@ -243,6 +243,17 @@ export class RuleService {
       rule.ruleBlocks = publicRuleBlocks;
     }
 
+    if (rule.topics && rule.topics.length > 0) {
+      rule.topics = rule.topics.map((topic) => {
+        let { translation } = topic;
+        try {
+          translation = JSON.parse(translation);
+        } catch (error) {}
+
+        return { ...topic, translation };
+      });
+    }
+
     return rule;
   }
 
@@ -317,10 +328,17 @@ export class RuleService {
 
     if (result.topics) {
       result.topics = result.topics.map((item) => {
+        let translation = { item };
+        if (typeof translation === 'string') {
+          try {
+            translation = JSON.parse(translation);
+          } catch (error) {}
+        }
         return {
           id: item.id,
           authorId: item.author_id,
           name: item.name,
+          translation,
           icon: item.icon,
           country: item.country,
           region: item.region,
@@ -375,6 +393,17 @@ export class RuleService {
         (ruleBlock) => ruleBlock.isPublic === true,
       );
       rule.ruleBlocks = publicRuleBlocks;
+    }
+
+    if (rule.topics && rule.topics.length > 0) {
+      rule.topics = rule.topics.map((topic) => {
+        let { translation } = topic;
+        try {
+          translation = JSON.parse(translation);
+        } catch (error) {}
+
+        return { ...topic, translation };
+      });
     }
 
     return rule;
