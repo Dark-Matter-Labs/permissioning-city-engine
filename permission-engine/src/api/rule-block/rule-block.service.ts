@@ -77,7 +77,7 @@ export class RuleBlockService {
     authorId: string,
     createRuleBlockDto: CreateRuleBlockDto,
   ): Promise<RuleBlock> {
-    const { type, content, name, files } = createRuleBlockDto;
+    const { type, content, name, files, details } = createRuleBlockDto;
 
     if (content == null) {
       throw new BadRequestException('Should provide content');
@@ -91,7 +91,7 @@ export class RuleBlockService {
 
     const existingRuleBlock = await this.findOneByHash(hash);
 
-    if (existingRuleBlock) {
+    if (existingRuleBlock && !details && !files) {
       return existingRuleBlock;
     }
 
