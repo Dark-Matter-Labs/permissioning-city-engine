@@ -211,7 +211,7 @@ export class SpaceApprovedRuleService {
         }
         if (topics) {
           topics = topics.map((item) => {
-            let { translation } = item;
+            let translation = item.translation;
 
             if (translation) {
               try {

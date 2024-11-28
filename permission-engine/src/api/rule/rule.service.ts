@@ -245,7 +245,7 @@ export class RuleService {
 
     if (rule.topics && rule.topics.length > 0) {
       rule.topics = rule.topics.map((topic) => {
-        let { translation } = topic;
+        let translation = topic.translation;
         try {
           translation = JSON.parse(translation);
         } catch (error) {}
@@ -397,7 +397,7 @@ export class RuleService {
 
     if (rule.topics && rule.topics.length > 0) {
       rule.topics = rule.topics.map((topic) => {
-        let { translation } = topic;
+        let translation = topic.translation;
         try {
           translation = JSON.parse(translation);
         } catch (error) {}
