@@ -274,7 +274,7 @@ export class SpaceService {
     if (space.spaceTopics && space.spaceTopics.length > 0) {
       space.spaceTopics = space.spaceTopics.map((spaceTopic) => {
         let { topic } = spaceTopic;
-        let translation = topic.translation;
+        let translation = topic?.translation;
         try {
           translation = JSON.parse(translation);
         } catch (error) {}

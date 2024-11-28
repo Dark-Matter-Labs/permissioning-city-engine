@@ -526,7 +526,7 @@ export class TopicService {
       relations: ['spaceTopics', 'rules', 'spaceEvents'],
     });
 
-    let translation = topic.translation;
+    let translation = topic?.translation;
 
     if (translation) {
       try {
