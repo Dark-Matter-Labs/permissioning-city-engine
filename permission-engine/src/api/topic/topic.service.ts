@@ -518,13 +518,25 @@ export class TopicService {
     };
   }
 
-  findOneById(id: string): Promise<Topic> {
-    return this.topicRepository.findOne({
+  async findOneById(id: string): Promise<Topic> {
+    const topic = await this.topicRepository.findOne({
       where: {
         id,
       },
       relations: ['spaceTopics', 'rules', 'spaceEvents'],
     });
+
+    let { translation } = topic;
+
+    if (translation) {
+      try {
+        translation = JSON.parse(translation);
+      } catch (error) {}
+
+      topic.translation = translation;
+    }
+
+    return topic;
   }
 
   async remove(id: string): Promise<void> {
