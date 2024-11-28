@@ -29,6 +29,12 @@ export class TopicController {
     return this.topicService.findAll(query, { isPagination: true });
   }
 
+  @Get('space')
+  @ApiOperation({ summary: 'Get all space assigned topics' })
+  findAllSpaceAssigned(@Query() query: FindAllTopicDto) {
+    return this.topicService.findAllSpaceAssigned(query);
+  }
+
   @Get('space/:spaceId')
   @ApiOperation({ summary: 'Get all topics by space id' })
   findAllBySpaceId(@Param('spaceId') spaceId: string) {

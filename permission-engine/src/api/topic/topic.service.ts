@@ -1,7 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CreateTopicDto, FindAllTopicDto, UpdateTopicDto } from './dto';
+import {
+  CreateTopicDto,
+  FindAllSpaceAssignedTopicDto,
+  FindAllTopicDto,
+  UpdateTopicDto,
+} from './dto';
 import { v4 as uuidv4 } from 'uuid';
 import { Logger } from 'src/lib/logger/logger.service';
 import { Topic } from 'src/database/entity/topic.entity';
@@ -94,6 +99,105 @@ export class TopicService {
       paginated_data AS (
         SELECT * FROM filtered_data
         ${isPagination === true ? 'LIMIT $2 OFFSET $1' : ''}
+      )
+      SELECT 
+        (SELECT COUNT(*) FROM filtered_data) AS total,
+        json_agg(paginated_data) AS data
+      FROM paginated_data;
+    `;
+
+    const [{ data, total }] = await this.topicRepository.query(query, params);
+    let result = [];
+
+    if (data != null) {
+      result = data.map((item) => {
+        let translation = item.row.f4;
+
+        if (translation) {
+          translation = JSON.parse(translation);
+        }
+
+        return {
+          id: item.row.f1,
+          authorId: item.row.f2,
+          name: item.row.f3,
+          translation,
+          icon: item.row.f5,
+          country: item.row.f6,
+          region: item.row.f7,
+          city: item.row.f8,
+          details: item.row.f9,
+          isActive: item.row.f10,
+          createdAt: item.row.f11,
+          updatedAt: item.row.f12,
+        };
+      });
+    }
+    return {
+      data: result,
+      total: parseInt(total),
+    };
+  }
+
+  async findAllSpaceAssigned(
+    findAllSpaceAssignedTopicDto: FindAllSpaceAssignedTopicDto,
+  ): Promise<{ data: Topic[]; total: number }> {
+    const { page, limit, isActive, country, region, city } =
+      findAllSpaceAssignedTopicDto;
+    const where = [];
+    const params: any[] = [(page - 1) * limit, limit];
+    let paramIndex: number = params.length;
+
+    if (country != null) {
+      paramIndex++;
+      where.push(`country = $${paramIndex}`);
+      params.push(country);
+    }
+
+    if (region != null) {
+      paramIndex++;
+      where.push(`region = $${paramIndex}`);
+      params.push(region);
+    }
+
+    if (city != null) {
+      paramIndex++;
+      where.push(`city = $${paramIndex}`);
+      params.push(city);
+    }
+
+    if (isActive != null) {
+      paramIndex++;
+      where.push(`t.is_active = $${paramIndex}`);
+      params.push(isActive);
+    }
+
+    // TODO. remove temporary created_at limit
+    const query = `
+      WITH filtered_data AS (
+        SELECT (
+          t.id,
+          t.author_id,
+          t.name,
+          t.translation,
+          t.icon,
+          t.country,
+          t.region,
+          t.city,
+          t.details,
+          t.is_active,
+          t.created_at,
+          t.updated_at
+        ) FROM topic t, space_topic st
+        WHERE t.id = st.topic_id
+        AND st.created_at > '2024-11-26'
+        ${where.length > 0 ? ' AND ' : ''} 
+        ${where.join(' AND ')}
+        GROUP BY t.id
+      ),
+      paginated_data AS (
+        SELECT * FROM filtered_data
+        LIMIT $2 OFFSET $1
       )
       SELECT 
         (SELECT COUNT(*) FROM filtered_data) AS total,
