@@ -69,6 +69,7 @@ services:
       - ENGINE_MODE=api
     volumes:
       - ./logs/permission-engine-api:/app/log
+      - ./permission-engine:/app
     logging:
       options:
         max-size: "10m"
@@ -98,6 +99,7 @@ services:
       - DAEMONS=notification-handler,permission-handler
     volumes:
       - ./logs/permission-engine-daemon:/app/log
+      - ./permission-engine:/app
     logging:
       options:
         max-size: "10m"
