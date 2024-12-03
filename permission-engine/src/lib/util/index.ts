@@ -61,7 +61,7 @@ export const getDayIndex = (day: DayOfWeek): number => {
   return index;
 };
 
-export const getTimeIntervals = (
+export const getAvailabilityIntervals = (
   startDate: Date,
   endDate: Date,
   unit: string,
@@ -162,7 +162,7 @@ export const getTimeIntervals = (
 
     if (intervals.length > MAX_INTERVALS) {
       throw new Error(
-        'Too many intervals generated. Reduce the date range or unit size.',
+        'Too many intervals generated. Reduce the date range or change unit size.',
       );
     }
 

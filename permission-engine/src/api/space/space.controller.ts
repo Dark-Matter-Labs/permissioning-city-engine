@@ -44,7 +44,7 @@ import {
 } from 'src/lib/type';
 import { RuleService } from '../rule/rule.service';
 import { SpaceEventService } from '../space-event/space-event.service';
-import { getTimeIntervals } from '../../lib/util';
+import { getAvailabilityIntervals } from '../../lib/util';
 import { TopicService } from '../topic/topic.service';
 import { SpaceHistoryService } from '../space-history/space-history.service';
 import { UserNotificationService } from '../user-notification/user-notification.service';
@@ -105,12 +105,15 @@ export class SpaceController {
   ): Promise<{ data: SpaceAvailability[] }> {
     let { startDate, endDate } = query;
     const space = await this.spaceService.findOneById(id);
+
     if (!space) {
       throw new BadRequestException(`There is no space with id: ${id}`);
     }
+
     if (!startDate) {
       startDate = new Date().toISOString();
     }
+
     if (!endDate) {
       endDate = new Date(
         new Date().getFullYear(),
@@ -118,6 +121,7 @@ export class SpaceController {
         0,
       ).toISOString();
     }
+
     const spaceRule = await this.ruleService.findOneById(space.ruleId);
     const spaceEvents =
       (
@@ -188,7 +192,7 @@ export class SpaceController {
       }) ?? [];
 
     return {
-      data: getTimeIntervals(
+      data: getAvailabilityIntervals(
         new Date(startDate),
         new Date(endDate),
         spaceAvailabilityUnit,
