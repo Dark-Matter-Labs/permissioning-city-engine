@@ -69,7 +69,8 @@ export class CreateSpaceEventDto {
     message: 'SpaceEvent duration must in format: {number}{d|w|M|y|h|m|s}',
   })
   @ApiProperty({
-    description: 'SpaceEvent duration in {number}{d|w|M|y|h|m|s} format',
+    description:
+      'SpaceEvent duration in {number}{d|w|M|y|h|m|s} format (duration = endsAt - startsAt + buffer)',
   })
   duration: string;
 
