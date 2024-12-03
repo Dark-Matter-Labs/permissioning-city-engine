@@ -74,6 +74,7 @@ CREATE TABLE "topic" (
   "id" uuid PRIMARY KEY,
   "author_id" uuid,
   "name" varchar NOT NULL,
+  "translation" text,
   "icon" varchar NOT NULL DEFAULT '✨',
   "country" varchar NOT NULL DEFAULT 'common',
   "region" varchar NOT NULL DEFAULT 'common',
