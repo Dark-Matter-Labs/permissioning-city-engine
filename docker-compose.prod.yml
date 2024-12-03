@@ -73,7 +73,6 @@ services:
       options:
         max-size: "10m"
         max-file: "5"
-    command: ["npm", "run", "start:prod"]
     depends_on:
       - postgres
       - redis
@@ -103,7 +102,6 @@ services:
       options:
         max-size: "10m"
         max-file: "5"
-    command: ["npm", "run", "start:prod"]
     depends_on:
       - postgres
       - redis
@@ -127,13 +125,10 @@ services:
       - .env
     volumes:
       - ./ptc-dashboard:/app
-      - /app/node_modules
-      - /app/dist
     logging:
       options:
         max-size: "10m"
         max-file: "5"
-    command: ["serve", "-s", "dist"]
     depends_on:
       - permission-engine-api
     restart: always
