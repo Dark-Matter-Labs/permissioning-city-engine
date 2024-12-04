@@ -70,7 +70,6 @@ services:
     volumes:
       - ./logs/permission-engine-api:/app/log
       - ./permission-engine:/app
-      - /app/node_modules
     logging:
       options:
         max-size: "10m"
@@ -101,7 +100,6 @@ services:
     volumes:
       - ./logs/permission-engine-daemon:/app/log
       - ./permission-engine:/app
-      - /app/node_modules
     logging:
       options:
         max-size: "10m"
