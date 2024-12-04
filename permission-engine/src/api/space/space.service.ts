@@ -60,6 +60,7 @@ export class SpaceService {
       city,
       district,
       address,
+      geometry,
     } = findAllSpaceDto;
     const where = [];
     const params: any[] = [(page - 1) * limit, limit];
@@ -126,6 +127,26 @@ export class SpaceService {
       paramIndex++;
       where.push(`s.name LIKE $${paramIndex}`);
       params.push(`%${name}%`);
+    }
+
+    if (geometry != null) {
+      const [pointALng, pointALat, pointBLng, pointBLat] = geometry;
+
+      paramIndex++;
+      where.push(`s.longitude >= $${paramIndex}`);
+      params.push(pointALng);
+
+      paramIndex++;
+      where.push(`s.latitude >= $${paramIndex}`);
+      params.push(pointALat);
+
+      paramIndex++;
+      where.push(`s.longitude <= $${paramIndex}`);
+      params.push(pointBLng);
+
+      paramIndex++;
+      where.push(`s.latitude <= $${paramIndex}`);
+      params.push(pointBLat);
     }
 
     const query = `

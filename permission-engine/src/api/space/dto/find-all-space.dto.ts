@@ -1,4 +1,11 @@
-import { IsArray, IsOptional, IsString, IsUUID } from 'class-validator';
+import {
+  ArrayMaxSize,
+  ArrayMinSize,
+  IsArray,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { PaginationDto } from 'src/lib/dto';
 import { Transform } from 'class-transformer';
@@ -84,4 +91,16 @@ export class FindAllSpaceDto extends PaginationDto {
     type: String,
   })
   address?: string;
+
+  @IsOptional()
+  @Transform(({ value }) =>
+    Array.isArray(value) ? value : value.split(',').map((item) => Number(item)),
+  )
+  @IsArray()
+  @ArrayMinSize(4)
+  @ArrayMaxSize(4)
+  @ApiPropertyOptional({
+    description: 'Space geometry box: [a.lng, a.lat, b.lng, b.lat]',
+  })
+  geometry?: number[];
 }
