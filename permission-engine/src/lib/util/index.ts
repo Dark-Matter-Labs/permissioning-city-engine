@@ -1,7 +1,7 @@
 import * as crypto from 'crypto';
 import * as cheerio from 'cheerio';
 import { DayOfWeek, RuleBlockContentDivider } from '../type';
-import dayjs from 'dayjs';
+import dayjs, { ManipulateType } from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import abbrTimezone from 'dayjs-abbr-timezone';
@@ -61,45 +61,56 @@ export const getDayIndex = (day: DayOfWeek): number => {
   return index;
 };
 
-export const getAvailabilityIntervals = (
-  startDate: Date,
-  endDate: Date,
-  unit: string,
-  availabilities: string[],
+export const parseTimeManipulation = (manupulation: string) => {
+  const match = manupulation.match(/^(\d+)([dwMyhms]+)$/);
+  const numberPart = parseInt(match[1], 10);
+  const stringPart = match[2];
+
+  return {
+    numberPart,
+    stringPart,
+  };
+};
+
+export type GetAvailabilityIntervalsOption = {
+  startDate: Date;
+  endDate: Date;
+  unit: string;
+  buffer: string;
+  availabilities: string[];
   unavailableRanges: {
     startTime: Date;
     endTime: Date;
     buffer: string;
     bufferMillis?: number;
-  }[],
+  }[];
+  timezone: string;
+};
+
+export const getAvailabilityIntervals = (
+  option: GetAvailabilityIntervalsOption,
 ) => {
+  const {
+    startDate,
+    endDate,
+    unit,
+    buffer,
+    availabilities,
+    unavailableRanges,
+    timezone,
+  } = option;
+
   const MAX_INTERVALS = 100000;
   const MAX_ITERATIONS = 31 * 24 * 60 * 60 * 1000;
   const intervals = [];
-  let currentDate = new Date(
-    startDate.getFullYear(),
-    startDate.getMonth(),
-    startDate.getDate(),
-    0,
-    0,
-    0,
-    0,
-  );
-  const finalDate = new Date(
-    endDate.getFullYear(),
-    endDate.getMonth(),
-    endDate.getDate() + 1,
-    0,
-    0,
-    0,
-    0,
-  );
+  let currentDate = dayjs(startDate).tz(timezone).startOf('day');
+  const finalDate = dayjs(endDate).tz(timezone).add(1, 'day').endOf('day');
 
   // Parse the unit (e.g., '30m', '1h', '1d') and get the corresponding milliseconds
   const unitAmount = parseInt(unit.slice(0, -1), 10); // Extract the number (30, 1, etc.)
   const unitType = unit.slice(-1); // Extract the unit type ('m', 'h', 'd')
-  // const bufferAmount = parseInt(buffer.slice(0, -1), 10); // Extract the number (30, 1, etc.)
-  // const bufferType = buffer.slice(-1); // Extract the buffer type ('m', 'h', 'd')
+  const bufferAmount = parseInt(buffer.slice(0, -1), 10); // Extract the number (30, 1, etc.)
+  const bufferType = buffer.slice(-1); // Extract the buffer type ('m', 'h', 'd')
 
   let unitMillis;
   switch (unitType) {
@@ -117,7 +128,7 @@ export const getAvailabilityIntervals = (
   }
 
   if (
-    (finalDate.getTime() - startDate.getTime()) / unitMillis >
+    (finalDate.toDate().getTime() - startDate.getTime()) / unitMillis >
     MAX_ITERATIONS
   ) {
     throw new Error('Date range too large to process');
@@ -152,73 +163,59 @@ export const getAvailabilityIntervals = (
     }
   });
 
-  let isReservedDay = false;
-  // TODO. fix buffer behavior -> current logic is not correct
-  let reservationBufferMillies = 0;
+  const currentDayString = currentDate.format('ddd').toLowerCase();
+  const firstAvailabilityRanges = availabilityMap.get(currentDayString) || [];
+  const firstAvailability = firstAvailabilityRanges[0];
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_, firstStartTime] = firstAvailability.split(
+    RuleBlockContentDivider.time,
+  );
+  const [firstHour, firstMinute] = firstStartTime.split(':');
+
+  currentDate = currentDate
+    .tz(timezone)
+    .hour(Number(firstHour))
+    .minute(Number(firstMinute));
 
   // Loop through the date range and create the intervals
   while (currentDate < finalDate) {
-    let nextDate = new Date(currentDate.getTime() + unitMillis);
-
     if (intervals.length > MAX_INTERVALS) {
       throw new Error(
         'Too many intervals generated. Reduce the date range or change unit size.',
       );
     }
-
-    // TODO. fix buffer behavior -> current logic is not correct
-    // reset buffer offset for new date
-    if (isReservedDay === true && currentDate.getDate() < nextDate.getDate()) {
-      isReservedDay = false;
-      // currentDate = new Date(currentDate.getTime() - reservationBufferMillies);
-      nextDate = new Date(currentDate.getTime() + unitMillis);
-    }
-
-    if (nextDate > endDate) break;
-
-    const currentDay = currentDate.getDay();
-    let currentDayString = null;
-
-    switch (currentDay) {
-      case 0:
-        currentDayString = 'sun';
-        break;
-      case 1:
-        currentDayString = 'mon';
-        break;
-      case 2:
-        currentDayString = 'tue';
-        break;
-      case 3:
-        currentDayString = 'wed';
-        break;
-      case 4:
-        currentDayString = 'thu';
-        break;
-      case 5:
-        currentDayString = 'fri';
-        break;
-      case 6:
-        currentDayString = 'sat';
-        break;
-
-      default:
-        break;
-    }
-
+    const currentDayString = currentDate.format('ddd').toLowerCase();
     const availabilityRanges = availabilityMap.get(currentDayString) || [];
+
+    let nextDate = currentDate
+      .tz(timezone)
+      .add(unitAmount, unitType as ManipulateType)
+      .add(bufferAmount, bufferType as ManipulateType);
+
     const reservation = unavailableRanges.find(
       (item) =>
-        new Date(item.startTime) <= new Date(currentDate) &&
-        new Date(new Date(item.endTime).getTime() + item.bufferMillis) >=
-          new Date(nextDate),
+        dayjs(item.startTime).tz(timezone) <= currentDate &&
+        dayjs(item.endTime).tz(timezone) >= nextDate,
     );
-
-    if (!!reservation) {
-      // TODO. fix buffer behavior -> current logic is not correct
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      reservationBufferMillies += reservation?.bufferMillis ?? 0;
+    // reset buffer offset for new date
+    if (currentDate.format('ddd') !== nextDate.format('ddd')) {
+      const nextAvailabilityRanges =
+        availabilityMap.get(nextDate.format('ddd').toLowerCase()) || [];
+      const nextAvailability = nextAvailabilityRanges[0];
+      if (nextAvailability) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const [_, nextStartTime] = nextAvailability.split(
+          RuleBlockContentDivider.time,
+        );
+        const [nextHour, nextMinute] = nextStartTime.split(':');
+        nextDate = nextDate
+          .tz(timezone)
+          .hour(Number(nextHour))
+          .minute(Number(nextMinute));
+      }
     }
+
+    if (nextDate > dayjs(endDate).tz(timezone)) break;
 
     for (const availability of availabilityRanges) {
       const [day, startTime, endTime] = availability.split(
@@ -226,20 +223,25 @@ export const getAvailabilityIntervals = (
       );
       const [startHour, startMinute] = startTime.split(':');
       const [endHour, endMinute] = endTime.split(':');
-      const startDate = new Date(currentDate);
-      startDate.setHours(parseInt(startHour), parseInt(startMinute), 0, 0);
-      const endDate = new Date(currentDate);
-      endDate.setHours(parseInt(endHour), parseInt(endMinute), 0, 0);
+      const startPoint = currentDate
+        .tz(timezone)
+        .hour(Number(startHour))
+        .minute(Number(startMinute));
+
+      const endPoint = currentDate
+        .tz(timezone)
+        .hour(Number(endHour))
+        .minute(Number(endMinute));
 
       if (
-        currentDate.getDay() === getDayIndex(day as DayOfWeek) &&
-        startDate <= new Date(currentDate) &&
-        endDate >= new Date(nextDate)
+        currentDate.format('ddd').toLowerCase() === day &&
+        startPoint <= currentDate &&
+        endPoint >= nextDate
       ) {
         if (!!reservation === false) {
           intervals.push({
-            startTime: new Date(currentDate),
-            endTime: new Date(nextDate),
+            startTime: currentDate.toDate(),
+            endTime: nextDate.toDate(),
           });
           break;
         }
@@ -247,12 +249,7 @@ export const getAvailabilityIntervals = (
     }
 
     // Move to the next interval
-    currentDate = new Date(nextDate.getTime());
-    if (!!reservation === true) {
-      // Add buffer if event exists
-      isReservedDay = true;
-      currentDate = new Date(currentDate.getTime() + reservation.bufferMillis);
-    }
+    currentDate = nextDate;
   }
 
   return intervals;

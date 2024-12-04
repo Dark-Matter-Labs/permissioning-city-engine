@@ -50,6 +50,14 @@ import { TopicService } from '../topic/topic.service';
 import { SpaceHistoryService } from '../space-history/space-history.service';
 import { UserNotificationService } from '../user-notification/user-notification.service';
 import { SpacePermissionerService } from '../space-permissioner/space-permissioner.service';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+import abbrTimezone from 'dayjs-abbr-timezone';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.extend(abbrTimezone);
 
 @ApiTags('space')
 @Controller('api/v1/space')
@@ -112,15 +120,12 @@ export class SpaceController {
     }
 
     if (!startDate) {
-      startDate = new Date().toISOString();
+      // startDate = new Date().toISOString();
+      startDate = dayjs().tz(space.timezone).toISOString();
     }
 
     if (!endDate) {
-      endDate = new Date(
-        new Date().getFullYear(),
-        new Date().getMonth() + 1,
-        0,
-      ).toISOString();
+      endDate = dayjs().tz(space.timezone).add(1, 'month').toISOString();
     }
 
     const spaceRule = await this.ruleService.findOneById(space.ruleId);
@@ -193,13 +198,15 @@ export class SpaceController {
       }) ?? [];
 
     return {
-      data: getAvailabilityIntervals(
-        new Date(startDate),
-        new Date(endDate),
-        spaceAvailabilityUnit,
-        spaceAvailabilities,
-        reservedTimeRanges,
-      ),
+      data: getAvailabilityIntervals({
+        startDate: new Date(startDate),
+        endDate: new Date(endDate),
+        unit: spaceAvailabilityUnit,
+        buffer: spaceAvailabilityBuffer,
+        availabilities: spaceAvailabilities,
+        unavailableRanges: reservedTimeRanges,
+        timezone: space.timezone,
+      }),
     };
   }
 
