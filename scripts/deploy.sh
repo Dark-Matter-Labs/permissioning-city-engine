@@ -1,4 +1,11 @@
 #!/bin/bash
+
+git stash
+
+cd ptc-dashboard
+git stash
+cd ..
+
 git pull origin prod
 git submodule update
 
