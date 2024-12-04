@@ -12,6 +12,7 @@ import {
   ReportSpaceIssueDto,
   ResolveSpaceIssueDto,
   UpdateSpaceDto,
+  VolunteerSpaceIssueResolveDto,
 } from './dto';
 import { User } from 'src/database/entity/user.entity';
 import { Rule } from 'src/database/entity/rule.entity';
@@ -493,6 +494,42 @@ export class SpaceService {
     });
   }
 
+  async volunteerIssueResolve(
+    spaceId: string,
+    loggerId: string,
+    volunteerSpaceIssueResolveDto: VolunteerSpaceIssueResolveDto,
+  ) {
+    const space = await this.findOneById(spaceId);
+
+    if (!space) {
+      throw new BadRequestException();
+    }
+
+    const spaceHistory = await this.spaceHistoryService.findOneById(
+      volunteerSpaceIssueResolveDto.spaceHistoryId,
+    );
+
+    if (
+      [
+        SpaceHistoryType.spaceIssue,
+        SpaceHistoryType.spaceEventCompleteWithIssue,
+      ].includes(spaceHistory.type) === false
+    ) {
+      throw new BadRequestException(`Cannot volunteer to resolve a non issue`);
+    }
+
+    const { isPublic } = spaceHistory;
+
+    return await this.spaceHistoryService.create({
+      ...volunteerSpaceIssueResolveDto,
+      spaceId,
+      loggerId,
+      ruleId: space.ruleId,
+      type: SpaceHistoryType.spaceIssueResolveVolunteer,
+      isPublic,
+    });
+  }
+
   async resolveIssue(
     spaceId: string,
     loggerId: string,
@@ -507,6 +544,15 @@ export class SpaceService {
     const spaceHistory = await this.spaceHistoryService.findOneById(
       resolveSpaceIssueDto.spaceHistoryId,
     );
+
+    if (
+      [
+        SpaceHistoryType.spaceIssue,
+        SpaceHistoryType.spaceEventCompleteWithIssue,
+      ].includes(spaceHistory.type) === false
+    ) {
+      throw new BadRequestException(`Cannot volunteer to resolve a non issue`);
+    }
 
     const { isPublic } = spaceHistory;
 

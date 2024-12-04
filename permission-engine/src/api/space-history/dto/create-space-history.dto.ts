@@ -20,7 +20,7 @@ export class CreateSpaceHistoryDto {
   @IsNotEmpty()
   @IsUUID('4')
   @ApiProperty({
-    description: 'SpaceHistory ruleId in uuid',
+    description: 'Space ruleId in uuid',
     required: true,
   })
   ruleId: string;
@@ -36,7 +36,7 @@ export class CreateSpaceHistoryDto {
   @IsOptional()
   @IsUUID('4')
   @ApiPropertyOptional({
-    description: 'SpaceHistory spaceHistoryId in uuid',
+    description: 'SpaceHistory parent spaceHistoryId in uuid',
     nullable: true,
   })
   spaceHistoryId?: string;
@@ -80,6 +80,14 @@ export class CreateSpaceHistoryDto {
     required: true,
   })
   type: SpaceHistoryType;
+
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({
+    description: 'SpaceHistory title',
+    nullable: true,
+  })
+  title?: string;
 
   @IsOptional()
   @IsString()

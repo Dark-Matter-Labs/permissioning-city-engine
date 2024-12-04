@@ -39,8 +39,11 @@ import {
   SpaceEventImageType,
   SpaceEventReportQuestion,
   SpaceEventStatus,
+  SpaceHistoryType,
 } from 'src/lib/type';
 import dayjs from 'dayjs';
+import { SpaceHistoryService } from '../space-history/space-history.service';
+import { RuleService } from '../rule/rule.service';
 
 @ApiTags('event')
 @Controller('api/v1/event')
@@ -49,6 +52,8 @@ export class SpaceEventController {
     private readonly spaceEventService: SpaceEventService,
     private readonly spaceEventImageService: SpaceEventImageService,
     private readonly spaceService: SpaceService,
+    private readonly spaceHistoryService: SpaceHistoryService,
+    private readonly ruleService: RuleService,
     private readonly spacePermissionerService: SpacePermissionerService,
     private readonly userService: UserService,
     private readonly s3Service: S3Service,
@@ -606,16 +611,29 @@ export class SpaceEventController {
       }
     }
 
-    // TODO. create SpaceHistory record with completeSpaceEventDto data
-    // TODO. if there is completeSpaceEventDto.details: issue reported to space -> recored as `issue_report` type to SpaceHistory -> notification sent to PG
     const result = await this.spaceEventService.updateToCompleteWithIssue(
       id,
       completeWithIssueSpaceEventDto,
     );
 
+    const spaceRule = await this.ruleService.findOneBySpaceId(
+      spaceEvent.spaceId,
+    );
+
+    const spaceHistory = await this.spaceHistoryService.create({
+      spaceId: spaceEvent.spaceId,
+      spaceEventId: spaceEvent.id,
+      ruleId: spaceRule.id,
+      isPublic: true,
+      type: SpaceHistoryType.spaceEventCompleteWithIssue,
+      title: spaceEvent.name,
+      details: completeWithIssueSpaceEventDto.details,
+    });
+
     return {
       data: {
         ...result.data,
+        spaceHistory,
         addedSpaceEventImageIds,
       },
     };
@@ -655,7 +673,7 @@ export class SpaceEventController {
       [SpaceEventStatus.completeWithIssue].includes(spaceEvent.status) === false
     ) {
       throw new ForbiddenException(
-        `Cannot report complete issue for ${spaceEvent.status} status events`,
+        `Cannot resolve complete issue for ${spaceEvent.status} status events`,
       );
     }
 
@@ -665,7 +683,21 @@ export class SpaceEventController {
     }
     const oldImages = spaceEvent.spaceEventImages ?? [];
 
-    if (spaceEvent.organizerId !== user.id) {
+    const spacePermissioners =
+      (
+        await this.spacePermissionerService.findAllBySpaceId(
+          id,
+          { isActive: true },
+          { isPagination: false },
+        )
+      )?.data ?? [];
+
+    if (
+      [
+        spaceEvent.organizerId,
+        ...spacePermissioners.map((item) => item.userId),
+      ].includes(user.id) === false
+    ) {
       throw new ForbiddenException();
     }
 
@@ -694,17 +726,45 @@ export class SpaceEventController {
       }
     }
 
-    // TODO. create SpaceHistory record with completeSpaceEventDto data
-    // TODO. if there is completeSpaceEventDto.details: issue reported to space -> recored as `issue_report` type to SpaceHistory -> notification sent to PG
     const result =
       await this.spaceEventService.updateToCompleteWithIssueResolved(
         id,
         completeWithIssueResolvedSpaceEventDto,
       );
 
+    const issueReportSpaceHistories =
+      (
+        await this.spaceHistoryService.findAll({
+          spaceId: spaceEvent.spaceId,
+          spaceEventId: id,
+          types: [SpaceHistoryType.spaceEventCompleteWithIssue],
+        })
+      )?.data ?? [];
+    const spaceHistories = [];
+
+    const spaceRule = await this.ruleService.findOneBySpaceId(
+      spaceEvent.spaceId,
+    );
+
+    issueReportSpaceHistories.forEach(async (spaceHistory) => {
+      const newSpaceHistory = await this.spaceHistoryService.create({
+        spaceId: spaceEvent.spaceId,
+        spaceEventId: spaceEvent.id,
+        ruleId: spaceRule.id,
+        isPublic: true,
+        type: SpaceHistoryType.spaceEventCompleteWithIssueResolve,
+        spaceHistoryId: spaceHistory.id,
+        title: spaceEvent.name,
+        details: completeWithIssueResolvedSpaceEventDto.details,
+      });
+
+      spaceHistories.push(newSpaceHistory);
+    });
+
     return {
       data: {
         ...result.data,
+        spaceHistories,
         addedSpaceEventImageIds,
       },
     };

@@ -16,12 +16,17 @@ export class SpaceHistoryService {
     findAllSpaceHistoryDto: FindAllSpaceHistoryDto,
     option: { isPagination: boolean } = { isPagination: true },
   ): Promise<{ data: SpaceHistory[]; total: number }> {
-    const { page, limit, spaceId, isPublic, types } = findAllSpaceHistoryDto;
+    const { page, limit, spaceId, spaceEventId, isPublic, types } =
+      findAllSpaceHistoryDto;
     const { isPagination } = option;
     const where: FindOptionsWhere<SpaceHistory> = {};
 
     if (spaceId != null) {
       where.spaceId = spaceId;
+    }
+
+    if (spaceEventId != null) {
+      where.spaceEventId = spaceEventId;
     }
 
     if (types != null) {

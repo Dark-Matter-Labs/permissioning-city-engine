@@ -26,6 +26,7 @@ import {
   ResolveSpaceIssueDto,
   SetSpaceImageDto,
   UpdateSpaceDto,
+  VolunteerSpaceIssueResolveDto,
 } from './dto';
 import { UserService } from '../user/user.service';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
@@ -586,7 +587,7 @@ export class SpaceController {
 
   @Post(':id/issue/report')
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Remove a topic from space' })
+  @ApiOperation({ summary: 'Report a space issue' })
   async reportIssue(
     @Req() req,
     @Param('id') id: string,
@@ -606,19 +607,6 @@ export class SpaceController {
       reportSpaceIssueDto,
     );
 
-    try {
-      await this.spaceHistoryService.create({
-        spaceId: id,
-        ruleId: space.ruleId,
-        isPublic: true,
-        type: SpaceHistoryType.spaceIssue,
-        // TODO. translate using user.country
-        details: `Issue was raised by ${user.name}`,
-      });
-    } catch (error) {
-      this.logger.error(`Failed to log space history`, error);
-    }
-
     spacePermissioners?.data?.forEach(async (spacePermissioner) => {
       try {
         await this.userNotificationService.create({
@@ -628,7 +616,50 @@ export class SpaceController {
           templateName: UserNotificationTemplateName.spaceIssueRaised,
           params: {
             spaceId: space.id,
-            spaceIssueReport: reportSpaceIssueDto.details,
+            spaceHistory: result,
+          },
+        });
+      } catch (error) {
+        this.logger.error(`Failed to notify user`, error);
+      }
+    });
+
+    return result;
+  }
+
+  @Post(':id/issue/volunteer')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Volunteer to resolve a space issue' })
+  async volunteerIssueResolve(
+    @Req() req,
+    @Param('id') id: string,
+    @Body() volunteerSpaceIssueResolveDto: VolunteerSpaceIssueResolveDto,
+  ) {
+    const user = await this.userService.findOneByEmail(req.user.email);
+    const space = await this.spaceService.findOneById(id);
+    const spacePermissioners =
+      await this.spacePermissionerService.findAllBySpaceId(
+        id,
+        { isActive: true },
+        { isPagination: false },
+      );
+
+    const result = await this.spaceService.volunteerIssueResolve(
+      id,
+      user.id,
+      volunteerSpaceIssueResolveDto,
+    );
+
+    spacePermissioners?.data?.forEach(async (spacePermissioner) => {
+      try {
+        await this.userNotificationService.create({
+          userId: spacePermissioner.userId,
+          target: UserNotificationTarget.permissioner,
+          type: UserNotificationType.external,
+          templateName: UserNotificationTemplateName.spaceIssueResolved,
+          params: {
+            spaceId: space.id,
+            spaceHistory: result,
           },
         });
       } catch (error) {
@@ -641,7 +672,7 @@ export class SpaceController {
 
   @Post(':id/issue/resolve')
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Remove a topic from space' })
+  @ApiOperation({ summary: 'Resolve a space issue' })
   async resolveIssue(
     @Req() req,
     @Param('id') id: string,
@@ -662,19 +693,6 @@ export class SpaceController {
       resolveSpaceIssueDto,
     );
 
-    try {
-      await this.spaceHistoryService.create({
-        spaceId: id,
-        ruleId: space.ruleId,
-        isPublic: true,
-        type: SpaceHistoryType.spaceIssueResolve,
-        // TODO. translate using user.country
-        details: `Issue was resolved by ${user.name}`,
-      });
-    } catch (error) {
-      this.logger.error(`Failed to log space history`, error);
-    }
-
     spacePermissioners?.data?.forEach(async (spacePermissioner) => {
       try {
         await this.userNotificationService.create({
@@ -684,7 +702,7 @@ export class SpaceController {
           templateName: UserNotificationTemplateName.spaceIssueResolved,
           params: {
             spaceId: space.id,
-            spaceIssueResolveDetails: resolveSpaceIssueDto.details,
+            spaceHistory: result,
           },
         });
       } catch (error) {

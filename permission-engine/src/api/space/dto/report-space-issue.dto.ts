@@ -1,7 +1,15 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsNotEmpty, IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class ReportSpaceIssueDto {
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({
+    description: 'SpaceHistory title',
+    nullable: true,
+  })
+  title?: string;
+
   @IsNotEmpty()
   @IsString()
   @ApiProperty({

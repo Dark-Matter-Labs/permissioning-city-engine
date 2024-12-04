@@ -29,6 +29,14 @@ export class FindAllSpaceHistoryDto extends PaginationDto {
   spaceId: string;
 
   @IsOptional()
+  @IsUUID()
+  @ApiPropertyOptional({
+    description: 'SpaceHistory spaceEventId in uuid',
+    type: String,
+  })
+  spaceEventId?: string;
+
+  @IsOptional()
   @Transform(({ value }) => (Array.isArray(value) ? value : value.split(',')))
   @IsArray()
   @IsString({ each: true })

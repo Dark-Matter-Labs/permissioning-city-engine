@@ -6,6 +6,7 @@ import { ReportSpaceIssueDto } from './report-space-issue.dto';
 import { ResolveSpaceIssueDto } from './resolve-space-issue.dto';
 import { SetSpaceImageDto } from './set-space-image.dto';
 import { UpdateSpaceDto } from './update-space.dto';
+import { VolunteerSpaceIssueResolveDto } from './volunteer-space-issue-resolve.dto';
 
 export {
   CreateSpaceDto,
@@ -16,4 +17,5 @@ export {
   ResolveSpaceIssueDto,
   SetSpaceImageDto,
   FindAllSpaceDto,
+  VolunteerSpaceIssueResolveDto,
 };
