@@ -1,6 +1,16 @@
 -- migration 1732516181631_add-translation-to-topic
 
-ALTER TABLE "topic" ADD COLUMN translation TEXT;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 
+        FROM information_schema.columns 
+        WHERE table_name='topic' 
+        AND column_name='translation'
+    ) THEN
+        ALTER TABLE "topic" ADD COLUMN translation TEXT;
+    END IF;
+END $$;
 
 INSERT INTO "topic" (id, name, country, region, city, translation) VALUES
   (uuid_generate_v4(), 'market', 'common', 'common', 'common', '{ "en": "market", "ko": "시장" }'),
