@@ -103,6 +103,10 @@ export class SpaceHistory {
   type: SpaceHistoryType;
 
   @Column()
+  @ApiProperty({ description: 'SpaceHistory title' })
+  title: string;
+
+  @Column()
   @ApiProperty({ description: 'SpaceHistory description' })
   details: string;
 

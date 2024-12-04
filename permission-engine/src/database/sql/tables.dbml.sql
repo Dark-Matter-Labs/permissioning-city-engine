@@ -165,6 +165,7 @@ CREATE TABLE "space_history" (
   "permission_request_id" uuid,
   "is_public" bool NOT NULL DEFAULT true,
   "type" varchar NOT NULL,
+  "title" text,
   "details" text,
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
 );

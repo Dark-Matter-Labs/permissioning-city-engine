@@ -189,6 +189,7 @@ Table space_history {
   permission_request_id uuid
   is_public bool [not null, default: true]
   type varchar [not null, note: 'create,update,permissioner_join,permissioner_leave,permission_request,permission_request_resolve,space_event_start,space_event_close,space_event_complete,space_event_complete_with_issue,space_event_complete_with_issue_resolve,space_issue,space_issue_resolve']
+  title text
   details text
   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
 }
