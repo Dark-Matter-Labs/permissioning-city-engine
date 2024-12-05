@@ -105,6 +105,7 @@ export const getAvailabilityIntervals = (
   const intervals = [];
   let currentDate = dayjs(startDate).tz(timezone).startOf('day');
   const finalDate = dayjs(endDate).tz(timezone).add(1, 'day').endOf('day');
+  const nowDate = dayjs().tz(timezone);
 
   // Parse the unit (e.g., '30m', '1h', '1d') and get the corresponding milliseconds
   const unitAmount = parseInt(unit.slice(0, -1), 10); // Extract the number (30, 1, etc.)
@@ -236,7 +237,8 @@ export const getAvailabilityIntervals = (
       if (
         currentDate.format('ddd').toLowerCase() === day &&
         startPoint <= currentDate &&
-        endPoint >= nextDate
+        endPoint >= nextDate &&
+        startPoint >= nowDate
       ) {
         if (!!reservation === false) {
           intervals.push({
