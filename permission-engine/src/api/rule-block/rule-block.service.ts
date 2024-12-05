@@ -57,7 +57,7 @@ export class RuleBlockService {
 
     return {
       data: data ?? [],
-      total,
+      total: Number(total),
     };
   }
 

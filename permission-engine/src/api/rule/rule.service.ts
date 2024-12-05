@@ -118,7 +118,7 @@ export class RuleService {
 
     return {
       data: result,
-      total,
+      total: Number(total),
     };
   }
 

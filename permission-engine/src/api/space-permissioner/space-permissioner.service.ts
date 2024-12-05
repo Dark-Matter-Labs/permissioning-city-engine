@@ -56,7 +56,7 @@ export class SpacePermissionerService {
 
     return {
       data: data ?? [],
-      total,
+      total: Number(total),
     };
   }
 
@@ -84,7 +84,7 @@ export class SpacePermissionerService {
 
     return {
       data: data ?? [],
-      total,
+      total: Number(total),
     };
   }
 

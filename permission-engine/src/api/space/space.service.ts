@@ -333,7 +333,7 @@ export class SpaceService {
 
     return {
       data: data ?? [],
-      total,
+      total: Number(total),
     };
   }
 

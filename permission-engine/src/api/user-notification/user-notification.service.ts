@@ -41,7 +41,7 @@ export class UserNotificationService {
 
     return {
       data: data ?? [],
-      total,
+      total: Number(total),
     };
   }
 
