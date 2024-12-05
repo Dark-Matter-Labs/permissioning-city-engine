@@ -146,24 +146,28 @@ export class AppModule implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleInit() {
-    await this.slackService.sendMessage(
-      [
-        dayjs().format('YYYY-MM-DD HH:mm:ss'),
-        `[${process.env.NODE_ENV}]`,
-        ['`permissoin-engine-', process.env.ENGINE_MODE, '`'].join(''),
-        `is up and running`,
-      ].join(' '),
-    );
+    if (process.env.SLACK_WEBHOOK_URL) {
+      await this.slackService.sendMessage(
+        [
+          dayjs().format('YYYY-MM-DD HH:mm:ss'),
+          `[${process.env.NODE_ENV}]`,
+          ['`permissoin-engine-', process.env.ENGINE_MODE, '`'].join(''),
+          `is up and running`,
+        ].join(' '),
+      );
+    }
   }
 
   async onModuleDestroy() {
-    await this.slackService.sendMessage(
-      [
-        dayjs().format('YYYY-MM-DD HH:mm:ss'),
-        `[${process.env.NODE_ENV}]`,
-        ['`permissoin-engine-', process.env.ENGINE_MODE, '`'].join(''),
-        `has went down`,
-      ].join(' '),
-    );
+    if (process.env.SLACK_WEBHOOK_URL) {
+      await this.slackService.sendMessage(
+        [
+          dayjs().format('YYYY-MM-DD HH:mm:ss'),
+          `[${process.env.NODE_ENV}]`,
+          ['`permissoin-engine-', process.env.ENGINE_MODE, '`'].join(''),
+          `has went down`,
+        ].join(' '),
+      );
+    }
   }
 }
