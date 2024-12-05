@@ -167,16 +167,18 @@ export const getAvailabilityIntervals = (
   const currentDayString = currentDate.format('ddd').toLowerCase();
   const firstAvailabilityRanges = availabilityMap.get(currentDayString) || [];
   const firstAvailability = firstAvailabilityRanges[0];
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_, firstStartTime] = firstAvailability.split(
-    RuleBlockContentDivider.time,
-  );
-  const [firstHour, firstMinute] = firstStartTime.split(':');
+  if (firstAvailability) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [_, firstStartTime] = firstAvailability.split(
+      RuleBlockContentDivider.time,
+    );
+    const [firstHour, firstMinute] = firstStartTime.split(':');
 
-  currentDate = currentDate
-    .tz(timezone)
-    .hour(Number(firstHour))
-    .minute(Number(firstMinute));
+    currentDate = currentDate
+      .tz(timezone)
+      .hour(Number(firstHour))
+      .minute(Number(firstMinute));
+  }
 
   // Loop through the date range and create the intervals
   while (currentDate < finalDate) {
