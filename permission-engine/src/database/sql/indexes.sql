@@ -41,3 +41,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS topic_idx_name_country_region_city ON "topic" 
 CREATE INDEX IF NOT EXISTS space_approved_rule_idx_space_id ON "space_approved_rule" (space_id);
 CREATE INDEX IF NOT EXISTS space_approved_rule_idx_rule_id ON "space_approved_rule" (rule_id);
 CREATE INDEX IF NOT EXISTS space_approved_rule_idx_public_hash ON "space_approved_rule" (public_hash);
+
+-- space_history
+CREATE INDEX IF NOT EXISTS space_history_idx_space_history_id ON "space_history" (space_history_id);

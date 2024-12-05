@@ -1,5 +1,5 @@
 import { Controller, Get, Param, Query, Req } from '@nestjs/common';
-import { FindAllSpaceHistoryDto } from './dto';
+import { FindAllIssueSpaceHistoryDto, FindAllSpaceHistoryDto } from './dto';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserService } from '../user/user.service';
 import { SpaceService } from '../space/space.service';
@@ -53,6 +53,78 @@ export class SpaceHistoryController {
       page,
       limit,
       spaceId,
+      isPublic,
+    });
+  }
+
+  @Get('issue')
+  @ApiOperation({ summary: 'Get all SpaceHistory issue' })
+  async findAllIssue(@Req() req, @Query() query: FindAllIssueSpaceHistoryDto) {
+    const { spaceId } = query;
+    let { isPublic } = query;
+    let user: User | null = null;
+
+    if (req.user) {
+      user = await this.userService.findOneByEmail(req.user.email);
+    }
+
+    const spacePermissioners =
+      (
+        await this.spacePermissionerService.findAllBySpaceId(
+          spaceId,
+          { isActive: true },
+          { isPagination: false },
+        )
+      )?.data ?? [];
+
+    if (
+      user &&
+      [...spacePermissioners.map((item) => item.userId)].includes(user.id) ===
+        true
+    ) {
+      isPublic = false;
+    } else {
+      isPublic = true;
+    }
+
+    return this.spaceHistoryService.findAllIssue({ ...query, isPublic });
+  }
+
+  @Get('issue/unresolved')
+  @ApiOperation({ summary: 'Get all unresolved SpaceHistory issue' })
+  async findAllUnresolvedIssue(
+    @Req() req,
+    @Query() query: FindAllIssueSpaceHistoryDto,
+  ) {
+    const { spaceId } = query;
+    let { isPublic } = query;
+    let user: User | null = null;
+
+    if (req.user) {
+      user = await this.userService.findOneByEmail(req.user.email);
+    }
+
+    const spacePermissioners =
+      (
+        await this.spacePermissionerService.findAllBySpaceId(
+          spaceId,
+          { isActive: true },
+          { isPagination: false },
+        )
+      )?.data ?? [];
+
+    if (
+      user &&
+      [...spacePermissioners.map((item) => item.userId)].includes(user.id) ===
+        true
+    ) {
+      isPublic = false;
+    } else {
+      isPublic = true;
+    }
+
+    return this.spaceHistoryService.findAllUnResolvedIssue({
+      ...query,
       isPublic,
     });
   }
