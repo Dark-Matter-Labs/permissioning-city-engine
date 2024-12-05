@@ -1,14 +1,15 @@
 import { IsOptional, IsUUID, IsBoolean, IsNotEmpty } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  ApiHideProperty,
+  ApiProperty,
+  ApiPropertyOptional,
+} from '@nestjs/swagger';
 import { PaginationDto } from 'src/lib/dto';
 
 export class FindAllIssueSpaceHistoryDto extends PaginationDto {
   @IsOptional()
   @IsBoolean()
-  @ApiPropertyOptional({
-    description: 'SpaceHistory is public',
-    type: 'boolean',
-  })
+  @ApiHideProperty()
   isPublic?: boolean;
 
   @IsNotEmpty()

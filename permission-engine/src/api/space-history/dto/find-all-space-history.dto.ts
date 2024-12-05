@@ -6,7 +6,11 @@ import {
   IsString,
   IsArray,
 } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  ApiHideProperty,
+  ApiProperty,
+  ApiPropertyOptional,
+} from '@nestjs/swagger';
 import { PaginationDto } from 'src/lib/dto';
 import { SpaceHistoryType } from 'src/lib/type';
 import { Transform } from 'class-transformer';
@@ -14,10 +18,7 @@ import { Transform } from 'class-transformer';
 export class FindAllSpaceHistoryDto extends PaginationDto {
   @IsOptional()
   @IsBoolean()
-  @ApiPropertyOptional({
-    description: 'SpaceHistory is public',
-    type: 'boolean',
-  })
+  @ApiHideProperty()
   isPublic?: boolean;
 
   @IsNotEmpty()
