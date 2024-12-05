@@ -115,11 +115,11 @@ export class RuleController {
 
     if (
       [
-        user.id,
+        rule.authorId,
         ...spaces.map((item) => item.ownerId),
         ...spaceEvents.map((item) => item.organizerId),
         ...spacePermissioners.map((item) => item.userId),
-      ].includes(rule.authorId) === false
+      ].includes(user.id) === false
     ) {
       rule.ruleBlocks = publicRuleBlocks;
     }
@@ -165,11 +165,11 @@ export class RuleController {
 
     if (
       [
-        user.id,
+        rule.authorId,
         ...spaces.map((item) => item.ownerId),
         ...spaceEvents.map((item) => item.organizerId),
         ...spacePermissioners.map((item) => item.userId),
-      ].includes(rule.authorId) === false
+      ].includes(user.id) === false
     ) {
       rule.ruleBlocks = publicRuleBlocks;
     }
