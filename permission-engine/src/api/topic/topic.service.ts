@@ -172,7 +172,6 @@ export class TopicService {
       params.push(isActive);
     }
 
-    // TODO. remove temporary created_at limit
     const query = `
       WITH filtered_data AS (
         SELECT (
@@ -190,7 +189,6 @@ export class TopicService {
           t.updated_at
         ) FROM topic t, space_topic st
         WHERE t.id = st.topic_id
-        AND st.created_at > '2024-11-26'
         ${where.length > 0 ? ' AND ' : ''} 
         ${where.join(' AND ')}
         GROUP BY t.id
