@@ -15,7 +15,7 @@ import { Logger } from '../logger/logger.service';
 
 @WebSocketGateway({
   cors: {
-    origin: process.env.WEBSOCKET_ORIGIN,
+    origin: '*',
     credentials: true,
   },
   transports: ['websocket'],
