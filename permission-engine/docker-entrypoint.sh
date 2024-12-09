@@ -1,13 +1,16 @@
 #!/bin/bash
 set -e
 
-echo "Install packages..."
-npm i
-echo "Package installation complete!"
 
-echo "Building application..."
-npm run build
-echo "Application build complete!"
+if [ "$ENGINE_MODE" = "api" ]; then
+  echo "Install packages..."
+  npm i
+  echo "Package installation complete!"
+
+  echo "Building application..."
+  npm run build
+  echo "Application build complete!"
+fi
 
 if [ "$NODE_ENV" = "production" ]; then
   echo "Production environment detected, serving the app..."
