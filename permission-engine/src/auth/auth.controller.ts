@@ -39,10 +39,10 @@ export class AuthController {
     });
 
     res.cookie('accessToken', tokens.accessToken, {
-      domain: process.env.DOMAIN,
+      domain: `.${process.env.DOMAIN}`,
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: 'none',
       maxAge: parseInt(process.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME) * 1000,
       path: '/',
     });
