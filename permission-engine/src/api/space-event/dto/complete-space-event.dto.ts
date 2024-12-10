@@ -37,7 +37,7 @@ export class CompleteSpaceEventDto {
   @IsArray()
   @IsOptional()
   @ApiPropertyOptional({
-    description: 'SpaceEvent complete images in jpeg|jpg|png|gif',
+    description: 'SpaceEvent complete images in jpeg|jpg|png|gif|heic|webp',
     type: 'array',
     items: {
       type: 'string',

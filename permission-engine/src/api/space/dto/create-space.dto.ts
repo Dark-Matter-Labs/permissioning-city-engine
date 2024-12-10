@@ -75,7 +75,7 @@ export class CreateSpaceDto {
   @IsArray()
   @ArrayMaxSize(5)
   @ApiPropertyOptional({
-    description: 'Space images in jpeg|jpg|png|gif',
+    description: 'Space images in jpeg|jpg|png|gif|heic|webp',
     type: 'array',
     items: {
       type: 'string',

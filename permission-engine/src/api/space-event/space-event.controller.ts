@@ -119,9 +119,14 @@ export class SpaceEventController {
     FileFieldsInterceptor([{ name: 'images', maxCount: 5 }], {
       fileFilter(req, file, cb) {
         if (
-          ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'].includes(
-            file.mimetype,
-          ) === false
+          [
+            'image/jpeg',
+            'image/jpg',
+            'image/png',
+            'image/gif',
+            'image/heic',
+            'image/webp',
+          ].includes(file.mimetype) === false
         ) {
           cb(new BadRequestException('file must be an image'), false);
         } else {
@@ -171,9 +176,14 @@ export class SpaceEventController {
     FileFieldsInterceptor([{ name: 'images', maxCount: 5 }], {
       fileFilter(req, file, cb) {
         if (
-          ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'].includes(
-            file.mimetype,
-          ) === false
+          [
+            'image/jpeg',
+            'image/jpg',
+            'image/png',
+            'image/gif',
+            'image/heic',
+            'image/webp',
+          ].includes(file.mimetype) === false
         ) {
           cb(new BadRequestException('file must be an image'), false);
         } else {
@@ -266,9 +276,14 @@ export class SpaceEventController {
     FileFieldsInterceptor([{ name: 'images', maxCount: 1 }], {
       fileFilter(req, file, cb) {
         if (
-          ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'].includes(
-            file.mimetype,
-          ) === false
+          [
+            'image/jpeg',
+            'image/jpg',
+            'image/png',
+            'image/gif',
+            'image/heic',
+            'image/webp',
+          ].includes(file.mimetype) === false
         ) {
           cb(new BadRequestException('file must be an image'), false);
         } else {
@@ -437,9 +452,14 @@ export class SpaceEventController {
     FileFieldsInterceptor([{ name: 'images', maxCount: 5 }], {
       fileFilter(req, file, cb) {
         if (
-          ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'].includes(
-            file.mimetype,
-          ) === false
+          [
+            'image/jpeg',
+            'image/jpg',
+            'image/png',
+            'image/gif',
+            'image/heic',
+            'image/webp',
+          ].includes(file.mimetype) === false
         ) {
           cb(new BadRequestException('file must be an image'), false);
         } else {
@@ -540,9 +560,14 @@ export class SpaceEventController {
     FileFieldsInterceptor([{ name: 'images', maxCount: 5 }], {
       fileFilter(req, file, cb) {
         if (
-          ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'].includes(
-            file.mimetype,
-          ) === false
+          [
+            'image/jpeg',
+            'image/jpg',
+            'image/png',
+            'image/gif',
+            'image/heic',
+            'image/webp',
+          ].includes(file.mimetype) === false
         ) {
           cb(new BadRequestException('file must be an image'), false);
         } else {
@@ -648,9 +673,14 @@ export class SpaceEventController {
     FileFieldsInterceptor([{ name: 'images', maxCount: 5 }], {
       fileFilter(req, file, cb) {
         if (
-          ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'].includes(
-            file.mimetype,
-          ) === false
+          [
+            'image/jpeg',
+            'image/jpg',
+            'image/png',
+            'image/gif',
+            'image/heic',
+            'image/webp',
+          ].includes(file.mimetype) === false
         ) {
           cb(new BadRequestException('file must be an image'), false);
         } else {

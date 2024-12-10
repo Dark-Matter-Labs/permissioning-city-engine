@@ -90,7 +90,7 @@ export class UpdateSpaceEventDto {
   @IsArray()
   @ArrayMaxSize(5)
   @ApiPropertyOptional({
-    description: 'SpaceEvent images in jpeg|jpg|png|gif',
+    description: 'SpaceEvent images in jpeg|jpg|png|gif|heic|webp',
     type: 'array',
     items: {
       type: 'string',

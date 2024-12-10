@@ -6,7 +6,7 @@ export class SetSpaceEventImageDto {
   @IsArray()
   @ArrayMaxSize(5)
   @ApiProperty({
-    description: 'Space images in jpeg|jpg|png|gif',
+    description: 'Space images in jpeg|jpg|png|gif|heic|webp',
     type: 'array',
     items: {
       type: 'string',
