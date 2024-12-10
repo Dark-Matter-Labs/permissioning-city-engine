@@ -26,6 +26,7 @@ import { SpaceTopicService } from '../space-topic/space-topic.service';
 import { SpaceHistoryService } from '../space-history/space-history.service';
 import { getCountry } from 'countries-and-timezones';
 import { countryNameToCode } from 'src/lib/util/locale';
+import { CreateSpaceHistoryDto } from '../space-history/dto';
 
 @Injectable()
 export class SpaceService {
@@ -499,6 +500,7 @@ export class SpaceService {
     spaceId: string,
     loggerId: string,
     reportSpaceIssueDto: ReportSpaceIssueDto,
+    image?: string | null,
   ) {
     const space = await this.findOneById(spaceId);
 
@@ -506,13 +508,21 @@ export class SpaceService {
       throw new BadRequestException();
     }
 
-    return await this.spaceHistoryService.create({
-      ...reportSpaceIssueDto,
+    const dto: CreateSpaceHistoryDto = {
+      title: reportSpaceIssueDto.title,
+      details: reportSpaceIssueDto.details,
+      isPublic: reportSpaceIssueDto.isPublic,
       spaceId,
       loggerId,
       ruleId: space.ruleId,
       type: SpaceHistoryType.spaceIssue,
-    });
+    };
+
+    if (image != null) {
+      dto.image = image;
+    }
+
+    return await this.spaceHistoryService.create(dto);
   }
 
   async volunteerIssueResolve(

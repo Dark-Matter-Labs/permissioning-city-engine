@@ -167,6 +167,7 @@ CREATE TABLE IF NOT EXISTS "space_history" (
   "type" varchar NOT NULL,
   "title" text,
   "details" text,
+  "image" text,
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
 );
 

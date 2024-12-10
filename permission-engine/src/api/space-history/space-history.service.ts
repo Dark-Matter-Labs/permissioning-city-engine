@@ -122,6 +122,7 @@ export class SpaceHistoryService {
           shp.type,
           shp.title,
           shp.details,
+          shp.image,
           shp.created_at,
           ARRAY_AGG(shc)
         ) FROM space_history shp
@@ -149,7 +150,7 @@ export class SpaceHistoryService {
 
     if (data != null) {
       result = data.map((item) => {
-        const children = item.row.f14;
+        const children = item.row.f15;
         return {
           id: item.row.f1,
           spaceId: item.row.f2,
@@ -163,7 +164,8 @@ export class SpaceHistoryService {
           type: item.row.f10,
           title: item.row.f11,
           details: item.row.f12,
-          createdAt: item.row.f13,
+          image: item.row.f13,
+          createdAt: item.row.f14,
           children: children[0] === null ? [] : children,
         };
       });
@@ -230,6 +232,7 @@ export class SpaceHistoryService {
           shp.type,
           shp.title,
           shp.details,
+          shp.image,
           shp.created_at,
           ARRAY_AGG(shc)
         ) FROM space_history shp
@@ -258,7 +261,7 @@ export class SpaceHistoryService {
 
     if (data != null) {
       result = data.map((item) => {
-        const children = item.row.f14;
+        const children = item.row.f15;
         return {
           id: item.row.f1,
           spaceId: item.row.f2,
@@ -272,7 +275,8 @@ export class SpaceHistoryService {
           type: item.row.f10,
           title: item.row.f11,
           details: item.row.f12,
-          createdAt: item.row.f13,
+          image: item.row.f13,
+          createdAt: item.row.f14,
           children: children[0] === null ? [] : children,
         };
       });

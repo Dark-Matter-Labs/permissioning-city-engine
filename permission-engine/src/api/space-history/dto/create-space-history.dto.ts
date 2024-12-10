@@ -96,4 +96,12 @@ export class CreateSpaceHistoryDto {
     nullable: true,
   })
   details?: string;
+
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({
+    description: 'SpaceHistory image',
+    nullable: true,
+  })
+  image?: string;
 }

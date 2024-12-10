@@ -110,6 +110,10 @@ export class SpaceHistory {
   @ApiProperty({ description: 'SpaceHistory description' })
   details: string;
 
+  @Column()
+  @ApiProperty({ description: 'SpaceHistory image' })
+  image: string;
+
   @CreateDateColumn()
   @ApiProperty({ description: 'Created timestamp' })
   createdAt: Date;

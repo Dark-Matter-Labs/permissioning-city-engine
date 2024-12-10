@@ -217,9 +217,13 @@ export class SpaceController {
     FileFieldsInterceptor([{ name: 'images', maxCount: 5 }], {
       fileFilter(req, file, cb) {
         if (
-          ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'].includes(
-            file.mimetype,
-          ) === false
+          [
+            'image/jpeg',
+            'image/jpg',
+            'image/png',
+            'image/gif',
+            'image/heic',
+          ].includes(file.mimetype) === false
         ) {
           cb(new BadRequestException('file must be an image'), false);
         } else {
@@ -297,9 +301,14 @@ export class SpaceController {
     FileFieldsInterceptor([{ name: 'images', maxCount: 5 }], {
       fileFilter(req, file, cb) {
         if (
-          ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'].includes(
-            file.mimetype,
-          ) === false
+          [
+            'image/jpeg',
+            'image/jpg',
+            'image/png',
+            'image/gif',
+            'image/heic',
+            'image/webp',
+          ].includes(file.mimetype) === false
         ) {
           cb(new BadRequestException('file must be an image'), false);
         } else {
@@ -390,9 +399,14 @@ export class SpaceController {
     FileFieldsInterceptor([{ name: 'images', maxCount: 1 }], {
       fileFilter(req, file, cb) {
         if (
-          ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'].includes(
-            file.mimetype,
-          ) === false
+          [
+            'image/jpeg',
+            'image/jpg',
+            'image/png',
+            'image/gif',
+            'image/heic',
+            'image/webp',
+          ].includes(file.mimetype) === false
         ) {
           cb(new BadRequestException('file must be an image'), false);
         } else {
@@ -594,12 +608,45 @@ export class SpaceController {
 
   @Post(':id/issue/report')
   @UseGuards(JwtAuthGuard)
+  @ApiBody({ type: ReportSpaceIssueDto })
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: 'image', maxCount: 1 }], {
+      fileFilter(req, file, cb) {
+        if (
+          [
+            'image/jpeg',
+            'image/jpg',
+            'image/png',
+            'image/gif',
+            'image/heic',
+            'image/webp',
+          ].includes(file.mimetype) === false
+        ) {
+          cb(new BadRequestException('file must be an image'), false);
+        } else {
+          cb(null, true);
+        }
+      },
+    }),
+  )
+  @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Report a space issue' })
   async reportIssue(
     @Req() req,
     @Param('id') id: string,
     @Body() reportSpaceIssueDto: ReportSpaceIssueDto,
+    @UploadedFiles() uploadedFiles: { image: Express.MulterS3.File[] },
   ) {
+    let images: Express.MulterS3.File[] = [];
+
+    if (uploadedFiles) {
+      images = uploadedFiles.image;
+    }
+
+    if (images.length > 1) {
+      throw new BadRequestException('Only 1 image is allowed');
+    }
+
     const user = await this.userService.findOneByEmail(req.user.email);
     const space = await this.spaceService.findOneById(id);
     const spacePermissioners =
@@ -612,6 +659,7 @@ export class SpaceController {
       id,
       user.id,
       reportSpaceIssueDto,
+      images[0].location,
     );
 
     spacePermissioners?.data?.forEach(async (spacePermissioner) => {

@@ -26,6 +26,11 @@ import { SpaceEquipment } from 'src/database/entity/space-equipment.entity';
 import { SpaceEquipmentService } from '../space-equipment/space-equipment.service';
 import { Topic } from 'src/database/entity/topic.entity';
 import { TopicService } from '../topic/topic.service';
+import { S3Client } from '@aws-sdk/client-s3';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { MulterModule } from '@nestjs/platform-express';
+import multerS3 from 'multer-s3';
+import { v4 as uuidv4 } from 'uuid';
 
 @Module({
   imports: [
@@ -43,6 +48,25 @@ import { TopicService } from '../topic/topic.service';
       SpaceEquipment,
       Topic,
     ]),
+    MulterModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        storage: multerS3({
+          s3: new S3Client({
+            credentials: {
+              accessKeyId: configService.get('AWS_ACCESS_KEY_ID'),
+              secretAccessKey: configService.get('AWS_SECRET_ACCESS_KEY'),
+            },
+            region: configService.get('AWS_REGION'),
+          }),
+          bucket: configService.get('AWS_S3_BUCKET_NAME'),
+          key: (req, file, cb) => {
+            cb(null, `${uuidv4()}_${file.originalname}`);
+          },
+        }),
+      }),
+    }),
   ],
   controllers: [SpaceHistoryController],
   providers: [

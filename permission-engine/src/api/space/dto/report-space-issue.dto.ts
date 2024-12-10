@@ -1,5 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsBoolean,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class ReportSpaceIssueDto {
   @IsOptional()
@@ -25,4 +32,18 @@ export class ReportSpaceIssueDto {
     required: true,
   })
   isPublic: boolean;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(1)
+  @ApiPropertyOptional({
+    description: 'SpaceHistory image in jpeg|jpg|png|gif|heic|webp',
+    type: 'array',
+    items: {
+      type: 'string',
+      format: 'binary',
+    },
+    maxItems: 1,
+  })
+  image?: Express.Multer.File[];
 }
