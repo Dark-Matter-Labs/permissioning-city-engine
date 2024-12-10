@@ -15,8 +15,8 @@ certbot certonly \
   --email $EMAIL_CERTIFICATOR \
   --agree-tos \
   --no-eff-email \
+  -d ws.engine.permissioning.city \
   -d engine.permissioning.city \
-  -d "*.engine.permissioning.city" \
   --non-interactive --quiet
 
 set -e
