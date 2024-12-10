@@ -32,6 +32,7 @@ export class AuthController {
     const tokens = await this.authService.generateTokens(req.user, ipAddress);
 
     res.cookie('refreshToken', tokens.refreshToken, {
+      domain: `.${process.env.DOMAIN}`,
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
@@ -39,6 +40,7 @@ export class AuthController {
     });
 
     res.cookie('accessToken', tokens.accessToken, {
+      domain: `.${process.env.DOMAIN}`,
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
