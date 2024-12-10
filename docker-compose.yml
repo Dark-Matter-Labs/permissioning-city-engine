@@ -127,7 +127,8 @@ services:
         max-size: "10m"
         max-file: "5"
     depends_on:
-      - permission-engine-api
+      permission-engine-api:
+        condition: service_healthy
     restart: always
     networks:
       - permission_engine_network
