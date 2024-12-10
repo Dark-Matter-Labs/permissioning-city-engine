@@ -25,19 +25,6 @@ services:
     networks:
       - permission_engine_network
 
-  certbot:
-    image: certbot/certbot:latest
-    container_name: certbot
-    env_file:
-      - .env
-    command: certbot certonly --webroot --webroot-path=/var/www/certbot --email $EMAIL_CERTIFICATOR --agree-tos --no-eff-email -d engine.permissioning.city
-    volumes:
-      - ./letsencrypt:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do sleep 6h & wait $!; certbot renew; done'"
-    networks:
-      - permission_engine_network
-
   redis:
     image: redis:7.2.5
     container_name: redis
