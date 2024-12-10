@@ -42,7 +42,7 @@ export class AuthController {
       domain: `.${process.env.DOMAIN}`,
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'none',
+      sameSite: 'lax',
       maxAge: parseInt(process.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME) * 1000,
       path: '/',
     });
