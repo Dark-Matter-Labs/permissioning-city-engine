@@ -26,6 +26,7 @@ import { SpaceEventService } from '../space-event/space-event.service';
 import { UserService } from '../user/user.service';
 import { SpacePermissionerService } from '../space-permissioner/space-permissioner.service';
 import { PermissionRequestStatus } from 'src/lib/type';
+import { Logger } from 'src/lib/logger/logger.service';
 
 @ApiTags('permission')
 @Controller('api/v1/permission/request')
@@ -35,6 +36,7 @@ export class PermissionRequestController {
     private readonly userService: UserService,
     private readonly spaceEventService: SpaceEventService,
     private readonly spacePermissionerService: SpacePermissionerService,
+    private readonly logger: Logger,
   ) {}
 
   @Get()
@@ -153,10 +155,24 @@ export class PermissionRequestController {
       throw new ForbiddenException('user must be an event organizer');
     }
 
-    return this.permissionRequestService.create(user.id, {
-      ...createPermissionRequestDto,
-      spaceId: spaceEvent.spaceId,
-    });
+    const permissionRequest = await this.permissionRequestService.create(
+      user.id,
+      {
+        ...createPermissionRequestDto,
+        spaceId: spaceEvent.spaceId,
+      },
+    );
+
+    try {
+      await this.spaceEventService.updateToPermissionRequested(spaceEventId);
+    } catch (error) {
+      this.logger.error(
+        `Failed to update SpaceEvent status to permission_requested`,
+        error,
+      );
+    }
+
+    return permissionRequest;
   }
 
   @Put(':id/cancel')
