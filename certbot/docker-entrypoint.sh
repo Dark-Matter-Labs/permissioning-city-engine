@@ -14,7 +14,8 @@ certbot certonly \
   --agree-tos \
   --no-eff-email \
   -d engine.permissioning.city \
-  -d "*.engine.permissioning.city"
+  -d "*.engine.permissioning.city" \
+  --non-interactive --quiet
 
 # Set up the renewal loop
 trap exit TERM; \
