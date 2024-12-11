@@ -1,4 +1,17 @@
-import { EmailTemplate } from '../email-template/email-template.interface';
+export enum Language {
+  en = 'en',
+  ko = 'ko',
+}
+
+export interface EmailTemplate {
+  language: Language;
+  subject: string;
+  html: string;
+  text: string;
+  subjectPart(): string;
+  htmlPart(): string;
+  textPart(): string;
+}
 
 export type SesMail = {
   timestamp: string;
@@ -635,11 +648,6 @@ export type IpLocationInfo = {
   as: string;
   query: string;
 };
-
-export enum Language {
-  en = 'en',
-  ko = 'ko',
-}
 
 export enum PermissionRequestTarget {
   spaceEvent = 'space-event',

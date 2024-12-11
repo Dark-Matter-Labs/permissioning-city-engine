@@ -1,5 +1,5 @@
 import { Language } from '../type';
-import { EmailTemplate } from './email-template.interface';
+import { EmailTemplate } from '.';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
