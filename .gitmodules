@@ -2,3 +2,8 @@
 	path = ptc-dashboard
 	url = https://github.com/Dark-Matter-Labs/ptc-dashboard.git
 	branch = main
+
+[submodule "ptc-sdk"]
+	path = ptc-sdk
+	url = https://github.com/Dark-Matter-Labs/ptc-sdk.git
+	branch = main
