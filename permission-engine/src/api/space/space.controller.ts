@@ -463,16 +463,12 @@ export class SpaceController {
 
     const image = images[0];
 
-    try {
-      await this.spaceImageService.create({
-        id: image.key.split('_')[0],
-        spaceId: space.id,
-        link: image.location,
-        type,
-      });
-    } catch (error) {
-      this.logger.error('Failed to create spaceImage', error);
-    }
+    return await this.spaceImageService.create({
+      id: image.key.split('_')[0],
+      spaceId: space.id,
+      link: image.location,
+      type,
+    });
   }
 
   @Put(':id/topic/add/:topicId')

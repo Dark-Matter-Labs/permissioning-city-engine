@@ -339,16 +339,12 @@ export class SpaceEventController {
 
     const image = images[0];
 
-    try {
-      await this.spaceEventImageService.create({
-        id: image.key.split('_')[0],
-        spaceEventId: spaceEvent.id,
-        link: image.location,
-        type,
-      });
-    } catch (error) {
-      this.logger.error('Failed to create spaceEventImage', error);
-    }
+    return await this.spaceEventImageService.create({
+      id: image.key.split('_')[0],
+      spaceEventId: spaceEvent.id,
+      link: image.location,
+      type,
+    });
   }
 
   @Put(':id/additional-info')
@@ -668,7 +664,7 @@ export class SpaceEventController {
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Resolve SpaceEvent complete issue' })
   @ApiConsumes('multipart/form-data')
-  @ApiBody({ type: CompleteWithIssueSpaceEventDto })
+  @ApiBody({ type: CompleteWithIssueResolvedSpaceEventDto })
   @UseInterceptors(
     FileFieldsInterceptor([{ name: 'images', maxCount: 5 }], {
       fileFilter(req, file, cb) {

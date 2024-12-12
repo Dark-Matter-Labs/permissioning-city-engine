@@ -48,7 +48,7 @@ export class TopicController {
   }
 
   @Get('rule/:ruleId')
-  @ApiOperation({ summary: 'Get all topics' })
+  @ApiOperation({ summary: 'Get all topics by rule id' })
   findAllByRuleId(@Param('ruleId') ruleId: string) {
     return this.topicService.findAllByRuleId(ruleId);
   }
