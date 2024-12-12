@@ -137,6 +137,7 @@ services:
       - .env
     volumes:
       - ./ptc-dashboard:/app
+      - .git:/home/.git
     logging:
       options:
         max-size: "10m"

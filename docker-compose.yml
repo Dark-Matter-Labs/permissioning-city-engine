@@ -2,6 +2,7 @@ services:
   nginx:
     image: nginx:1.25.3
     container_name: nginx
+    restart: always
     env_file:
       - .env
     volumes:
@@ -28,6 +29,7 @@ services:
   redis:
     image: redis:7.2.5
     container_name: redis
+    restart: always
     volumes:
       - ./data/redis:/data
     env_file:
@@ -40,6 +42,7 @@ services:
   postgres:
     image: postgres:15
     container_name: postgres
+    restart: always
     env_file:
       - .env
     ports:
@@ -122,6 +125,7 @@ services:
       - .env
     volumes:
       - ./ptc-dashboard:/app
+      - .git:/home/.git
     logging:
       options:
         max-size: "10m"
