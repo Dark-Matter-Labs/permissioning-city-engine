@@ -51,17 +51,24 @@ export class PermissionResponseService {
     const query = `
       WITH filtered_data AS (
         SELECT 
-          id,
-          permission_request_id,
-          space_permissioner_id,
-          status,
-          conditions,
-          excitements,
-          worries,
-          timeout_at,
-          created_at,
-          updated_at
-        FROM permission_response
+          pr.id,
+          pr.permission_request_id,
+          pr.space_permissioner_id,
+          pr.status,
+          pr.conditions,
+          pr.excitements,
+          pr.worries,
+          pr.timeout_at,
+          pr.created_at,
+          pr.updated_at,
+          u.id as user_id,
+          u.image as user_image,
+          u.name as user_name,
+          u.type as user_type,
+          u.details as user_details
+        FROM permission_response pr
+        LEFT JOIN space_permissioner sp ON pr.space_permissioner_id = sp.id
+        LEFT JOIN public.user u ON sp.user_id = u.id
         ${whereClause} ${where.join(' AND ')}
       ),
       paginated_data AS (
@@ -79,7 +86,7 @@ export class PermissionResponseService {
       params,
     );
 
-    let result = [];
+    let result: PermissionResponse[] = [];
 
     if (data != null) {
       result = data.map((item) => {
@@ -94,6 +101,13 @@ export class PermissionResponseService {
           timeoutAt: item.timeout_at,
           createdAt: item.created_at,
           updatedAt: item.updated_at,
+          user: {
+            id: item.user_id,
+            image: item.user_image,
+            name: item.user_name,
+            type: item.user_type,
+            details: item.user_details,
+          },
         };
       });
     }
