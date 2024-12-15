@@ -29,6 +29,7 @@ import {
   SetSpaceImageDto,
   UpdateSpaceDto,
   VolunteerSpaceIssueResolveDto,
+  ResolveSpaceHistoryTaskDto,
 } from './dto';
 import { UserService } from '../user/user.service';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
@@ -1031,7 +1032,7 @@ export class SpaceController {
 
   @Post(':id/issue/:spaceHistoryId/task/:spaceHistoryTaskId/resolve')
   @UseGuards(JwtAuthGuard)
-  @ApiBody({ type: AddSpaceHistoryTaskDto })
+  @ApiBody({ type: ResolveSpaceHistoryTaskDto })
   @UseInterceptors(
     FileFieldsInterceptor([{ name: 'images', maxCount: 5 }], {
       fileFilter(req, file, cb) {

@@ -5,6 +5,7 @@ import { FindAllSpaceDto } from './find-all-space.dto';
 import { FindSpaceAvailabilityDto } from './find-space-availability.dto';
 import { MarkIssueResolveVolunteerFullDto } from './mark-issue-resolve-volunteer-full.dto';
 import { ReportSpaceIssueDto } from './report-space-issue.dto';
+import { ResolveSpaceHistoryTaskDto } from './resolve-space-history-task.dto';
 import { ResolveSpaceIssueDto } from './resolve-space-issue.dto';
 import { SetSpaceImageDto } from './set-space-image.dto';
 import { UpdateSpaceDto } from './update-space.dto';
@@ -22,4 +23,5 @@ export {
   VolunteerSpaceIssueResolveDto,
   AddSpaceHistoryTaskDto,
   MarkIssueResolveVolunteerFullDto,
+  ResolveSpaceHistoryTaskDto,
 };
