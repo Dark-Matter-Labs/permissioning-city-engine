@@ -694,6 +694,9 @@ export enum SpaceHistoryType {
   spaceEventCompleteWithIssueResolve = 'space_event_complete_with_issue_resolve',
   spaceIssue = 'space_issue',
   spaceIssueResolveVolunteer = 'space_issue_resolve_volunteer',
+  spaceIssueResolveVolunteerFull = 'space_issue_resolve_volunteer_full',
+  spaceIssueResolveTask = 'space_issue_resolve_task',
+  spaceIssueResolveTaskComplete = 'space_issue_resolve_task_complete',
   spaceIssueResolve = 'space_issue_resolve',
 }
 
