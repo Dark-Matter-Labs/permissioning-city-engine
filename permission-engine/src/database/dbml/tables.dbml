@@ -191,7 +191,6 @@ Table space_history {
   type varchar [not null, note: 'create,update,permissioner_join,permissioner_leave,permission_request,permission_request_resolve,space_event_start,space_event_close,space_event_complete,space_event_complete_with_issue,space_event_complete_with_issue_resolve,space_issue,space_issue_resolve']
   title text
   details text
-  image text
   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
 }
 Ref: space_history.space_id > space.id
@@ -201,6 +200,41 @@ Ref: space_history.logger_id > user.id
 Ref: space_history.space_permissioner_id > space_permissioner.id
 Ref: space_history.space_event_id > space_event.id
 Ref: space_history.permission_request_id > permission_request.id
+
+Table space_history_image {
+  id uuid [primary key]
+  space_history_id uuid [not null]
+  link text [not null]
+  created_at timestamptz [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
+}
+Ref: space_history_image.space_history_id > space_history.id
+
+Table space_history_task {
+  id uuid [primary key]
+  space_id uuid [not null]
+  space_history_id uuid [not null]
+  creator_id uuid [not null]
+  resolver_id uuid
+  title text
+  details text
+  status varchar [not null, default: 'pending', note: 'pending, complete']
+  created_at timestamptz [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
+}
+Ref: space_history_task.space_history_id > space_history.id
+Ref: space_history_task.space_id > space.id
+Ref: space_history_task.creator_id > user.id
+Ref: space_history_task.resolver_id > user.id
+
+Table space_history_task_image {
+  id uuid [primary key]
+  space_history_task_id uuid [not null]
+  link text [not null]
+  created_at timestamptz [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
+}
+Ref: space_history_task_image.space_history_task_id > space_history_task.id
 
 Table permission_request {
   id uuid [primary key]

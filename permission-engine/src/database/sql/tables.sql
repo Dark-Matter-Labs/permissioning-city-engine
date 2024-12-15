@@ -167,8 +167,36 @@ CREATE TABLE IF NOT EXISTS "space_history" (
   "type" varchar NOT NULL,
   "title" text,
   "details" text,
-  "image" text,
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
+);
+
+CREATE TABLE IF NOT EXISTS "space_history_image" (
+  "id" uuid PRIMARY KEY,
+  "space_history_id" uuid NOT NULL,
+  "link" text NOT NULL,
+  "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
+  "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
+);
+
+CREATE TABLE IF NOT EXISTS "space_history_task" (
+  "id" uuid PRIMARY KEY,
+  "space_id" uuid NOT NULL,
+  "space_history_id" uuid NOT NULL,
+  "creator_id" uuid NOT NULL,
+  "resolver_id" uuid,
+  "title" text,
+  "details" text,
+  "status" varchar NOT NULL DEFAULT 'pending',
+  "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
+  "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
+);
+
+CREATE TABLE IF NOT EXISTS "space_history_task_image" (
+  "id" uuid PRIMARY KEY,
+  "space_history_task_id" uuid NOT NULL,
+  "link" text NOT NULL,
+  "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
+  "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
 );
 
 CREATE TABLE IF NOT EXISTS "permission_request" (
@@ -294,6 +322,7 @@ COMMENT ON COLUMN "user"."birth_year" IS 'year of birth';
 COMMENT ON COLUMN "topic"."icon" IS 'unicode emoji';
 COMMENT ON COLUMN "space_event"."status" IS 'pending, permission_requested, permission_approved, permission_approved_with_condition, permission_rejected, running, complete';
 COMMENT ON COLUMN "space_history"."type" IS 'create,update,permissioner_join,permissioner_leave,permission_request,permission_request_resolve,space_event_start,space_event_close,space_event_complete,space_event_complete_with_issue,space_event_complete_with_issue_resolve,space_issue,space_issue_resolve';
+COMMENT ON COLUMN "space_history_task"."status" IS 'pending, complete';
 COMMENT ON COLUMN "permission_request"."space_event_id" IS 'when space_event_id is null, the permission_request is for the space rule revision';
 COMMENT ON COLUMN "permission_request"."space_event_rule_id" IS 'when space_event_rule_id is null, the permission_request is for the space rule revision';
 COMMENT ON COLUMN "permission_request"."status" IS 'pending, assigned, assign_failed, review_approved, review_approved_with_condition';
@@ -651,6 +680,90 @@ BEGIN
         ALTER TABLE space_history
         ADD CONSTRAINT space_history_fkey_permission_request_id
         FOREIGN KEY ("permission_request_id") REFERENCES "permission_request" ("id");
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.table_constraints
+        WHERE constraint_type = 'FOREIGN KEY'
+        AND table_name = 'space_history_image'
+        AND constraint_name = 'space_history_image_fkey_space_history_id'
+    ) THEN
+        ALTER TABLE space_history_image
+        ADD CONSTRAINT space_history_image_fkey_space_history_id
+        FOREIGN KEY ("space_history_id") REFERENCES "space_history" ("id");
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.table_constraints
+        WHERE constraint_type = 'FOREIGN KEY'
+        AND table_name = 'space_history_task'
+        AND constraint_name = 'space_history_task_fkey_space_history_id'
+    ) THEN
+        ALTER TABLE space_history_task
+        ADD CONSTRAINT space_history_task_fkey_space_history_id
+        FOREIGN KEY ("space_history_id") REFERENCES "space_history" ("id");
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.table_constraints
+        WHERE constraint_type = 'FOREIGN KEY'
+        AND table_name = 'space_history_task'
+        AND constraint_name = 'space_history_task_fkey_space_id'
+    ) THEN
+        ALTER TABLE space_history_task
+        ADD CONSTRAINT space_history_task_fkey_space_id
+        FOREIGN KEY ("space_id") REFERENCES "space" ("id");
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.table_constraints
+        WHERE constraint_type = 'FOREIGN KEY'
+        AND table_name = 'space_history_task'
+        AND constraint_name = 'space_history_task_fkey_creator_id'
+    ) THEN
+        ALTER TABLE space_history_task
+        ADD CONSTRAINT space_history_task_fkey_creator_id
+        FOREIGN KEY ("creator_id") REFERENCES "user" ("id");
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.table_constraints
+        WHERE constraint_type = 'FOREIGN KEY'
+        AND table_name = 'space_history_task'
+        AND constraint_name = 'space_history_task_fkey_resolver_id'
+    ) THEN
+        ALTER TABLE space_history_task
+        ADD CONSTRAINT space_history_task_fkey_resolver_id
+        FOREIGN KEY ("resolver_id") REFERENCES "user" ("id");
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.table_constraints
+        WHERE constraint_type = 'FOREIGN KEY'
+        AND table_name = 'space_history_task_image'
+        AND constraint_name = 'space_history_task_image_fkey_space_history_task_id'
+    ) THEN
+        ALTER TABLE space_history_task_image
+        ADD CONSTRAINT space_history_task_image_fkey_space_history_task_id
+        FOREIGN KEY ("space_history_task_id") REFERENCES "space_history_task" ("id");
     END IF;
 END $$;
 DO $$

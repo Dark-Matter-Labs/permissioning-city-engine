@@ -167,8 +167,36 @@ CREATE TABLE "space_history" (
   "type" varchar NOT NULL,
   "title" text,
   "details" text,
-  "image" text,
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
+);
+
+CREATE TABLE "space_history_image" (
+  "id" uuid PRIMARY KEY,
+  "space_history_id" uuid NOT NULL,
+  "link" text NOT NULL,
+  "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
+  "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
+);
+
+CREATE TABLE "space_history_task" (
+  "id" uuid PRIMARY KEY,
+  "space_id" uuid NOT NULL,
+  "space_history_id" uuid NOT NULL,
+  "creator_id" uuid NOT NULL,
+  "resolver_id" uuid,
+  "title" text,
+  "details" text,
+  "status" varchar NOT NULL DEFAULT 'pending',
+  "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
+  "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
+);
+
+CREATE TABLE "space_history_task_image" (
+  "id" uuid PRIMARY KEY,
+  "space_history_task_id" uuid NOT NULL,
+  "link" text NOT NULL,
+  "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
+  "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
 );
 
 CREATE TABLE "permission_request" (
@@ -269,6 +297,8 @@ COMMENT ON COLUMN "space_event"."status" IS 'pending, permission_requested, perm
 
 COMMENT ON COLUMN "space_history"."type" IS 'create,update,permissioner_join,permissioner_leave,permission_request,permission_request_resolve,space_event_start,space_event_close,space_event_complete,space_event_complete_with_issue,space_event_complete_with_issue_resolve,space_issue,space_issue_resolve';
 
+COMMENT ON COLUMN "space_history_task"."status" IS 'pending, complete';
+
 COMMENT ON COLUMN "permission_request"."space_event_id" IS 'when space_event_id is null, the permission_request is for the space rule revision';
 
 COMMENT ON COLUMN "permission_request"."space_event_rule_id" IS 'when space_event_rule_id is null, the permission_request is for the space rule revision';
@@ -336,6 +366,18 @@ ALTER TABLE "space_history" ADD FOREIGN KEY ("space_permissioner_id") REFERENCES
 ALTER TABLE "space_history" ADD FOREIGN KEY ("space_event_id") REFERENCES "space_event" ("id");
 
 ALTER TABLE "space_history" ADD FOREIGN KEY ("permission_request_id") REFERENCES "permission_request" ("id");
+
+ALTER TABLE "space_history_image" ADD FOREIGN KEY ("space_history_id") REFERENCES "space_history" ("id");
+
+ALTER TABLE "space_history_task" ADD FOREIGN KEY ("space_history_id") REFERENCES "space_history" ("id");
+
+ALTER TABLE "space_history_task" ADD FOREIGN KEY ("space_id") REFERENCES "space" ("id");
+
+ALTER TABLE "space_history_task" ADD FOREIGN KEY ("creator_id") REFERENCES "user" ("id");
+
+ALTER TABLE "space_history_task" ADD FOREIGN KEY ("resolver_id") REFERENCES "user" ("id");
+
+ALTER TABLE "space_history_task_image" ADD FOREIGN KEY ("space_history_task_id") REFERENCES "space_history_task" ("id");
 
 ALTER TABLE "permission_request" ADD FOREIGN KEY ("user_id") REFERENCES "user" ("id");
 
