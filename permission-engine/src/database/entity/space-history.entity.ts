@@ -15,6 +15,8 @@ import { SpacePermissioner } from './space-permissioner.entity';
 import { SpaceEvent } from './space-event.entity';
 import { PermissionRequest } from './permission-request.entity';
 import { User } from './user.entity';
+import { SpaceHistoryImage } from './space-history-image.entity';
+import { SpaceHistoryTask } from './space-history-task.entity';
 
 @Entity()
 export class SpaceHistory {
@@ -110,9 +112,17 @@ export class SpaceHistory {
   @ApiProperty({ description: 'SpaceHistory description' })
   details: string;
 
-  @Column()
-  @ApiProperty({ description: 'SpaceHistory image' })
-  image: string;
+  @OneToMany(
+    () => SpaceHistoryImage,
+    (spaceHistoryImage) => spaceHistoryImage.spaceHistory,
+  )
+  spaceHistoryImages: SpaceHistoryImage[];
+
+  @OneToMany(
+    () => SpaceHistoryTask,
+    (spaceHistoryTask) => spaceHistoryTask.spaceHistory,
+  )
+  spaceHistoryTasks: SpaceHistoryTask[];
 
   @CreateDateColumn()
   @ApiProperty({ description: 'Created timestamp' })

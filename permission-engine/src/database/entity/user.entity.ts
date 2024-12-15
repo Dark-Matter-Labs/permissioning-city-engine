@@ -16,6 +16,7 @@ import { Rule } from './rule.entity';
 import { SpacePermissioner } from './space-permissioner.entity';
 import { Topic } from './topic.entity';
 import { SpaceHistory } from './space-history.entity';
+import { SpaceHistoryTask } from './space-history-task.entity';
 
 @Entity()
 export class User {
@@ -110,6 +111,18 @@ export class User {
     (spacePermissioner) => spacePermissioner.inviter,
   )
   spacePermissionerInviters: SpacePermissioner[];
+
+  @OneToMany(
+    () => SpaceHistoryTask,
+    (spaceHistoryTask) => spaceHistoryTask.creator,
+  )
+  spaceHistoryTaskCreators: SpaceHistoryTask[];
+
+  @OneToMany(
+    () => SpaceHistoryTask,
+    (spaceHistoryTask) => spaceHistoryTask.resolver,
+  )
+  spaceHistoryTaskResolvers: SpaceHistoryTask[];
 
   @OneToMany(() => SpaceHistory, (spacehistory) => spacehistory.logger)
   spaceHistories: SpaceHistory[];
