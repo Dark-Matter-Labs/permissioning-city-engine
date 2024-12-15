@@ -6,7 +6,7 @@ export class ResolveSpaceHistoryTaskDto {
   @IsArray()
   @ArrayMaxSize(5)
   @ApiPropertyOptional({
-    description: 'SpaceHistory image in jpeg|jpg|png|gif|heic|webp',
+    description: 'SpaceHistoryTask image in jpeg|jpg|png|gif|heic|webp',
     type: 'array',
     items: {
       type: 'string',

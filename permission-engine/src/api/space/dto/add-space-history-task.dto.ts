@@ -11,7 +11,7 @@ export class AddSpaceHistoryTaskDto {
   @IsOptional()
   @IsString()
   @ApiPropertyOptional({
-    description: 'SpaceHistory title',
+    description: 'SpaceHistoryTask title',
     nullable: true,
   })
   title?: string;
@@ -19,7 +19,7 @@ export class AddSpaceHistoryTaskDto {
   @IsNotEmpty()
   @IsString()
   @ApiProperty({
-    description: 'SpaceHistory details',
+    description: 'SpaceHistoryTask details',
     required: true,
   })
   details: string;
@@ -28,7 +28,7 @@ export class AddSpaceHistoryTaskDto {
   @IsArray()
   @ArrayMaxSize(5)
   @ApiPropertyOptional({
-    description: 'SpaceHistory image in jpeg|jpg|png|gif|heic|webp',
+    description: 'SpaceHistoryTask image in jpeg|jpg|png|gif|heic|webp',
     type: 'array',
     items: {
       type: 'string',
