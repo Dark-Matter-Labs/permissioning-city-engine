@@ -9,6 +9,7 @@ import { Space } from '../../database/entity/space.entity';
 import {
   CreateSpaceDto,
   FindAllSpaceDto,
+  MarkIssueResolveVolunteerFullDto,
   ReportSpaceIssueDto,
   ResolveSpaceIssueDto,
   UpdateSpaceDto,
@@ -500,7 +501,6 @@ export class SpaceService {
     spaceId: string,
     loggerId: string,
     reportSpaceIssueDto: ReportSpaceIssueDto,
-    image?: string | null,
   ) {
     const space = await this.findOneById(spaceId);
 
@@ -508,19 +508,14 @@ export class SpaceService {
       throw new BadRequestException();
     }
 
+    console.log('reportSpaceIssueDto', reportSpaceIssueDto);
     const dto: CreateSpaceHistoryDto = {
-      title: reportSpaceIssueDto.title,
-      details: reportSpaceIssueDto.details,
-      isPublic: reportSpaceIssueDto.isPublic,
+      ...reportSpaceIssueDto,
       spaceId,
       loggerId,
       ruleId: space.ruleId,
       type: SpaceHistoryType.spaceIssue,
     };
-
-    if (image != null) {
-      dto.image = image;
-    }
 
     return await this.spaceHistoryService.create(dto);
   }
@@ -557,6 +552,42 @@ export class SpaceService {
       loggerId,
       ruleId: space.ruleId,
       type: SpaceHistoryType.spaceIssueResolveVolunteer,
+      isPublic,
+    });
+  }
+
+  async markIssueResolveVolunteerFull(
+    spaceId: string,
+    loggerId: string,
+    markIssueResolveVolunteerFullDto: MarkIssueResolveVolunteerFullDto,
+  ) {
+    const space = await this.findOneById(spaceId);
+
+    if (!space) {
+      throw new BadRequestException();
+    }
+
+    const spaceHistory = await this.spaceHistoryService.findOneById(
+      markIssueResolveVolunteerFullDto.spaceHistoryId,
+    );
+
+    if (
+      [
+        SpaceHistoryType.spaceIssue,
+        SpaceHistoryType.spaceEventCompleteWithIssue,
+      ].includes(spaceHistory.type) === false
+    ) {
+      throw new BadRequestException(`Cannot volunteer to resolve a non issue`);
+    }
+
+    const { isPublic } = spaceHistory;
+
+    return await this.spaceHistoryService.create({
+      ...markIssueResolveVolunteerFullDto,
+      spaceId,
+      loggerId,
+      ruleId: space.ruleId,
+      type: SpaceHistoryType.spaceIssueResolveVolunteerFull,
       isPublic,
     });
   }

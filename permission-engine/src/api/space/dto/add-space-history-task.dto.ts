@@ -7,7 +7,7 @@ import {
   IsString,
 } from 'class-validator';
 
-export class ReportSpaceIssueDto {
+export class AddSpaceHistoryTaskDto {
   @IsOptional()
   @IsString()
   @ApiPropertyOptional({
@@ -23,14 +23,6 @@ export class ReportSpaceIssueDto {
     required: true,
   })
   details: string;
-
-  @IsNotEmpty()
-  @ApiProperty({
-    description: 'SpaceHistory is public or not',
-    type: 'boolean',
-    required: true,
-  })
-  isPublic: boolean;
 
   @IsOptional()
   @IsArray()

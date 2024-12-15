@@ -28,6 +28,12 @@ import { TopicService } from '../topic/topic.service';
 import { Topic } from 'src/database/entity/topic.entity';
 import { SpaceHistory } from 'src/database/entity/space-history.entity';
 import { SpaceHistoryService } from '../space-history/space-history.service';
+import { SpaceHistoryImage } from 'src/database/entity/space-history-image.entity';
+import { SpaceHistoryTaskImage } from 'src/database/entity/space-history-task-image.entity';
+import { SpaceHistoryTask } from 'src/database/entity/space-history-task.entity';
+import { SpaceHistoryImageService } from '../space-history-image/space-history-image.service';
+import { SpaceHistoryTaskImageService } from '../space-history-task-image/space-history-task-image.service';
+import { SpaceHistoryTaskService } from '../space-history-task/space-history-task.service';
 
 @Module({
   imports: [
@@ -39,6 +45,9 @@ import { SpaceHistoryService } from '../space-history/space-history.service';
       SpaceEquipment,
       SpaceTopic,
       SpaceHistory,
+      SpaceHistoryImage,
+      SpaceHistoryTask,
+      SpaceHistoryTaskImage,
       User,
       UserNotification,
       Rule,
@@ -57,6 +66,9 @@ import { SpaceHistoryService } from '../space-history/space-history.service';
     SpaceEquipmentService,
     SpaceTopicService,
     SpaceHistoryService,
+    SpaceHistoryImageService,
+    SpaceHistoryTaskService,
+    SpaceHistoryTaskImageService,
     UserService,
     UserNotificationService,
     RuleService,

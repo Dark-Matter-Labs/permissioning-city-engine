@@ -123,7 +123,7 @@ export class SpaceHistoryController {
       isPublic = true;
     }
 
-    return this.spaceHistoryService.findAllUnResolvedIssue({
+    return this.spaceHistoryService.findAllUnresolvedIssue({
       ...query,
       isPublic,
     });

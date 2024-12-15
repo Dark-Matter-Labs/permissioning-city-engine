@@ -19,9 +19,11 @@ import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateSpaceDto } from './dto/create-space.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import {
+  AddSpaceHistoryTaskDto,
   FindAllMatchedRuleDto,
   FindAllSpaceDto,
   FindSpaceAvailabilityDto,
+  MarkIssueResolveVolunteerFullDto,
   ReportSpaceIssueDto,
   ResolveSpaceIssueDto,
   SetSpaceImageDto,
@@ -37,6 +39,7 @@ import {
   RuleBlockType,
   SpaceAvailability,
   SpaceEventStatus,
+  SpaceHistoryTaskStatus,
   SpaceHistoryType,
   SpaceImageType,
   UserNotificationTarget,
@@ -54,6 +57,9 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import abbrTimezone from 'dayjs-abbr-timezone';
+import { SpaceHistoryImageService } from '../space-history-image/space-history-image.service';
+import { SpaceHistoryTaskService } from '../space-history-task/space-history-task.service';
+import { SpaceHistoryTaskImageService } from '../space-history-task-image/space-history-task-image.service';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -72,6 +78,9 @@ export class SpaceController {
     private readonly spaceImageService: SpaceImageService,
     private readonly spaceHistoryService: SpaceHistoryService,
     private readonly spacePermissionerService: SpacePermissionerService,
+    private readonly spaceHistoryImageService: SpaceHistoryImageService,
+    private readonly spaceHistoryTaskService: SpaceHistoryTaskService,
+    private readonly spaceHistoryTaskImageService: SpaceHistoryTaskImageService,
     private readonly logger: Logger,
   ) {}
 
@@ -247,7 +256,7 @@ export class SpaceController {
     const user = await this.userService.findOneByEmail(req.user.email);
     const space = await this.spaceService.create(user.id, createSpaceDto);
 
-    if (images.length > 5) {
+    if (images?.length > 5) {
       throw new BadRequestException(
         `Cannot have more than ${maxImageCount} images`,
       );
@@ -429,7 +438,7 @@ export class SpaceController {
     }
     const maxImageCount = 5;
 
-    if (images.length > 1) {
+    if (images?.length > 1) {
       throw new BadRequestException('Only 1 image is allowed');
     }
 
@@ -606,7 +615,7 @@ export class SpaceController {
   @UseGuards(JwtAuthGuard)
   @ApiBody({ type: ReportSpaceIssueDto })
   @UseInterceptors(
-    FileFieldsInterceptor([{ name: 'image', maxCount: 1 }], {
+    FileFieldsInterceptor([{ name: 'images', maxCount: 5 }], {
       fileFilter(req, file, cb) {
         if (
           [
@@ -631,16 +640,16 @@ export class SpaceController {
     @Req() req,
     @Param('id') id: string,
     @Body() reportSpaceIssueDto: ReportSpaceIssueDto,
-    @UploadedFiles() uploadedFiles: { image: Express.MulterS3.File[] },
+    @UploadedFiles() uploadedFiles: { images: Express.MulterS3.File[] },
   ) {
     let images: Express.MulterS3.File[] = [];
 
     if (uploadedFiles) {
-      images = uploadedFiles.image;
+      images = uploadedFiles.images;
     }
 
-    if (images.length > 1) {
-      throw new BadRequestException('Only 1 image is allowed');
+    if (images?.length > 5) {
+      throw new BadRequestException('Only 5 image is allowed');
     }
 
     const user = await this.userService.findOneByEmail(req.user.email);
@@ -651,12 +660,20 @@ export class SpaceController {
         { isActive: true },
         { isPagination: false },
       );
-    const result = await this.spaceService.reportIssue(
-      id,
-      user.id,
-      reportSpaceIssueDto,
-      images[0].location,
-    );
+    const spaceHistory = await this.spaceService.reportIssue(id, user.id, {
+      ...reportSpaceIssueDto,
+      isPublic: reportSpaceIssueDto.isPublic.toString() === 'true',
+    });
+
+    if (images != null) {
+      images.map(async (s3File) => {
+        await this.spaceHistoryImageService.create({
+          id: s3File.key.split('_')[0],
+          spaceHistoryId: spaceHistory.id,
+          link: s3File.location,
+        });
+      });
+    }
 
     spacePermissioners?.data?.forEach(async (spacePermissioner) => {
       try {
@@ -667,7 +684,7 @@ export class SpaceController {
           templateName: UserNotificationTemplateName.spaceIssueRaised,
           params: {
             spaceId: space.id,
-            spaceHistory: result,
+            spaceHistory,
           },
         });
       } catch (error) {
@@ -675,17 +692,50 @@ export class SpaceController {
       }
     });
 
-    return result;
+    return spaceHistory;
   }
 
   @Post(':id/issue/volunteer')
   @UseGuards(JwtAuthGuard)
+  @ApiBody({ type: ReportSpaceIssueDto })
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: 'images', maxCount: 5 }], {
+      fileFilter(req, file, cb) {
+        if (
+          [
+            'image/jpeg',
+            'image/jpg',
+            'image/png',
+            'image/gif',
+            'image/heic',
+            'image/webp',
+          ].includes(file.mimetype) === false
+        ) {
+          cb(new BadRequestException('file must be an image'), false);
+        } else {
+          cb(null, true);
+        }
+      },
+    }),
+  )
+  @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Volunteer to resolve a space issue' })
   async volunteerIssueResolve(
     @Req() req,
     @Param('id') id: string,
     @Body() volunteerSpaceIssueResolveDto: VolunteerSpaceIssueResolveDto,
+    @UploadedFiles() uploadedFiles: { images: Express.MulterS3.File[] },
   ) {
+    let images: Express.MulterS3.File[] = [];
+
+    if (uploadedFiles) {
+      images = uploadedFiles.images;
+    }
+
+    if (images?.length > 5) {
+      throw new BadRequestException('Only 5 image is allowed');
+    }
+
     const user = await this.userService.findOneByEmail(req.user.email);
     const space = await this.spaceService.findOneById(id);
     const spacePermissioners =
@@ -695,12 +745,29 @@ export class SpaceController {
         { isPagination: false },
       );
 
-    const result = await this.spaceService.volunteerIssueResolve(
+    if (
+      spacePermissioners.data?.map((item) => item.userId).includes(user.id) ===
+      false
+    ) {
+      throw new ForbiddenException();
+    }
+
+    const spaceHistory = await this.spaceService.volunteerIssueResolve(
       id,
       user.id,
       volunteerSpaceIssueResolveDto,
     );
 
+    if (images != null) {
+      images.map(async (s3File) => {
+        await this.spaceHistoryImageService.create({
+          id: s3File.key.split('_')[0],
+          spaceHistoryId: spaceHistory.id,
+          link: s3File.location,
+        });
+      });
+    }
+
     spacePermissioners?.data?.forEach(async (spacePermissioner) => {
       try {
         await this.userNotificationService.create({
@@ -710,7 +777,7 @@ export class SpaceController {
           templateName: UserNotificationTemplateName.spaceIssueResolved,
           params: {
             spaceId: space.id,
-            spaceHistory: result,
+            spaceHistory: spaceHistory,
           },
         });
       } catch (error) {
@@ -718,16 +785,17 @@ export class SpaceController {
       }
     });
 
-    return result;
+    return spaceHistory;
   }
 
-  @Post(':id/issue/resolve')
+  @Post(':id/issue/volunteer/full')
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Resolve a space issue' })
-  async resolveIssue(
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Mark space issue has enough volunteer' })
+  async markIssueResolveVolunteerFull(
     @Req() req,
     @Param('id') id: string,
-    @Body() resolveSpaceIssueDto: ResolveSpaceIssueDto,
+    @Body() markIssueResolveVolunteerFullDto: MarkIssueResolveVolunteerFullDto,
   ) {
     const user = await this.userService.findOneByEmail(req.user.email);
     const space = await this.spaceService.findOneById(id);
@@ -738,10 +806,17 @@ export class SpaceController {
         { isPagination: false },
       );
 
-    const result = await this.spaceService.resolveIssue(
+    if (
+      spacePermissioners.data?.map((item) => item.userId).includes(user.id) ===
+      false
+    ) {
+      throw new ForbiddenException();
+    }
+
+    const spaceHistory = await this.spaceService.markIssueResolveVolunteerFull(
       id,
       user.id,
-      resolveSpaceIssueDto,
+      markIssueResolveVolunteerFullDto,
     );
 
     spacePermissioners?.data?.forEach(async (spacePermissioner) => {
@@ -753,7 +828,7 @@ export class SpaceController {
           templateName: UserNotificationTemplateName.spaceIssueResolved,
           params: {
             spaceId: space.id,
-            spaceHistory: result,
+            spaceHistory: spaceHistory,
           },
         });
       } catch (error) {
@@ -761,6 +836,304 @@ export class SpaceController {
       }
     });
 
-    return result;
+    return spaceHistory;
+  }
+
+  @Post(':id/issue/resolve')
+  @UseGuards(JwtAuthGuard)
+  @ApiBody({ type: ReportSpaceIssueDto })
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: 'images', maxCount: 5 }], {
+      fileFilter(req, file, cb) {
+        if (
+          [
+            'image/jpeg',
+            'image/jpg',
+            'image/png',
+            'image/gif',
+            'image/heic',
+            'image/webp',
+          ].includes(file.mimetype) === false
+        ) {
+          cb(new BadRequestException('file must be an image'), false);
+        } else {
+          cb(null, true);
+        }
+      },
+    }),
+  )
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Resolve a space issue' })
+  async resolveIssue(
+    @Req() req,
+    @Param('id') id: string,
+    @Body() resolveSpaceIssueDto: ResolveSpaceIssueDto,
+    @UploadedFiles() uploadedFiles: { images: Express.MulterS3.File[] },
+  ) {
+    let images: Express.MulterS3.File[] = [];
+
+    if (uploadedFiles) {
+      images = uploadedFiles.images;
+    }
+
+    if (images?.length > 5) {
+      throw new BadRequestException('Only 5 image is allowed');
+    }
+
+    const user = await this.userService.findOneByEmail(req.user.email);
+    const space = await this.spaceService.findOneById(id);
+    const spacePermissioners =
+      await this.spacePermissionerService.findAllBySpaceId(
+        id,
+        { isActive: true },
+        { isPagination: false },
+      );
+
+    if (
+      spacePermissioners.data?.map((item) => item.userId).includes(user.id) ===
+      false
+    ) {
+      throw new ForbiddenException();
+    }
+
+    const spaceHistory = await this.spaceService.resolveIssue(
+      id,
+      user.id,
+      resolveSpaceIssueDto,
+    );
+
+    if (images != null) {
+      images.map(async (s3File) => {
+        await this.spaceHistoryImageService.create({
+          id: s3File.key.split('_')[0],
+          spaceHistoryId: spaceHistory.id,
+          link: s3File.location,
+        });
+      });
+    }
+
+    spacePermissioners?.data?.forEach(async (spacePermissioner) => {
+      try {
+        await this.userNotificationService.create({
+          userId: spacePermissioner.userId,
+          target: UserNotificationTarget.permissioner,
+          type: UserNotificationType.external,
+          templateName: UserNotificationTemplateName.spaceIssueResolved,
+          params: {
+            spaceId: space.id,
+            spaceHistory: spaceHistory,
+          },
+        });
+      } catch (error) {
+        this.logger.error(`Failed to notify user`, error);
+      }
+    });
+
+    return spaceHistory;
+  }
+
+  @Post(':id/issue/:spaceHistoryId/task')
+  @UseGuards(JwtAuthGuard)
+  @ApiBody({ type: AddSpaceHistoryTaskDto })
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: 'images', maxCount: 5 }], {
+      fileFilter(req, file, cb) {
+        if (
+          [
+            'image/jpeg',
+            'image/jpg',
+            'image/png',
+            'image/gif',
+            'image/heic',
+            'image/webp',
+          ].includes(file.mimetype) === false
+        ) {
+          cb(new BadRequestException('file must be an image'), false);
+        } else {
+          cb(null, true);
+        }
+      },
+    }),
+  )
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Add a task for a space issue' })
+  async addSpaceHistoryTask(
+    @Req() req,
+    @Param('id') id: string,
+    @Param('spaceHistoryId') spaceHistoryId: string,
+    @Body() addSpaceHistoryTaskDto: AddSpaceHistoryTaskDto,
+    @UploadedFiles() uploadedFiles: { images: Express.MulterS3.File[] },
+  ) {
+    let images: Express.MulterS3.File[] = [];
+
+    if (uploadedFiles) {
+      images = uploadedFiles.images;
+    }
+
+    if (images?.length > 5) {
+      throw new BadRequestException('Only 5 image is allowed');
+    }
+
+    const user = await this.userService.findOneByEmail(req.user.email);
+    const space = await this.spaceService.findOneById(id);
+    const spacePermissioners =
+      await this.spacePermissionerService.findAllBySpaceId(
+        id,
+        { isActive: true },
+        { isPagination: false },
+      );
+
+    if (
+      spacePermissioners.data?.map((item) => item.userId).includes(user.id) ===
+      false
+    ) {
+      throw new ForbiddenException();
+    }
+
+    const { title, details } = addSpaceHistoryTaskDto;
+    const spaceHistoryTask = await this.spaceHistoryTaskService.create({
+      spaceId: id,
+      spaceHistoryId,
+      creatorId: user.id,
+      title,
+      details,
+    });
+
+    if (images != null) {
+      images.map(async (s3File) => {
+        await this.spaceHistoryTaskImageService.create({
+          id: s3File.key.split('_')[0],
+          spaceHistoryTaskId: spaceHistoryTask.id,
+          link: s3File.location,
+        });
+      });
+    }
+
+    spacePermissioners?.data?.forEach(async (spacePermissioner) => {
+      try {
+        await this.userNotificationService.create({
+          userId: spacePermissioner.userId,
+          target: UserNotificationTarget.permissioner,
+          type: UserNotificationType.external,
+          templateName: UserNotificationTemplateName.spaceIssueRaised,
+          params: {
+            spaceId: space.id,
+            spaceHistoryTask,
+          },
+        });
+      } catch (error) {
+        this.logger.error(`Failed to notify user`, error);
+      }
+    });
+
+    return spaceHistoryTask;
+  }
+
+  @Post(':id/issue/:spaceHistoryId/task/:spaceHistoryTaskId/resolve')
+  @UseGuards(JwtAuthGuard)
+  @ApiBody({ type: AddSpaceHistoryTaskDto })
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: 'images', maxCount: 5 }], {
+      fileFilter(req, file, cb) {
+        if (
+          [
+            'image/jpeg',
+            'image/jpg',
+            'image/png',
+            'image/gif',
+            'image/heic',
+            'image/webp',
+          ].includes(file.mimetype) === false
+        ) {
+          cb(new BadRequestException('file must be an image'), false);
+        } else {
+          cb(null, true);
+        }
+      },
+    }),
+  )
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Resolve a space issue task' })
+  async resolveSpaceHistoryTask(
+    @Req() req,
+    @Param('id') id: string,
+    @Param('spaceHistoryId') spaceHistoryId: string,
+    @Param('spaceHistoryTaskId') spaceHistoryTaskId: string,
+    @UploadedFiles() uploadedFiles: { images: Express.MulterS3.File[] },
+  ) {
+    let images: Express.MulterS3.File[] = [];
+
+    if (uploadedFiles) {
+      images = uploadedFiles.images;
+    }
+
+    if (images?.length > 5) {
+      throw new BadRequestException('Only 5 image is allowed');
+    }
+
+    const user = await this.userService.findOneByEmail(req.user.email);
+    const space = await this.spaceService.findOneById(id);
+    const spacePermissioners =
+      await this.spacePermissionerService.findAllBySpaceId(
+        id,
+        { isActive: true },
+        { isPagination: false },
+      );
+
+    if (
+      spacePermissioners.data?.map((item) => item.userId).includes(user.id) ===
+      false
+    ) {
+      throw new ForbiddenException();
+    }
+
+    const spaceHistoryTask =
+      await this.spaceHistoryTaskService.findOneById(spaceHistoryTaskId);
+
+    if (spaceHistoryId !== spaceHistoryTask.spaceHistoryId) {
+      throw new BadRequestException();
+    }
+
+    if (spaceHistoryTask.status !== SpaceHistoryTaskStatus.pending) {
+      throw new BadRequestException(
+        `Cannot resolve ${spaceHistoryTask.status} task`,
+      );
+    }
+
+    const updateResult = await this.spaceHistoryTaskService.update(
+      spaceHistoryTaskId,
+      {
+        resolverId: user.id,
+      },
+    );
+
+    if (images != null) {
+      images.map(async (s3File) => {
+        await this.spaceHistoryTaskImageService.create({
+          id: s3File.key.split('_')[0],
+          spaceHistoryTaskId: spaceHistoryTask.id,
+          link: s3File.location,
+        });
+      });
+    }
+
+    spacePermissioners?.data?.forEach(async (spacePermissioner) => {
+      try {
+        await this.userNotificationService.create({
+          userId: spacePermissioner.userId,
+          target: UserNotificationTarget.permissioner,
+          type: UserNotificationType.external,
+          templateName: UserNotificationTemplateName.spaceIssueRaised,
+          params: {
+            spaceId: space.id,
+            spaceHistoryTask,
+          },
+        });
+      } catch (error) {
+        this.logger.error(`Failed to notify user`, error);
+      }
+    });
+
+    return updateResult;
   }
 }

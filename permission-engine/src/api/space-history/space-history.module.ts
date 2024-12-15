@@ -31,11 +31,14 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MulterModule } from '@nestjs/platform-express';
 import multerS3 from 'multer-s3';
 import { v4 as uuidv4 } from 'uuid';
+import { SpaceHistoryImage } from 'src/database/entity/space-history-image.entity';
+import { SpaceHistoryImageService } from '../space-history-image/space-history-image.service';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       SpaceHistory,
+      SpaceHistoryImage,
       Space,
       SpaceTopic,
       User,
@@ -72,6 +75,7 @@ import { v4 as uuidv4 } from 'uuid';
   providers: [
     Logger,
     SpaceHistoryService,
+    SpaceHistoryImageService,
     SpaceService,
     SpaceTopicService,
     UserService,

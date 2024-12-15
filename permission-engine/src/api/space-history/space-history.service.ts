@@ -47,6 +47,8 @@ export class SpaceHistoryService {
     let queryOption: FindManyOptions<SpaceHistory> = {
       where,
       relations: [
+        'spaceHistoryImages',
+        'spaceHistoryTasks',
         'space',
         'rule',
         'logger',
@@ -60,6 +62,9 @@ export class SpaceHistoryService {
         ...queryOption,
         skip: (page - 1) * limit,
         take: limit,
+        order: {
+          createdAt: 'DESC',
+        },
       };
     }
 
@@ -122,14 +127,20 @@ export class SpaceHistoryService {
           shp.type,
           shp.title,
           shp.details,
-          shp.image,
           shp.created_at,
-          ARRAY_AGG(shc)
+          ARRAY_AGG(shc),
+          ARRAY_AGG(shi),
+          ARRAY_AGG(sht)
         ) FROM space_history shp
         LEFT JOIN space_history shc
         ON shp.id = shc.space_history_id
+        LEFT JOIN space_history_image shi
+        ON shp.id = shi.space_history_id
+        LEFT JOIN space_history_task sht
+        ON shp.id = sht.space_history_id
         WHERE ${where.join(' AND ')}
-        GROUP BY shp.id
+        GROUP BY shp.id, shp.created_at
+        ORDER BY shp.created_at DESC
       ),
       paginated_data AS (
         SELECT * FROM filtered_data
@@ -150,7 +161,10 @@ export class SpaceHistoryService {
 
     if (data != null) {
       result = data.map((item) => {
-        const children = item.row.f15;
+        const children = item.row.f14;
+        const images = item.row.f15;
+        const tasks = item.row.f16;
+
         return {
           id: item.row.f1,
           spaceId: item.row.f2,
@@ -164,9 +178,10 @@ export class SpaceHistoryService {
           type: item.row.f10,
           title: item.row.f11,
           details: item.row.f12,
-          image: item.row.f13,
-          createdAt: item.row.f14,
+          createdAt: item.row.f13,
           children: children[0] === null ? [] : children,
+          images: images[0] === null ? [] : images,
+          tasks: tasks[0] === null ? [] : tasks,
         };
       });
     }
@@ -177,7 +192,7 @@ export class SpaceHistoryService {
     };
   }
 
-  async findAllUnResolvedIssue(
+  async findAllUnresolvedIssue(
     findAllIssueSpaceHistoryDto: FindAllIssueSpaceHistoryDto,
   ) {
     const { page, limit, spaceId, spaceEventId, isPublic } =
@@ -232,15 +247,21 @@ export class SpaceHistoryService {
           shp.type,
           shp.title,
           shp.details,
-          shp.image,
           shp.created_at,
-          ARRAY_AGG(shc)
+          ARRAY_AGG(shc),
+          ARRAY_AGG(shi),
+          ARRAY_AGG(sht)
         ) FROM space_history shp
         LEFT JOIN space_history shc
         ON shp.id = shc.space_history_id
+        LEFT JOIN space_history_image shi
+        ON shp.id = shi.space_history_id
+        LEFT JOIN space_history_task sht
+        ON shp.id = sht.space_history_id
         WHERE ${where.join(' AND ')}
-        GROUP BY shp.id
+        GROUP BY shp.id, shp.created_at
         HAVING COUNT(CASE WHEN shc.type IS NOT NULL AND shc.type = $3 THEN 1 END) = 0
+        ORDER BY shp.created_at DESC
       ),
       paginated_data AS (
         SELECT * FROM filtered_data
@@ -261,7 +282,10 @@ export class SpaceHistoryService {
 
     if (data != null) {
       result = data.map((item) => {
-        const children = item.row.f15;
+        const children = item.row.f14;
+        const images = item.row.f15;
+        const tasks = item.row.f16;
+
         return {
           id: item.row.f1,
           spaceId: item.row.f2,
@@ -275,9 +299,10 @@ export class SpaceHistoryService {
           type: item.row.f10,
           title: item.row.f11,
           details: item.row.f12,
-          image: item.row.f13,
-          createdAt: item.row.f14,
+          createdAt: item.row.f13,
           children: children[0] === null ? [] : children,
+          images: images[0] === null ? [] : images,
+          tasks: tasks[0] === null ? [] : tasks,
         };
       });
     }
