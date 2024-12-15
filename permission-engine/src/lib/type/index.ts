@@ -700,6 +700,11 @@ export enum SpaceHistoryType {
   spaceIssueResolve = 'space_issue_resolve',
 }
 
+export enum SpaceHistoryTaskStatus {
+  pending = 'pending',
+  resolved = 'resolved',
+}
+
 export enum SpaceImageType {
   list = 'list',
   thumbnail = 'thumbnail',
