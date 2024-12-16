@@ -23,8 +23,7 @@ export class CreateRuleBlockDto {
 
   @IsString()
   @ApiProperty({
-    description:
-      'RuleBlock type: {space|space_event}:{general|consent_method|access|max_attendee|max_noise_level|availability|availability_unit|availability_buffer|pre_permission_check|post_event_check|access|require_equipment|expected_attendee_count|exception|benefit|risk|self_risk_assesment|insurance|noise_level|pre_permission_check_answer}',
+    description: `RuleBlock type: ${Object.values(RuleBlockType).join(' | ')}`,
     required: true,
   })
   type: RuleBlockType;
