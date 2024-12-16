@@ -66,6 +66,10 @@ export class Rule {
   @Column({ default: true })
   isActive: boolean;
 
+  @Column()
+  @ApiProperty({ description: 'Rule details' })
+  details: string;
+
   @CreateDateColumn()
   @ApiProperty({ description: 'Created timestamp' })
   createdAt: Date;

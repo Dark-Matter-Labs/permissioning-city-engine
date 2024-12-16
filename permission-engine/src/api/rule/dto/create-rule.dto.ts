@@ -32,6 +32,14 @@ export class CreateRuleDto {
   target: RuleTarget;
 
   @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({
+    description: 'Rule details',
+    nullable: true,
+  })
+  details?: string;
+
+  @IsOptional()
   @IsUUID('4', { each: true })
   @IsArray()
   @ArrayMinSize(0)

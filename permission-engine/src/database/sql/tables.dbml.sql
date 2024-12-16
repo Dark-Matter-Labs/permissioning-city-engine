@@ -137,6 +137,7 @@ CREATE TABLE "rule" (
   "target" varchar NOT NULL,
   "parent_rule_id" uuid,
   "is_active" bool NOT NULL DEFAULT true,
+  "details" text,
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
   "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)
 );

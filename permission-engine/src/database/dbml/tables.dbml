@@ -157,6 +157,7 @@ Table rule {
   target varchar [not null]
   parent_rule_id uuid
   is_active bool [not null, default: true]
+  details text
   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
   updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
 }

@@ -1,4 +1,4 @@
-import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
+import { ApiHideProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   ArrayMaxSize,
   ArrayMinSize,
@@ -13,15 +13,23 @@ export class UpdateRuleDto {
   @IsOptional()
   @IsString()
   @MaxLength(100)
-  @ApiProperty({ description: 'Rule name', required: true })
+  @ApiPropertyOptional({ description: 'Rule name', required: true })
   name?: string;
+
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({
+    description: 'RuleBlock details',
+    nullable: true,
+  })
+  details?: string;
 
   @IsOptional()
   @IsUUID('4', { each: true })
   @IsArray()
   @ArrayMinSize(1)
   @ArrayMaxSize(100)
-  @ApiProperty({ description: 'Array of ruleBlockIds', required: true })
+  @ApiPropertyOptional({ description: 'Array of ruleBlockIds', required: true })
   ruleBlockIds?: string[];
 
   @IsOptional()
