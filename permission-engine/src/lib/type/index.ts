@@ -256,6 +256,11 @@ export enum RuleBlockType {
    * content: {number}{d|h|m}
    */
   spaceCancelDeadline = 'space:cancel_deadline',
+  /**
+   * [Required] RuleBlock for community members
+   * content: markdown
+   */
+  spaceJoinCommunity = 'space:join_community',
 
   /**
    * SpaceEvent: rule blocks for event rules
