@@ -224,6 +224,7 @@ CREATE TABLE IF NOT EXISTS "permission_response" (
   "conditions" text[],
   "excitements" text[],
   "worries" text[],
+  "vote_history" jsonb DEFAULT '[]',
   "timeout_at" timestamptz,
   "created_at" timestamptz DEFAULT (CURRENT_TIMESTAMP),
   "updated_at" timestamptz DEFAULT (CURRENT_TIMESTAMP)

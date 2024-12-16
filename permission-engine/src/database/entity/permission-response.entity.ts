@@ -9,7 +9,10 @@ import {
 } from 'typeorm';
 import { PermissionRequest } from './permission-request.entity';
 import { SpacePermissioner } from './space-permissioner.entity';
-import { PermissionResponseStatus } from 'src/lib/type';
+import {
+  PermissionResponseStatus,
+  PermissionResponseVoteHistoryItem,
+} from 'src/lib/type';
 
 @Entity()
 export class PermissionResponse {
@@ -58,6 +61,9 @@ export class PermissionResponse {
   @Column('text', { array: true })
   @ApiProperty({ description: 'PermissionReqponse worries' })
   worries: string[];
+
+  @Column('jsonb', { nullable: true })
+  voteHistory: PermissionResponseVoteHistoryItem[];
 
   @Column()
   @ApiProperty({ description: 'Timeout timestamp' })

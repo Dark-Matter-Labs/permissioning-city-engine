@@ -10,7 +10,10 @@ import { PermissionResponse } from 'src/database/entity/permission-response.enti
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
-import { PermissionResponseStatus } from 'src/lib/type';
+import {
+  PermissionResponseStatus,
+  PermissionResponseVoteDecision,
+} from 'src/lib/type';
 
 @Injectable()
 export class PermissionResponseService {
@@ -58,6 +61,7 @@ export class PermissionResponseService {
           pr.conditions,
           pr.excitements,
           pr.worries,
+          pr.vote_history,
           pr.timeout_at,
           pr.created_at,
           pr.updated_at,
@@ -98,6 +102,7 @@ export class PermissionResponseService {
           conditions: item.conditions,
           excitements: item.excitements,
           worries: item.worries,
+          voteHistory: item.vote_history,
           timeoutAt: item.timeout_at,
           createdAt: item.created_at,
           updatedAt: item.updated_at,
@@ -151,10 +156,20 @@ export class PermissionResponseService {
       status = PermissionResponseStatus.approvedWithCondition;
     }
 
+    const permissionResponse = await this.findOneById(id);
+    const timestamp = new Date();
+
     const updateResult = await this.permissionResponseRepository.update(id, {
       ...approvePermissionResponseDto,
       status,
-      updatedAt: new Date(),
+      voteHistory: [
+        ...(permissionResponse.voteHistory ?? []),
+        {
+          decision: status as unknown as PermissionResponseVoteDecision,
+          timestamp,
+        },
+      ],
+      updatedAt: timestamp,
     });
 
     return {
@@ -168,10 +183,20 @@ export class PermissionResponseService {
     id: string,
     rejectPermissionResponseDto: RejectPermissionResponseDto,
   ): Promise<{ data: { result: boolean } }> {
+    const permissionResponse = await this.findOneById(id);
+    const timestamp = new Date();
+
     const updateResult = await this.permissionResponseRepository.update(id, {
       ...rejectPermissionResponseDto,
       status: PermissionResponseStatus.rejected,
-      updatedAt: new Date(),
+      voteHistory: [
+        ...(permissionResponse.voteHistory ?? []),
+        {
+          decision: PermissionResponseVoteDecision.rejected,
+          timestamp,
+        },
+      ],
+      updatedAt: timestamp,
     });
 
     return {
@@ -198,10 +223,20 @@ export class PermissionResponseService {
     id: string,
     updatePermissionResponseDto: UpdatePermissionResponseDto,
   ): Promise<{ data: { result: boolean } }> {
+    const permissionResponse = await this.findOneById(id);
+    const timestamp = new Date();
+
     const updateResult = await this.permissionResponseRepository.update(id, {
       ...updatePermissionResponseDto,
       status: PermissionResponseStatus.abstention,
-      updatedAt: new Date(),
+      voteHistory: [
+        ...(permissionResponse.voteHistory ?? []),
+        {
+          decision: PermissionResponseVoteDecision.abstention,
+          timestamp,
+        },
+      ],
+      updatedAt: timestamp,
     });
 
     return {

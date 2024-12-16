@@ -266,6 +266,7 @@ Table permission_response {
   conditions text[]
   excitements text[]
   worries text[]
+  vote_history jsonb [default: '[]']
   timeout_at timestamptz
   created_at timestamptz [default: `CURRENT_TIMESTAMP`]
   updated_at timestamptz [default: `CURRENT_TIMESTAMP`]
