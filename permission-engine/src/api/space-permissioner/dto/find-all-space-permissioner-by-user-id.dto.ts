@@ -1,4 +1,4 @@
-import { IsOptional } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { PaginationDto } from 'src/lib/dto';
 
@@ -9,4 +9,12 @@ export class FindAllSpacePermissionerByUserIdDto extends PaginationDto {
     type: Boolean,
   })
   isActive?: boolean;
+
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({
+    description: 'SpacePermissioner spaceId',
+    type: 'string',
+  })
+  spaceId?: string;
 }

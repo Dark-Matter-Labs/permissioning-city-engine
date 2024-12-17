@@ -65,10 +65,11 @@ export class SpacePermissionerService {
     findAllSpacePermissionerByUserIdDto: FindAllSpacePermissionerByUserIdDto,
     option: { isPagination: boolean } = { isPagination: true },
   ): Promise<{ data: SpacePermissioner[]; total: number }> {
-    const { page, limit, isActive } = findAllSpacePermissionerByUserIdDto;
+    const { page, limit, isActive, spaceId } =
+      findAllSpacePermissionerByUserIdDto;
     const { isPagination } = option;
     let queryOption: FindManyOptions<SpacePermissioner> = {
-      where: { userId, isActive },
+      where: { userId, isActive, spaceId },
     };
 
     if (isPagination === true) {
