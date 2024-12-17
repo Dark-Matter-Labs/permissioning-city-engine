@@ -110,6 +110,7 @@ export class RuleBlockService {
       case RuleBlockType.spaceEventRisk:
       case RuleBlockType.spaceEventSelfRiskAssesment:
       case RuleBlockType.spacePrePermissionCheck:
+      case RuleBlockType.spaceJoinCommunity:
         break;
       case RuleBlockType.spaceExcludedTopic:
         await this.validateSpaceExcludedTopic(trimmedContent);
