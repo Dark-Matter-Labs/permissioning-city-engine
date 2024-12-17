@@ -17,10 +17,18 @@ import { SpacePermissioner } from 'src/database/entity/space-permissioner.entity
 import {
   FindAllSpacePermissionerByUserIdDto,
   InviteSpacePermissionerDto,
+  JoinSpacePermissionerDto,
 } from './dto';
 import { UserService } from '../user/user.service';
 import { PaginationDto } from 'src/lib/dto';
 import { SpaceService } from '../space/space.service';
+import { UserNotificationService } from '../user-notification/user-notification.service';
+import {
+  UserNotificationTarget,
+  UserNotificationTemplateName,
+  UserNotificationType,
+} from 'src/lib/type';
+import { Logger } from 'src/lib/logger/logger.service';
 
 @ApiTags('permissioner')
 @Controller('api/v1/permissioner')
@@ -29,6 +37,8 @@ export class SpacePermissionerController {
     private readonly spacePermissionerService: SpacePermissionerService,
     private readonly userService: UserService,
     private readonly spaceService: SpaceService,
+    private readonly userNotificationService: UserNotificationService,
+    private readonly logger: Logger,
   ) {}
 
   @Get('self')
@@ -113,19 +123,49 @@ export class SpacePermissionerController {
   async join(
     @Req() req,
     @Param('spaceId') spaceId: string,
+    @Body() joinSpacePermissionerDto: JoinSpacePermissionerDto,
   ): Promise<SpacePermissioner> {
     const user = await this.userService.findOneByEmail(req.user.email);
-    const existingSpacePermissioner =
-      await this.spacePermissionerService.findOneByUserIdAndSpaceId(
-        user.id,
+    const { message } = joinSpacePermissionerDto;
+    const spacePermissioners =
+      await this.spacePermissionerService.findAllBySpaceId(
         spaceId,
+        { isActive: true },
+        {
+          isPagination: false,
+        },
       );
+
+    const existingSpacePermissioner = spacePermissioners.data.find(
+      (item) => item.userId === user.id,
+    );
+    const otherSpacePermissioners = spacePermissioners.data.filter(
+      (item) => item.userId !== user.id,
+    );
     const isSpacePermissioner =
-      existingSpacePermissioner && existingSpacePermissioner.isActive === true;
+      existingSpacePermissioner && existingSpacePermissioner?.isActive === true;
 
     if (isSpacePermissioner === true) {
       throw new BadRequestException(`Already a permissioner.`);
     }
+
+    otherSpacePermissioners.forEach(async (spacePermissioner) => {
+      try {
+        await this.userNotificationService.create({
+          userId: spacePermissioner.userId,
+          target: UserNotificationTarget.permissioner,
+          type: UserNotificationType.external,
+          templateName: UserNotificationTemplateName.spaceNewCommunityMember,
+          params: {
+            spaceId,
+            message,
+            user,
+          },
+        });
+      } catch (error) {
+        this.logger.error(`Failed to notify user`, error);
+      }
+    });
 
     if (existingSpacePermissioner) {
       await this.spacePermissionerService.update({

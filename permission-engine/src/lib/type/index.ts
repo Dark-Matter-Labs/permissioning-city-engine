@@ -555,6 +555,12 @@ export enum UserNotificationTemplateName {
    */
   spaceUpdated = 'space-updated',
   /**
+   * <Space has new community member>
+   * Inform the space permissioners when a new space permissioner has joined
+   * Show message from the new space permissioner
+   */
+  spaceNewCommunityMember = 'space-new-community-member',
+  /**
    * <Event is created>
    * Inform the event organizer when event is created
    * Tell them what to do next: request for permission
