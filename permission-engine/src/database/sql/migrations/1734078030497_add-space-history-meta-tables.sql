@@ -115,4 +115,3 @@ BEGIN
         FOREIGN KEY ("space_history_task_id") REFERENCES "space_history_task" ("id");
     END IF;
 END $$;
-DO $$
