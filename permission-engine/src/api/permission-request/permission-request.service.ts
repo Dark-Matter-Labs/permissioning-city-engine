@@ -117,6 +117,7 @@ export class PermissionRequestService {
           space_rule_id,
           space_event_rule_id,
           status,
+          resolve_status,
           process_type,
           created_at,
           updated_at
@@ -150,6 +151,7 @@ export class PermissionRequestService {
           spaceRuleId: item.space_rule_id,
           spaceEventRuleId: item.space_event_rule_id,
           status: item.status,
+          resolveStatus: item.resolve_status,
           processType: item.process_type,
           createdAt: item.created_at,
           updatedAt: item.updated_at,
@@ -176,6 +178,7 @@ export class PermissionRequestService {
           preq.space_rule_id,
           preq.space_event_rule_id,
           preq.status,
+          preq.resolve_status,
           preq.created_at,
           preq.updated_at
         FROM permission_request preq, permission_response pres
@@ -213,6 +216,7 @@ export class PermissionRequestService {
           spaceRuleId: item.space_rule_id,
           spaceEventRuleId: item.space_event_rule_id,
           status: item.status,
+          resolveStatus: item.resolve_status,
           createdAt: item.created_at,
           updatedAt: item.updated_at,
         };
@@ -459,7 +463,7 @@ export class PermissionRequestService {
     const { isForce } = option;
 
     if (isForce === true) {
-      dto.status = PermissionRequestStatus.reviewApproved;
+      dto.status = PermissionRequestStatus.reviewRejected;
     }
 
     const updateResult = await this.permissionRequestRepository.update(id, dto);
