@@ -826,6 +826,9 @@ export class PermissionHandlerProcessor {
     const spaceRule = await this.ruleService.findOneById(
       permissionRequest.space.ruleId,
     );
+    const consentQuorum = spaceRule.ruleBlocks.find(
+      (item) => item.type === RuleBlockType.spaceConsentQuorum,
+    );
     const consentMethod = spaceRule.ruleBlocks.find(
       (item) => item.type === RuleBlockType.spaceConsentMethod,
     );
@@ -842,10 +845,18 @@ export class PermissionHandlerProcessor {
           : PermissionRequestTarget.spaceEventRulePreApprove
         : PermissionRequestTarget.spaceRule;
 
-    // Everyone reviewed || timeout reached: can resolve
-    const isResolveReady =
-      permissionResponses.length === reviewedResponses.length ||
-      dayjs(timeoutAt) <= dayjs();
+    // Consent quorum filled || timeout reached: can resolve
+    let isQuorumFilled = false;
+    if (consentQuorum) {
+      isQuorumFilled = new BigNumber(reviewedResponses.length)
+        .div(permissionResponses.length)
+        .times(1000)
+        .gte(new BigNumber(consentQuorum.content));
+    } else {
+      isQuorumFilled = permissionResponses.length === reviewedResponses.length;
+    }
+
+    const isResolveReady = isQuorumFilled || dayjs(timeoutAt) <= dayjs();
 
     if (isResolveReady === true) {
       const timeoutResponses = permissionResponses.filter(
