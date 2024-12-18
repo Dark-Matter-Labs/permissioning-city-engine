@@ -962,9 +962,12 @@ export class PermissionHandlerProcessor {
       let templateName: UserNotificationTemplateName;
 
       reviewedResponses.forEach((permissionResponse) => {
-        conditions = [...conditions, ...permissionResponse.conditions];
-        excitements = [...excitements, ...permissionResponse.excitements];
-        worries = [...worries, ...permissionResponse.worries];
+        conditions = [...conditions, ...(permissionResponse?.conditions ?? [])];
+        excitements = [
+          ...excitements,
+          ...(permissionResponse?.excitements ?? []),
+        ];
+        worries = [...worries, ...(permissionResponse?.worries ?? [])];
       });
 
       // resolve if spaceRule update permission request
@@ -1136,9 +1139,12 @@ export class PermissionHandlerProcessor {
     let worries = [];
 
     permissionResponses.forEach((permissionResponse) => {
-      conditions = [...conditions, ...permissionResponse.conditions];
-      excitements = [...excitements, ...permissionResponse.excitements];
-      worries = [...worries, ...permissionResponse.worries];
+      conditions = [...conditions, ...(permissionResponse?.conditions ?? [])];
+      excitements = [
+        ...excitements,
+        ...(permissionResponse?.excitements ?? []),
+      ];
+      worries = [...worries, ...(permissionResponse?.worries ?? [])];
     });
 
     let templateName: UserNotificationTemplateName;
