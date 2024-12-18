@@ -166,12 +166,15 @@ export class PermissionRequestController {
     const spacePermissioners =
       await this.spacePermissionerService.findAllBySpaceId(spaceEvent.spaceId, {
         isActive: true,
+        page: 1,
+        limit: 2,
       });
 
     try {
       if (
         permissionRequest?.data?.permissionRequest?.id &&
-        spacePermissioners.total === 1
+        spacePermissioners.total === 1 &&
+        spacePermissioners?.data?.[0]?.id === user.id
       ) {
         await this.permissionRequestService
           .updateToReviewApproved(permissionRequest?.data?.permissionRequest.id)
