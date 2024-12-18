@@ -163,13 +163,41 @@ export class PermissionRequestController {
       },
     );
 
+    const spacePermissioners =
+      await this.spacePermissionerService.findAllBySpaceId(spaceEvent.spaceId, {
+        isActive: true,
+      });
+
     try {
-      await this.spaceEventService.updateToPermissionRequested(spaceEventId);
+      if (
+        permissionRequest?.data?.permissionRequest?.id &&
+        spacePermissioners.total === 1
+      ) {
+        await this.permissionRequestService
+          .updateToReviewApproved(permissionRequest?.data?.permissionRequest.id)
+          .catch((error) => {
+            throw new Error(
+              `Failed to update permissionRequest to review_approved: ${error}`,
+            );
+          });
+        await this.spaceEventService
+          .updateToPermissionGranted(spaceEventId)
+          .catch((error) => {
+            throw new Error(
+              `Failed to update spaceEvent to permission_granted: ${error}`,
+            );
+          });
+      } else {
+        await this.spaceEventService
+          .updateToPermissionRequested(spaceEventId)
+          .catch((error) => {
+            throw new Error(
+              `Failed to update SpaceEvent status to permission_requested: ${error}`,
+            );
+          });
+      }
     } catch (error) {
-      this.logger.error(
-        `Failed to update SpaceEvent status to permission_requested`,
-        error,
-      );
+      this.logger.error(error.message, error);
     }
 
     return permissionRequest;
