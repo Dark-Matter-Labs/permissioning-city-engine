@@ -499,8 +499,9 @@ export class SpaceEventService {
     const spaceEvent = await this.spaceEventRepository.findOneBy({ id });
 
     if (
-      [SpaceEventStatus.permissionRequested].includes(spaceEvent.status) ===
-      false
+      [SpaceEventStatus.pending, SpaceEventStatus.permissionRequested].includes(
+        spaceEvent.status,
+      ) === false
     ) {
       throw new ForbiddenException(
         `Cannot reject permission for ${spaceEvent.status} SpaceEvent.`,
