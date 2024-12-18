@@ -8,7 +8,11 @@ import {
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import { Job, Queue } from 'bull';
-import { PermissionHandlerJobData, PermissionProcessType } from 'src/lib/type';
+import {
+  PermissionHandlerJobData,
+  PermissionProcessType,
+  PermissionRequestStatus,
+} from 'src/lib/type';
 import { ConfigService } from '@nestjs/config';
 import { Logger } from '../logger/logger.service';
 import { DataSource } from 'typeorm';
@@ -126,6 +130,14 @@ export class PermissionHandlerService
     });
   }
 
+  async findAssignedPermissionRequests() {
+    return await this.permissionRequestService.findAll({
+      statuses: [PermissionRequestStatus.assigned],
+      page: 1,
+      limit: this.fetchCount,
+    });
+  }
+
   async findPendingPermissionRequests() {
     return await this.permissionRequestService.findAllPending(this.fetchCount);
   }
@@ -166,8 +178,13 @@ export class PermissionHandlerService
     try {
       const timeoutReachedPermissionRequests =
         (await this.findTimeoutReachedPermissionRequests())?.data ?? [];
+      const assignedPermissionRequests =
+        (await this.findAssignedPermissionRequests())?.data ?? [];
 
-      for (const permissionRequest of timeoutReachedPermissionRequests) {
+      for (const permissionRequest of [
+        ...timeoutReachedPermissionRequests,
+        ...assignedPermissionRequests,
+      ]) {
         try {
           await this.addJob({
             permissionProcessType:
