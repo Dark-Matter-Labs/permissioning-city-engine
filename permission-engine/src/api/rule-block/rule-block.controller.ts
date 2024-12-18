@@ -92,7 +92,7 @@ export class RuleBlockController {
   ): Promise<RuleBlock> {
     const { type, content } = createRuleBlockDto;
     const user = await this.userService.findOneByEmail(req.user.email);
-    const { files } = uploadedFiles;
+    const files = uploadedFiles?.files ?? [];
 
     if (files?.length > 1) {
       throw new BadRequestException('Only 1 file is allowed');
