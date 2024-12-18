@@ -166,16 +166,15 @@ export class PermissionHandlerProcessor {
      * Auto Approval Conditions
      * (Topic matches the space && No Exceptions or collisions on SpaceRule) || in SpaceApprovedRule table
      */
-    let isAutoApproval = false;
+    let isAutoApproval = true;
 
     // check spaceApprovedRules
     if (
-      spaceApprovedRules.data.find(
+      !spaceApprovedRules.data.find(
         (item) => item.publicHash === spaceEventRule.publicHash,
       )
     ) {
-      isAutoApproval = true;
-    } else {
+      isAutoApproval = false;
       // check topics
       const { spaceTopics } = space;
       const spaceDesiredTopics = spaceTopics;
@@ -337,40 +336,12 @@ export class PermissionHandlerProcessor {
 
       // check ruleBlock exceptions
       if (
-        !spaceEventRule.ruleBlocks.find(
+        spaceEventRule.ruleBlocks.find(
           (item) => item.type === RuleBlockType.spaceEventException,
-        ) === true
+        )
       ) {
-        isAutoApproval = true;
+        isAutoApproval = false;
       }
-
-      if (isAutoApproval === true) {
-        // save spaceApprovedRule
-        await this.spaceApprovedRuleService
-          .create(
-            {
-              spaceId: permissionRequest.spaceId,
-              ruleId: permissionRequest.spaceEventRuleId,
-              permissionRequestId: permissionRequestId,
-            },
-            { isForce: true },
-          )
-          .catch((error) => {
-            this.logger.error(
-              `Failed to create spaceApprovedRule: ${JSON.stringify({
-                spaceId: permissionRequest.spaceId,
-                ruleId: permissionRequest.spaceEventRuleId,
-                permissionRequestId: permissionRequestId,
-              })}`,
-              error,
-            );
-          });
-      }
-    }
-
-    // TODO. delete wildcard code after workshop
-    if (dayjs('2024-12-01 00:00:00') > dayjs()) {
-      isAutoApproval = true;
     }
 
     if (isAutoApproval === false) {
@@ -470,6 +441,27 @@ export class PermissionHandlerProcessor {
         );
       }
     } else {
+      // save spaceApprovedRule
+      await this.spaceApprovedRuleService
+        .create(
+          {
+            spaceId: permissionRequest.spaceId,
+            ruleId: permissionRequest.spaceEventRuleId,
+            permissionRequestId: permissionRequestId,
+          },
+          { isForce: true },
+        )
+        .catch((error) => {
+          this.logger.error(
+            `Failed to create spaceApprovedRule: ${JSON.stringify({
+              spaceId: permissionRequest.spaceId,
+              ruleId: permissionRequest.spaceEventRuleId,
+              permissionRequestId: permissionRequestId,
+            })}`,
+            error,
+          );
+        });
+
       // auto approve permission request
       await this.permissionRequestService
         .updateToReviewApproved(permissionRequestId)
@@ -885,13 +877,13 @@ export class PermissionHandlerProcessor {
         let result = false;
         switch (operator) {
           case 'over':
-            result = new BigNumber(a).gte(b);
+            result = new BigNumber(a).gte(new BigNumber(b));
             break;
           case 'under':
-            result = new BigNumber(a).lte(b);
+            result = new BigNumber(a).lte(new BigNumber(b));
             break;
           case 'is':
-            result = new BigNumber(a).eq(b);
+            result = new BigNumber(a).eq(new BigNumber(b));
             break;
           default:
             break;
@@ -924,7 +916,11 @@ export class PermissionHandlerProcessor {
       // TODO. add comments to ruleBlocks
       let permissionRequestStatus = PermissionRequestStatus.assigned;
       let permissionRequestResolveStatus = null;
-      if (isConsent === true && approvedWithConditionResponses.length === 0) {
+      if (
+        isConsent === true &&
+        approvedResponses.length > 0 &&
+        approvedWithConditionResponses.length === 0
+      ) {
         permissionRequestStatus = PermissionRequestStatus.reviewApproved;
         await this.permissionRequestService.updateToReviewApproved(
           permissionRequest.id,
