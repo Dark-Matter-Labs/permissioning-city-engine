@@ -330,7 +330,7 @@ COMMENT ON COLUMN "permission_request"."space_event_rule_id" IS 'when space_even
 COMMENT ON COLUMN "permission_request"."status" IS 'pending, assigned, assign_failed, review_approved, review_approved_with_condition';
 COMMENT ON COLUMN "permission_request"."resolve_status" IS 'resolve_rejected, resolve_accepted, resolve_dropped';
 COMMENT ON COLUMN "permission_request"."permission_code" IS 'assigned after permission granted';
-COMMENT ON COLUMN "permission_response"."status" IS 'pending, approved, approved_with_condition, rejected';
+COMMENT ON COLUMN "permission_response"."status" IS 'pending, approved, approved_with_condition, rejected abstention timeout';
 COMMENT ON COLUMN "user_notification"."target" IS 'space_owner, space_event_orgnaizer, space_event_attendee, permissioner, topic_follower, space_follower, rule_creator';
 COMMENT ON COLUMN "user_notification"."type" IS 'internal, external';
 COMMENT ON COLUMN "user_notification"."status" IS 'pending, complete, failed';

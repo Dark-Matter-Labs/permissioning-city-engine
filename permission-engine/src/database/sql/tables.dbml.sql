@@ -311,7 +311,7 @@ COMMENT ON COLUMN "permission_request"."resolve_status" IS 'resolve_rejected, re
 
 COMMENT ON COLUMN "permission_request"."permission_code" IS 'assigned after permission granted';
 
-COMMENT ON COLUMN "permission_response"."status" IS 'pending, approved, approved_with_condition, rejected';
+COMMENT ON COLUMN "permission_response"."status" IS 'pending, approved, approved_with_condition, rejected abstention timeout';
 
 COMMENT ON COLUMN "user_notification"."target" IS 'space_owner, space_event_orgnaizer, space_event_attendee, permissioner, topic_follower, space_follower, rule_creator';
 
