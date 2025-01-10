@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import configuration from 'src/config/configuration';
+import jwt from 'jsonwebtoken';
+import cookie from 'cookie';
 import { UserNotification } from 'src/database/entity/user-notification.entity';
 import { User } from 'src/database/entity/user.entity';
 
@@ -39,19 +41,44 @@ import { User } from 'src/database/entity/user.entity';
             throw new Error('ADMIN_PASSWORD is not set');
           }
 
-          const DEFAULT_ADMIN = {
-            email: process.env.ADMIN_EMAIL,
-            password: process.env.ADMIN_PASSWORD,
-          };
+          const authenticate = async (
+            email: string,
+            password: string,
+            ctx: any,
+          ) => {
+            const cookies = cookie.parse(ctx.req.headers.cookie || '');
+            const token = cookies.accessToken;
 
-          const authenticate = async (email: string, password: string) => {
-            if (
-              email === DEFAULT_ADMIN.email &&
-              password === DEFAULT_ADMIN.password
-            ) {
-              return Promise.resolve(DEFAULT_ADMIN);
+            if (!token) {
+              return null; // No token present, deny access
             }
-            return null;
+
+            try {
+              // Verify the token using the JWT secret
+              const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+              if (typeof decoded === 'string') {
+                throw new Error('Invalid token');
+              }
+              const domain = decoded.email.split('@')[1];
+
+              if (domain !== process.env.ADMIN_DOMAIN) {
+                throw new Error('Invalid token');
+              }
+
+              if (decoded.email !== email) {
+                throw new Error('Invalid token');
+              }
+
+              // Return the decoded user if the token is valid
+              return {
+                email: decoded.email,
+              };
+            } catch (error) {
+              // Token is invalid or expired
+              console.error('JWT verification failed:', error.message);
+              return null;
+            }
           };
 
           return {
@@ -62,12 +89,12 @@ import { User } from 'src/database/entity/user.entity';
             auth: {
               authenticate,
               cookieName: 'adminjs',
-              cookiePassword: 'secret',
+              cookiePassword: process.env.JWT_SECRET,
             },
             sessionOptions: {
               resave: true,
               saveUninitialized: true,
-              secret: 'secret',
+              secret: process.env.JWT_SECRET,
             },
           };
         },
