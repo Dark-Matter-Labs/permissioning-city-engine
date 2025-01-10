@@ -35,7 +35,7 @@ jobs:
       # Step 4: Deploy the application
       - name: Deploy to Prod Server
         run: |
-          ssh ${{ secrets.PROD_SERVER_USER }}@${{ secrets.PROD_SERVER_IP }} "cd /mnt/ptc/permissioning-city-engine && git pull origin prod && ./scripts/deploy.sh"
+          ssh ${{ secrets.PROD_SERVER_USER }}@${{ secrets.PROD_SERVER_IP }} "cd /mnt/ptc/permissioning-city-engine && git pull origin prod && ./scripts/deploy.sh prod"
 
       # Step 5: Send results to Slack
       - name: Send success notification to Slack

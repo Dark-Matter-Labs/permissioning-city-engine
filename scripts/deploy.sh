@@ -1,17 +1,28 @@
 #!/bin/bash
 
-git stash
+DOCKER_COMPOSE="docker-compose"
 
-cd ptc-dashboard
-git stash
-cd ..
+if [ "$1" == "prod" ]; then
+  DOCKER_COMPOSE="docker-compose.prod"
+fi
 
-git pull origin prod
-git submodule update
+if [ "$1" == "prod" ]; then
+  git stash
 
-docker compose -f docker-compose.prod.yml build --no-cache
-docker compose -f docker-compose.prod.yml down
-docker compose -f docker-compose.prod.yml up -d
-docker system prune -f -a
+  cd ptc-dashboard
+  git stash
+  cd ..
+
+  git pull origin prod
+  git submodule update
+fi
+
+docker compose -f $DOCKER_COMPOSE.yml build --no-cache
+docker compose -f $DOCKER_COMPOSE.yml down
+docker compose -f $DOCKER_COMPOSE.yml up -d
+
+if [ "$1" == "prod" ]; then
+  docker system prune -f -a
+fi
 
 echo "Deployment completed."

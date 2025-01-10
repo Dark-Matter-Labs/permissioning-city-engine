@@ -1,5 +1,11 @@
 #!/bin/bash
 
+DOCKER_COMPOSE="docker-compose"
+
+if [ "$1" == "prod" ]; then
+  DOCKER_COMPOSE="docker-compose.prod"
+fi
+
 echo "Backup start..."
 
 ./scripts/backup.sh
@@ -20,7 +26,7 @@ echo "Deleted redis data"
 
 echo "Restarting system..."
 
-docker compose -f docker-compose.prod.yml up -d
+docker compose -f $DOCKER_COMPOSE.yml up -d
 
 echo "System started"
 
