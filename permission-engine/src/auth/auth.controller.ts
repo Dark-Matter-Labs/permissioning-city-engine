@@ -53,7 +53,9 @@ export class AuthController {
   @Post('refresh')
   @ApiOperation({ summary: 'Refresh access token with refresh token' })
   async refresh(@Req() req, @Res() res: Response) {
-    const refreshToken = req.cookies['refreshToken'];
+    const refreshToken =
+      req.cookies['refreshToken'] ||
+      req.headers?.authorization?.replace('Bearer ', '');
 
     if (!refreshToken) {
       return res.status(403).json({ message: 'Refresh token not found' });
@@ -83,7 +85,9 @@ export class AuthController {
   @Post('revoke')
   @ApiOperation({ summary: 'Revoke refresh token' })
   async revoke(@Req() req, @Res() res: Response) {
-    const refreshToken = req.cookies['refreshToken'];
+    const refreshToken =
+      req.cookies['refreshToken'] ||
+      req.headers?.authorization?.replace('Bearer ', '');
 
     if (!refreshToken) {
       return res.status(403).json({ message: 'Refresh token not found' });
@@ -111,7 +115,9 @@ export class AuthController {
   async logout(@Req() req, @Res() res: Response) {
     // Clear the access and refresh tokens from cookies and redis
     res.clearCookie('accessToken');
-    const refreshToken = req.cookies['refreshToken'];
+    const refreshToken =
+      req.cookies['refreshToken'] ||
+      req.headers?.authorization?.replace('Bearer ', '');
 
     if (refreshToken) {
       await this.authService.revokeRefreshToken(refreshToken);
