@@ -18,7 +18,7 @@ certbot certonly \
   -d admin.engine.permissioning.city \
   -d ws.engine.permissioning.city \
   -d engine.permissioning.city \
-  --non-interactive --quiet
+  --non-interactive --quiet --expand
 
 set -e
 
