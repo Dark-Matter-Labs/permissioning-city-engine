@@ -262,7 +262,7 @@ Table permission_response {
   id uuid [primary key]
   permission_request_id uuid [not null]
   space_permissioner_id uuid [not null]
-  status varchar [not null, note: 'pending, approved, approved_with_condition, rejected']
+  status varchar [not null, note: 'pending, approved, approved_with_condition, rejected', 'abstention', 'timeout']
   conditions text[]
   excitements text[]
   worries text[]
