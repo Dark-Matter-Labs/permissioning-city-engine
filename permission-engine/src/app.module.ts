@@ -43,6 +43,7 @@ import { SpaceHistoryModule } from './api/space-history/space-history.module';
 import { SlackService } from './lib/slack/slack.service';
 import { SlackModule } from './lib/slack/slack.module';
 import dayjs from 'dayjs';
+import { AdminModule } from './lib/admin/admin.module';
 
 @Module({
   imports: [
@@ -101,6 +102,7 @@ import dayjs from 'dayjs';
       ? [NotificationHandlerModule]
       : []),
     ...(process.env.ENGINE_MODE === 'daemon' ? [PermissionHandlerModule] : []),
+    AdminModule,
     AuthModule,
     EmailModule,
     UserNotificationModule,
