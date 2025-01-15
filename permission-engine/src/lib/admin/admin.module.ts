@@ -37,10 +37,6 @@ import { User } from 'src/database/entity/user.entity';
             throw new Error('ADMIN_EMAIL is not set');
           }
 
-          if (!process.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD == '') {
-            throw new Error('ADMIN_PASSWORD is not set');
-          }
-
           const authenticate = async (
             email: string,
             password: string,
