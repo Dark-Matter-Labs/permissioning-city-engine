@@ -97,7 +97,7 @@
     "i18next-http-backend": "^2.6.2",
     "ioredis": "^5.4.1",
     "jest": "^29.5.0",
-    "multer": "^2.0.1",
+    "multer": "^2.0.2",
     "multer-s3": "^3.0.1",
     "nestjs-i18n": "^10.4.9",
     "passport": "^0.7.0",
