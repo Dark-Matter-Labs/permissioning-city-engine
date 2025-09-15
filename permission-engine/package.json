@@ -71,7 +71,7 @@
     "@typescript-eslint/parser": "^6.0.0",
     "adminjs": "^7.8.13",
     "aws-sdk": "^2.1655.0",
-    "axios": "^1.7.2",
+    "axios": "^1.12.2",
     "bcrypt": "^5.1.1",
     "bignumber.js": "^9.1.2",
     "bull": "^4.13.0",
